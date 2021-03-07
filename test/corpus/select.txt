@@ -1,0 +1,13 @@
+==================
+Select literal noalias
+==================
+
+select 1
+
+---
+
+(source_file
+  (select_definition
+    (column_list)
+  )
+)

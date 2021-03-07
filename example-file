@@ -1,0 +1,27 @@
+select
+    abc as id,
+    def,
+    1 as id,
+    true as lala,
+    false as lala2,
+    TrUe as lala3,
+    falSE as lala4,
+    'lit' as literal
+
+from my_table,
+other_table
+cross join something_else
+left join abc on abc = 123
+right join abc using (id, id2)
+
+where (abc = def
+  and ghi != 123
+  or 456 < 789
+  and (1=1))
+
+group by 1, abc, def+10
+having ok(1) > 10
+
+order by abc desc, 1 asc, 2
+limit 10
+
