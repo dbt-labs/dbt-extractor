@@ -1,13 +1,2 @@
-{{ config(materialized='table', enabled=True) }}
 
-with abc as (
-    select * from {{ ref('my_model') }}
-),
-def as (
-    select * from {{ source('some', 'source') }}
-)
-
-select *
-from abc
-join def on def.id = abc.id
-where def.name = 'drew'
+select 123 = 123 and 'def' = 'ghi'

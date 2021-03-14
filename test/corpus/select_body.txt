@@ -1,0 +1,216 @@
+==================
+Simple select and alias
+==================
+
+select * from table as my_table
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list (select_all))
+   (dataset_definition
+    (table_reference
+     (qualified_identifier (quoted_identifier (identifier)))
+     (table_alias (quoted_identifier (identifier)))
+     )
+    )
+   )
+  )
+)
+
+==================
+Simple filter
+==================
+
+select * from table
+where abc = 123
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list (select_all))
+   (dataset_definition
+    (table_reference
+     (qualified_identifier (quoted_identifier (identifier))))
+     (where_clause
+       (comparison_operator
+         (primary_expression (qualified_identifier (quoted_identifier (identifier))))
+         (primary_expression (lit_integer))
+       )
+     )
+    )
+   )
+  )
+)
+
+==================
+Compound filter
+==================
+
+select * from table
+where abc = 123 and def = ghi
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list (select_all))
+   (dataset_definition
+    (table_reference
+     (qualified_identifier (quoted_identifier (identifier))))
+     (where_clause
+       (boolean_operator
+         (comparison_operator
+           (primary_expression (qualified_identifier (quoted_identifier (identifier))))
+           (primary_expression (lit_integer))
+         )
+         (comparison_operator
+           (primary_expression (qualified_identifier (quoted_identifier (identifier))))
+           (primary_expression (qualified_identifier (quoted_identifier (identifier))))
+         )
+       )
+     )
+    )
+   )
+  )
+)
+
+
+==================
+Group by one named field
+==================
+
+select id
+from table
+group by id
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list
+    (select_expr (primary_expression (qualified_identifier (quoted_identifier (identifier))))))
+   (dataset_definition
+    (table_reference (qualified_identifier (quoted_identifier (identifier))))
+    (group_by_clause (primary_expression (qualified_identifier (quoted_identifier (identifier)))))
+    )
+   )
+  )
+)
+
+==================
+Group by multiple fields
+==================
+
+select id, name
+from table
+group by 1, name
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list
+    (select_expr (primary_expression (qualified_identifier (quoted_identifier (identifier)))))
+    (select_expr (primary_expression (qualified_identifier (quoted_identifier (identifier))))))
+   (dataset_definition
+    (table_reference (qualified_identifier (quoted_identifier (identifier))))
+    (group_by_clause
+     (primary_expression (lit_integer))
+     (primary_expression (qualified_identifier (quoted_identifier (identifier))))
+    )
+   )
+  )
+ )
+)
+
+==================
+Group by having
+==================
+
+select name, sum(1)
+from table
+group by name
+having count(1) > 1 and count(1) < 5
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list
+    (select_expr (primary_expression (qualified_identifier (quoted_identifier (identifier)))))
+    (select_expr (primary_expression (function_call (agg_function
+      (identifier)
+      (primary_expression (lit_integer)))))))
+   (dataset_definition
+    (table_reference (qualified_identifier (quoted_identifier (identifier))))
+    (group_by_clause
+     (primary_expression (qualified_identifier (quoted_identifier (identifier))))
+    )
+    (having_clause
+     (boolean_operator
+      (comparison_operator
+       (primary_expression (function_call (agg_function
+         (identifier)
+         (primary_expression (lit_integer)))))
+       (primary_expression (lit_integer)))
+      (comparison_operator
+       (primary_expression (function_call (agg_function
+         (identifier)
+         (primary_expression (lit_integer)))))
+       (primary_expression (lit_integer))))
+     ) 
+   )
+  )
+ )
+)
+
+
+==================
+Select ordering
+==================
+
+select *
+from table
+order by id
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list (select_all))
+   (dataset_definition
+    (table_reference (qualified_identifier (quoted_identifier (identifier))))))
+  (order_by_clause
+   (primary_expression (qualified_identifier (quoted_identifier (identifier)))))
+ )
+)
+
+==================
+Select limiting
+==================
+
+select *
+from table
+limit 10
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list (select_all))
+   (dataset_definition
+    (table_reference (qualified_identifier (quoted_identifier (identifier))))))
+  (limit_clause (lit_integer))
+ )
+)

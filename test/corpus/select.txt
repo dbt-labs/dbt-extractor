@@ -1,13 +1,58 @@
 ==================
-Select literal noalias
+Select set logic
 ==================
 
-select 1
+select * from table
+union all
+select * from table
+
+order by 1
+limit 1
 
 ---
 
-(source_file
-  (select_definition
-    (column_list)
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list (select_all))
+   (dataset_definition
+    (table_reference (qualified_identifier (quoted_identifier (identifier))))))
+  (select_set_operator)
+  (select_body
+   (column_list (select_all))
+   (dataset_definition
+    (table_reference (qualified_identifier (quoted_identifier (identifier))))))
+  (order_by_clause (primary_expression (lit_integer)))
+  (limit_clause (lit_integer))
+ )
+)
+
+==================
+Select set logic (2)
+==================
+
+select * from table
+union all
+select * from table
+
+order by 1
+limit 1
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_set_operator
+    (select_body
+     (column_list (select_all))
+     (dataset_definition
+      (table_reference (qualified_identifier (quoted_identifier (identifier))))))
+    (select_body
+     (column_list (select_all))
+     (dataset_definition
+      (table_reference (qualified_identifier (quoted_identifier (identifier))))))
   )
+  (order_by_clause (primary_expression (lit_integer)))
+  (limit_clause (lit_integer))
+ )
 )

@@ -1,0 +1,139 @@
+==================
+Select literal noalias
+==================
+
+select 1
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list
+    (select_expr (primary_expression (lit_integer)))
+    )
+   )
+  )
+)
+
+
+==================
+Select literal aliased
+==================
+
+select 1 as id
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list
+    (select_expr (primary_expression (lit_integer))
+      (column_alias (quoted_identifier (identifier))))
+    )
+   )
+  )
+)
+
+==================
+Select multiple literal aliased
+==================
+
+select 1 as id, 'abc' as name
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list
+    (select_expr (primary_expression  (lit_integer))
+     (column_alias (quoted_identifier (identifier))))
+    (select_expr (primary_expression (lit_string (string_literal)))
+     (column_alias (quoted_identifier (identifier))))
+   )
+  )
+ )
+ )
+
+
+
+==================
+Select single column from table
+==================
+
+select id from table
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list
+    (select_expr
+     (primary_expression
+      (qualified_identifier
+        (quoted_identifier
+         (identifier)
+      ))
+     )
+    )
+   )
+   (dataset_definition
+     (table_reference
+       (qualified_identifier
+         (quoted_identifier
+           (identifier)
+    ))))
+  )
+ )
+)
+
+==================
+Select star from table
+==================
+
+select * from table
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list
+    (select_all)
+   )
+   (dataset_definition
+     (table_reference
+       (qualified_identifier
+         (quoted_identifier
+           (identifier)
+    ))))
+  )
+ )
+)
+
+==================
+Select star and project from table
+==================
+
+select *, id as table_id from table
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list
+    (select_all)
+    (select_expr
+      (primary_expression (qualified_identifier (quoted_identifier (identifier))))
+        (column_alias (quoted_identifier (identifier))))
+   )
+   (dataset_definition
+     (table_reference (qualified_identifier (quoted_identifier (identifier)))))
+  )
+ )
+)
+

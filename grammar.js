@@ -3,6 +3,23 @@
  *  TODO : Need to figure out what's up with words / missing whitespace?
  */
 
+const PREC = {
+  parenthesized_expression: 1,
+  not: 1,
+  compare: 2,
+  or: 10,
+  and: 11,
+  //bitwise_or: 12,
+  //bitwise_and: 13,
+  plus: 16,
+  times: 17,
+  unary: 18,
+  power: 19,
+  equality: 20,
+
+  projection: 30,
+}
+
 String.prototype.toCaseInsensitiv = function () {
   return alias(
     token(new RegExp(
@@ -75,7 +92,8 @@ module.exports = grammar({
                 $.select_body
             )
         ),
-        optional($.limit_clause)
+        optional(field('order_by_clause', $.order_by_clause)),
+        optional(field('limit_clause', $.limit_clause)),
     ),
 
     select_set_operator: $ => (
@@ -111,7 +129,6 @@ module.exports = grammar({
         optional(field('where_clause', $.where_clause)),
         optional(field('group_by_clause', $.group_by_clause)),
         optional(field('having_clause', $.having_clause)),
-        optional(field('order_by_clause', $.order_by_clause)),
     ),
 
     group_by_clause: $ => seq(
@@ -146,15 +163,6 @@ module.exports = grammar({
     where_clause: $ => seq(
         'WHERE'.toCaseInsensitiv(),
         $._expression,
-        repeat(
-            seq(
-                choice(
-                    'AND'.toCaseInsensitiv(),
-                    'OR'.toCaseInsensitiv(),
-                ),
-                $._expression,
-            )
-        )
     ),
 
     subquery: $ => seq(
@@ -234,6 +242,11 @@ module.exports = grammar({
         '}}'
     ),
 
+    table_alias: $ => seq(
+        optional('AS'.toCaseInsensitiv()),
+        field('alias', $.quoted_identifier)
+    ),
+
     table_reference: $ => seq(
         choice(
             field('identifier', $.qualified_identifier),
@@ -241,12 +254,7 @@ module.exports = grammar({
             field('source', $.dbt_jinja_source),
             field('subquery', $.subquery),
         ),
-        optional(
-            seq(
-                'AS'.toCaseInsensitiv(),
-                field('table_alias', $.qualified_identifier)
-            )
-        )
+        optional($.table_alias)
     ),
 
     cross_join: $ => seq(
@@ -325,6 +333,7 @@ module.exports = grammar({
     ),
 
     select_all: $ => seq(
+        // todo: not right!
         optional(
             seq(
                 $.quoted_identifier,
@@ -340,14 +349,17 @@ module.exports = grammar({
         '*'
     ),
 
+    column_alias: $ => seq(
+        optional('AS'.toCaseInsensitiv()),
+        prec.right(
+            PREC.projection,
+            field('alias', $.quoted_identifier)
+        )
+    ),
+
     select_expr: $ => seq(
         $._expression,
-        optional(
-            seq(
-                optional('AS'.toCaseInsensitiv()),
-                field('column_alias', $.quoted_identifier)
-            ),
-        )
+        optional($.column_alias)
     ),
 
     column_list: $ => commaSep1(
@@ -373,7 +385,8 @@ module.exports = grammar({
         'FALSE'.toCaseInsensitiv()
     ),
 
-    identifier: $ => token(/[a-zA-Z0-9_]+/),
+    //identifier: $ => token(/[a-zA-Z0-9_]+/),
+    identifier: $ => /[_\p{XID_Start}][_\p{XID_Continue}]*/,
 
     // todo : prolly not right
     quoted_identifier: $ => choice(
@@ -401,12 +414,32 @@ module.exports = grammar({
         $.quoted_identifier
     ),
 
+    // no idea at all if this is right...
     _expression: $ => choice(
-      $.parenthesized_expression,
+      $.comparison_operator,
+      $.boolean_operator,
       $.primary_expression,
-      $.unary_expression,
-      $.binary_expression,
     ),
+
+    comparison_operator: $ => prec(PREC.compare, seq(
+      $.primary_expression,
+      repeat1(seq(
+        choice(
+          '<',
+          '<=',
+          '=',
+          '!=',
+          '>=',
+          '>',
+          '<>',
+          'IN'.toCaseInsensitiv(),
+          seq('NOT'.toCaseInsensitiv(), 'IN'.toCaseInsensitiv()),
+          'IS'.toCaseInsensitiv(),
+          seq('IS'.toCaseInsensitiv(), 'NOT'.toCaseInsensitiv())
+        ),
+        $.primary_expression
+      ))
+    )),
 
     parenthesized_expression: $ => seq(
         '(',
@@ -422,40 +455,50 @@ module.exports = grammar({
       )
     ),
 
-    // [110 - 117]
-    binary_expression: $ => choice(
-
-      // numeric
-      prec.left(1, seq($._expression, '*', $._expression)),
-      prec.left(1, seq($._expression, '/', $._expression)),
-      prec.left(1, seq($._expression, '%', $._expression)),
-      prec.left(2, seq($._expression, '+', $._expression)),
-      prec.left(2, seq($._expression, '-', $._expression)),
-
-      // relational
-      prec.left(3, seq($._expression, '<=', $._expression)),
-      prec.left(3, seq($._expression, '>=', $._expression)),
-      prec.left(3, seq($._expression, '>', $._expression)),
-      prec.left(3, seq($._expression, '<', $._expression)),
-      prec.left(3, seq($._expression, '!=', $._expression)),
-      prec.left(3, seq($._expression, '=', $._expression)),
-      prec.left(3, seq($._expression, 'IN'.toCaseInsensitiv(), $.expression_list)),
-      prec.left(3, seq($._expression, 'NOT'.toCaseInsensitiv(), 'IN'.toCaseInsensitiv(), $.expression_list)),
-
-      prec.left(3, seq($._expression, 'IS'.toCaseInsensitiv(), 'NOT'.toCaseInsensitiv(), $.expression_list)),
-      prec.left(3, seq($._expression, 'IS'.toCaseInsensitiv(), $.expression_list)),
-
-      // conditional
-      prec.left(4, seq($._expression, 'AND'.toCaseInsensitiv(), $._expression)),
-      prec.left(4, seq($._expression, 'OR'.toCaseInsensitiv(), $._expression)),
-
+    boolean_operator: $ => choice(
+      // todo: why can i not use toCaseInsensitiv here??
+      // when I do use it, tree-sitter gets confused about precedence
+      // and thinks that in `select true and false`, "and" is a column alias!
+      prec.left(PREC.and, seq(
+        field('left', $._expression),
+        choice(
+            'AND',
+            'and'
+        ),
+        field('right', $._expression)
+      )),
+      prec.left(PREC.or, seq(
+        field('left', $._expression),
+        choice(
+            'OR',
+            'or'
+        ),
+        field('right', $._expression)
+      ))
     ),
 
-    unary_expression: $ => choice(
-      seq('NOT'.toCaseInsensitiv(), $.primary_expression),
-      seq('+', $.primary_expression),
-      seq('-', $.primary_expression),
-    ),
+    unary_operator: $ => prec(PREC.unary, seq(
+        choice('+', '-', 'NOT'.toCaseInsensitiv()),
+        field('argument', $.primary_expression)
+    )),
+
+    binary_operator: $ => {
+      const table = [
+        [prec.left, '+', PREC.plus],
+        [prec.left, '-', PREC.plus],
+        [prec.left, '*', PREC.times],
+        [prec.left, '/', PREC.times],
+        [prec.left, '%', PREC.times],
+        [prec.left, '^', PREC.power],
+      ];
+
+      return choice(...table.map(([fn, operator, precedence]) => fn(precedence, seq(
+        field('left', $.primary_expression),
+        field('operator', operator),
+        field('right', $.primary_expression)
+      ))));
+
+    },
 
     // todo... special cases... like distinct?
     // also, count(*)
@@ -551,12 +594,18 @@ module.exports = grammar({
     ),
 
     primary_expression: $ => choice(
-        $.qualified_identifier,
+        $.lit_null,
         $.lit_string,
         $.lit_integer,
         $.lit_decimal,
         $.lit_boolean,
+
         $.function_call,
+        $.unary_operator,
+        $.binary_operator,
+        $.qualified_identifier,
+        $.parenthesized_expression,
+
     ),
 
   }
