@@ -1,0 +1,91 @@
+==================
+Case when
+==================
+
+select
+    case
+        when 1=1 then true
+        else false
+    end
+
+---
+
+(select_statement (select_wrapper (select_body (column_list
+ (select_expr (primary_expression
+   (case_when_then_value
+     (case_when_entry
+       (comparison_operator
+           (primary_expression (lit_integer))
+           (primary_expression (lit_integer))
+       )
+       (primary_expression (lit_boolean))
+     )
+     (case_when_else (primary_expression (lit_boolean)))
+   )
+  )
+)))))
+
+==================
+Case when (multiple conditions)
+==================
+
+select
+    case
+        when 1=1 then true
+        when 1=2 then false
+        else false
+    end
+
+---
+
+(select_statement (select_wrapper (select_body (column_list
+ (select_expr (primary_expression
+   (case_when_then_value
+     (case_when_entry
+       (comparison_operator
+           (primary_expression (lit_integer))
+           (primary_expression (lit_integer)))
+       (primary_expression (lit_boolean))
+     )
+     (case_when_entry
+       (comparison_operator
+           (primary_expression (lit_integer))
+           (primary_expression (lit_integer))
+       )
+       (primary_expression (lit_boolean))
+     )
+     (case_when_else (primary_expression (lit_boolean)))
+   )
+  )
+)))))
+
+==================
+Case when (no else)
+==================
+
+select
+    case
+        when 1=1 then true
+        when 1=2 then false
+    end
+
+---
+
+(select_statement (select_wrapper (select_body (column_list
+ (select_expr (primary_expression
+   (case_when_then_value
+     (case_when_entry
+       (comparison_operator
+           (primary_expression (lit_integer))
+           (primary_expression (lit_integer))
+       )
+       (primary_expression (lit_boolean)))
+     (case_when_entry
+       (comparison_operator
+           (primary_expression (lit_integer))
+           (primary_expression (lit_integer))
+       )
+       (primary_expression (lit_boolean)))
+   )
+  )
+)))))

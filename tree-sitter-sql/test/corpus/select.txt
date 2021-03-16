@@ -1,0 +1,110 @@
+==================
+Select compound set operator
+==================
+
+select * from table
+union all
+select * from table
+
+order by 1
+limit 1
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_compound
+    (select_body
+     (column_list (select_all))
+     (dataset_definition
+      (table_reference (qualified_identifier (quoted_identifier (identifier))))))
+    (select_set_operator)
+    (select_body
+     (column_list (select_all))
+     (dataset_definition
+      (table_reference (qualified_identifier (quoted_identifier (identifier))))))
+  )
+  (order_by_clause (primary_expression (lit_integer)))
+  (limit_clause (lit_integer))
+ )
+)
+
+==================
+Select compound set operator - associativity
+==================
+
+select * from table
+union all
+(
+    select * from table
+    except
+    select * from table
+)
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_compound
+   (select_body
+    (column_list (select_all))
+    (dataset_definition
+     (table_reference (qualified_identifier (quoted_identifier (identifier))))))
+   (select_set_operator)
+   (select_compound
+     (select_body
+      (column_list (select_all))
+      (dataset_definition
+       (table_reference (qualified_identifier (quoted_identifier (identifier))))))
+     (select_set_operator)
+     (select_body
+      (column_list (select_all))
+      (dataset_definition
+       (table_reference (qualified_identifier (quoted_identifier (identifier))))))
+   )
+  )
+ )
+)
+
+
+==================
+Common table expressions
+==================
+
+with
+abc as (select * from table),
+def as (select * from table)
+select * from abc
+
+---
+
+(select_statement
+ (cte_clause_list
+  (cte_def
+    (quoted_identifier (identifier))
+    (select_wrapper 
+     (select_body
+       (column_list (select_all))
+       (dataset_definition
+         (table_reference (qualified_identifier (quoted_identifier (identifier)))))
+     )
+    )
+   )
+  (cte_def
+    (quoted_identifier (identifier))
+    (select_wrapper 
+     (select_body
+       (column_list (select_all))
+       (dataset_definition
+         (table_reference (qualified_identifier (quoted_identifier (identifier)))))
+     )
+    )
+   )
+  )
+  (select_wrapper
+   (select_body
+    (column_list (select_all))
+    (dataset_definition (table_reference (qualified_identifier (quoted_identifier (identifier)))))
+   )
+  )
+)

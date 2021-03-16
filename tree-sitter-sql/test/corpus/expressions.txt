@@ -1,0 +1,106 @@
+==================
+Simple expression
+==================
+
+select 123 = 123 and 'def' = 'ghi'
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list
+    (select_expr
+     (boolean_operator
+      (comparison_operator
+         (primary_expression (lit_integer))
+         (primary_expression (lit_integer)))
+      (comparison_operator
+         (primary_expression (lit_string (string_literal)))
+         (primary_expression (lit_string (string_literal))))
+      )
+     )
+    )
+   )
+  )
+)
+
+==================
+Implicit compound expression
+==================
+
+select true and 1 or null
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list
+    (select_expr
+     (boolean_operator
+      (boolean_operator
+       (primary_expression (lit_boolean))
+       (primary_expression (lit_integer))
+       )
+      (primary_expression (lit_null))
+      )
+     )
+    )
+   )
+  )
+)
+
+==================
+Implicit compound expression precedence
+==================
+
+select true or 1 and null
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list
+    (select_expr
+     (boolean_operator
+      (primary_expression (lit_boolean))
+      (boolean_operator
+       (primary_expression (lit_integer))
+       (primary_expression (lit_null))
+       )
+      )
+     )
+    )
+   )
+  )
+)
+
+
+==================
+Explicit compound expression
+==================
+
+select true and (1 or null)
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list
+    (select_expr
+     (boolean_operator
+      (primary_expression (lit_boolean))
+      (primary_expression
+        (parenthesized_expression
+         (boolean_operator
+           (primary_expression (lit_integer))
+           (primary_expression (lit_null)))))
+      )
+     )
+    )
+   )
+  )
+)

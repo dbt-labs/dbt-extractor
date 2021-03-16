@@ -1,0 +1,45 @@
+==================
+Shorthad casting
+==================
+
+select '2021-01-01'::date as dt
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list
+    (select_expr
+      (primary_expression (inline_cast
+        (primary_expression (lit_string (string_literal)))
+        (type_name)))
+      (column_alias (quoted_identifier (identifier))))
+    )
+   )
+  )
+)
+
+
+==================
+Long-form casting
+==================
+
+select cast('2021-01-01' as date) as dt
+
+---
+
+(select_statement
+ (select_wrapper
+  (select_body
+   (column_list
+    (select_expr
+      (primary_expression (explicit_cast
+        (primary_expression (lit_string (string_literal)))
+        (type_name)))
+      (column_alias (quoted_identifier (identifier))))
+    )
+   )
+  )
+)
+

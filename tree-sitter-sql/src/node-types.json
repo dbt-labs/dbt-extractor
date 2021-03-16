@@ -1,0 +1,1661 @@
+[
+  {
+    "type": "agg_function",
+    "named": true,
+    "fields": {
+      "function_name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "function_name",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "distinct",
+          "named": true
+        },
+        {
+          "type": "function_args",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "binary_operator",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "primary_expression",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "%",
+            "named": false
+          },
+          {
+            "type": "*",
+            "named": false
+          },
+          {
+            "type": "+",
+            "named": false
+          },
+          {
+            "type": "-",
+            "named": false
+          },
+          {
+            "type": "/",
+            "named": false
+          },
+          {
+            "type": "^",
+            "named": false
+          }
+        ]
+      },
+      "right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "primary_expression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "boolean_operator",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "boolean_operator",
+            "named": true
+          },
+          {
+            "type": "comparison_operator",
+            "named": true
+          },
+          {
+            "type": "not_operator",
+            "named": true
+          },
+          {
+            "type": "primary_expression",
+            "named": true
+          }
+        ]
+      },
+      "right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "boolean_operator",
+            "named": true
+          },
+          {
+            "type": "comparison_operator",
+            "named": true
+          },
+          {
+            "type": "not_operator",
+            "named": true
+          },
+          {
+            "type": "primary_expression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "case_when_else",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "boolean_operator",
+          "named": true
+        },
+        {
+          "type": "comparison_operator",
+          "named": true
+        },
+        {
+          "type": "not_operator",
+          "named": true
+        },
+        {
+          "type": "primary_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "case_when_entry",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "boolean_operator",
+          "named": true
+        },
+        {
+          "type": "comparison_operator",
+          "named": true
+        },
+        {
+          "type": "not_operator",
+          "named": true
+        },
+        {
+          "type": "primary_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "case_when_then_value",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "case_when_else",
+          "named": true
+        },
+        {
+          "type": "case_when_entry",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "column_alias",
+    "named": true,
+    "fields": {
+      "alias": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "quoted_identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "column_list",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "select_all",
+          "named": true
+        },
+        {
+          "type": "select_expr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "comparison_operator",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "primary_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "cross_join",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "join_target",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "cte_clause_list",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "cte_def",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "cte_def",
+    "named": true,
+    "fields": {
+      "cte_name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "quoted_identifier",
+            "named": true
+          }
+        ]
+      },
+      "select": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "select_wrapper",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "dataset_definition",
+    "named": true,
+    "fields": {
+      "group_by_clause": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "group_by_clause",
+            "named": true
+          }
+        ]
+      },
+      "having_clause": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "having_clause",
+            "named": true
+          }
+        ]
+      },
+      "join_clause_list": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "join_clause",
+            "named": true
+          }
+        ]
+      },
+      "table_reference": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "table_reference",
+            "named": true
+          }
+        ]
+      },
+      "where_clause": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "where_clause",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "distinct",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "explicit_cast",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "boolean_operator",
+          "named": true
+        },
+        {
+          "type": "comparison_operator",
+          "named": true
+        },
+        {
+          "type": "not_operator",
+          "named": true
+        },
+        {
+          "type": "primary_expression",
+          "named": true
+        },
+        {
+          "type": "type_name",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "function_args",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "boolean_operator",
+          "named": true
+        },
+        {
+          "type": "comparison_operator",
+          "named": true
+        },
+        {
+          "type": "not_operator",
+          "named": true
+        },
+        {
+          "type": "primary_expression",
+          "named": true
+        },
+        {
+          "type": "select_all",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "function_name",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "group_by_clause",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "boolean_operator",
+          "named": true
+        },
+        {
+          "type": "comparison_operator",
+          "named": true
+        },
+        {
+          "type": "not_operator",
+          "named": true
+        },
+        {
+          "type": "primary_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "having_clause",
+    "named": true,
+    "fields": {
+      "having_expression": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "boolean_operator",
+            "named": true
+          },
+          {
+            "type": "comparison_operator",
+            "named": true
+          },
+          {
+            "type": "not_operator",
+            "named": true
+          },
+          {
+            "type": "primary_expression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "inline_cast",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "primary_expression",
+          "named": true
+        },
+        {
+          "type": "type_name",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "join_clause",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "cross_join",
+          "named": true
+        },
+        {
+          "type": "natural_join",
+          "named": true
+        },
+        {
+          "type": "qualified_join",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "join_clause_on",
+    "named": true,
+    "fields": {
+      "join_condition": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "boolean_operator",
+            "named": true
+          },
+          {
+            "type": "comparison_operator",
+            "named": true
+          },
+          {
+            "type": "not_operator",
+            "named": true
+          },
+          {
+            "type": "primary_expression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "join_clause_using",
+    "named": true,
+    "fields": {
+      "join_using_field": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": "quoted_identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "join_target",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "table_reference",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "limit_clause",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "lit_integer",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "lit_boolean",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "lit_null",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "lit_string",
+    "named": true,
+    "fields": {
+      "literal": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "string_literal",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "natural_join",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "join_target",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "not_operator",
+    "named": true,
+    "fields": {
+      "argument": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "boolean_operator",
+            "named": true
+          },
+          {
+            "type": "comparison_operator",
+            "named": true
+          },
+          {
+            "type": "not_operator",
+            "named": true
+          },
+          {
+            "type": "primary_expression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "order_by_clause",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "boolean_operator",
+          "named": true
+        },
+        {
+          "type": "comparison_operator",
+          "named": true
+        },
+        {
+          "type": "not_operator",
+          "named": true
+        },
+        {
+          "type": "primary_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "parenthesized_expression",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "boolean_operator",
+          "named": true
+        },
+        {
+          "type": "comparison_operator",
+          "named": true
+        },
+        {
+          "type": "not_operator",
+          "named": true
+        },
+        {
+          "type": "primary_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "primary_expression",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "agg_function",
+          "named": true
+        },
+        {
+          "type": "binary_operator",
+          "named": true
+        },
+        {
+          "type": "case_when_then_value",
+          "named": true
+        },
+        {
+          "type": "explicit_cast",
+          "named": true
+        },
+        {
+          "type": "inline_cast",
+          "named": true
+        },
+        {
+          "type": "lit_boolean",
+          "named": true
+        },
+        {
+          "type": "lit_decimal",
+          "named": true
+        },
+        {
+          "type": "lit_integer",
+          "named": true
+        },
+        {
+          "type": "lit_null",
+          "named": true
+        },
+        {
+          "type": "lit_string",
+          "named": true
+        },
+        {
+          "type": "parenthesized_expression",
+          "named": true
+        },
+        {
+          "type": "qualified_identifier",
+          "named": true
+        },
+        {
+          "type": "subquery",
+          "named": true
+        },
+        {
+          "type": "unary_operator",
+          "named": true
+        },
+        {
+          "type": "window_function",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "qualified_identifier",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "quoted_identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "qualified_join",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "join_clause_on",
+          "named": true
+        },
+        {
+          "type": "join_clause_using",
+          "named": true
+        },
+        {
+          "type": "join_target",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "quoted_identifier",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "select_all",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "quoted_identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "select_body",
+    "named": true,
+    "fields": {
+      "column_list": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "column_list",
+            "named": true
+          }
+        ]
+      },
+      "dataset_definition": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "dataset_definition",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "select_compound",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "select_body",
+          "named": true
+        },
+        {
+          "type": "select_compound",
+          "named": true
+        },
+        {
+          "type": "select_set_operator",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "select_expr",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "boolean_operator",
+          "named": true
+        },
+        {
+          "type": "column_alias",
+          "named": true
+        },
+        {
+          "type": "comparison_operator",
+          "named": true
+        },
+        {
+          "type": "not_operator",
+          "named": true
+        },
+        {
+          "type": "primary_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "select_set_operator",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "select_statement",
+    "named": true,
+    "fields": {
+      "ctes": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "cte_clause_list",
+            "named": true
+          }
+        ]
+      },
+      "select": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "select_wrapper",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "select_wrapper",
+    "named": true,
+    "fields": {
+      "limit_clause": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "limit_clause",
+            "named": true
+          }
+        ]
+      },
+      "order_by_clause": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "order_by_clause",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "select_body",
+          "named": true
+        },
+        {
+          "type": "select_compound",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "subquery",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "select_statement",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "table_alias",
+    "named": true,
+    "fields": {
+      "alias": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "quoted_identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "table_reference",
+    "named": true,
+    "fields": {
+      "identifier": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "qualified_identifier",
+            "named": true
+          }
+        ]
+      },
+      "subquery": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "subquery",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "table_alias",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "type_name",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "unary_operator",
+    "named": true,
+    "fields": {
+      "argument": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "primary_expression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "where_clause",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "boolean_operator",
+          "named": true
+        },
+        {
+          "type": "comparison_operator",
+          "named": true
+        },
+        {
+          "type": "not_operator",
+          "named": true
+        },
+        {
+          "type": "primary_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "window_current_row",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "window_frame_end",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "window_current_row",
+          "named": true
+        },
+        {
+          "type": "window_integer_offset",
+          "named": true
+        },
+        {
+          "type": "window_unbounded_following",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "window_frame_start",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "window_current_row",
+          "named": true
+        },
+        {
+          "type": "window_integer_offset",
+          "named": true
+        },
+        {
+          "type": "window_unbounded_preceding",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "window_function",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "distinct",
+          "named": true
+        },
+        {
+          "type": "function_args",
+          "named": true
+        },
+        {
+          "type": "function_name",
+          "named": true
+        },
+        {
+          "type": "window_specification",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "window_integer_offset",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "lit_integer",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "window_order_clause",
+    "named": false,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "boolean_operator",
+          "named": true
+        },
+        {
+          "type": "comparison_operator",
+          "named": true
+        },
+        {
+          "type": "not_operator",
+          "named": true
+        },
+        {
+          "type": "primary_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "window_partition_clause",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "boolean_operator",
+          "named": true
+        },
+        {
+          "type": "comparison_operator",
+          "named": true
+        },
+        {
+          "type": "not_operator",
+          "named": true
+        },
+        {
+          "type": "primary_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "window_specification",
+    "named": true,
+    "fields": {
+      "window_order_clause": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "window_order_clause",
+            "named": true
+          }
+        ]
+      },
+      "window_partition_clause": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "window_partition_clause",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "window_frame_end",
+          "named": true
+        },
+        {
+          "type": "window_frame_start",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "window_unbounded_following",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "window_unbounded_preceding",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "!=",
+    "named": false
+  },
+  {
+    "type": "\"",
+    "named": false
+  },
+  {
+    "type": "%",
+    "named": false
+  },
+  {
+    "type": "'",
+    "named": false
+  },
+  {
+    "type": "(",
+    "named": false
+  },
+  {
+    "type": ")",
+    "named": false
+  },
+  {
+    "type": "*",
+    "named": false
+  },
+  {
+    "type": "+",
+    "named": false
+  },
+  {
+    "type": ",",
+    "named": false
+  },
+  {
+    "type": "-",
+    "named": false
+  },
+  {
+    "type": ".",
+    "named": false
+  },
+  {
+    "type": "/",
+    "named": false
+  },
+  {
+    "type": "::",
+    "named": false
+  },
+  {
+    "type": "<",
+    "named": false
+  },
+  {
+    "type": "<=",
+    "named": false
+  },
+  {
+    "type": "<>",
+    "named": false
+  },
+  {
+    "type": "=",
+    "named": false
+  },
+  {
+    "type": ">",
+    "named": false
+  },
+  {
+    "type": ">=",
+    "named": false
+  },
+  {
+    "type": "ALL",
+    "named": false
+  },
+  {
+    "type": "AND",
+    "named": false
+  },
+  {
+    "type": "AS",
+    "named": false
+  },
+  {
+    "type": "ASC",
+    "named": false
+  },
+  {
+    "type": "BETWEEN",
+    "named": false
+  },
+  {
+    "type": "BY",
+    "named": false
+  },
+  {
+    "type": "CASE",
+    "named": false
+  },
+  {
+    "type": "CAST",
+    "named": false
+  },
+  {
+    "type": "CROSS",
+    "named": false
+  },
+  {
+    "type": "CURRENT",
+    "named": false
+  },
+  {
+    "type": "DATE",
+    "named": false
+  },
+  {
+    "type": "DESC",
+    "named": false
+  },
+  {
+    "type": "DISTINCT",
+    "named": false
+  },
+  {
+    "type": "ELSE",
+    "named": false
+  },
+  {
+    "type": "END",
+    "named": false
+  },
+  {
+    "type": "EXCEPT",
+    "named": false
+  },
+  {
+    "type": "FALSE",
+    "named": false
+  },
+  {
+    "type": "FOLLOWING",
+    "named": false
+  },
+  {
+    "type": "FROM",
+    "named": false
+  },
+  {
+    "type": "FULL",
+    "named": false
+  },
+  {
+    "type": "GROUP",
+    "named": false
+  },
+  {
+    "type": "HAVING",
+    "named": false
+  },
+  {
+    "type": "IN",
+    "named": false
+  },
+  {
+    "type": "INNER",
+    "named": false
+  },
+  {
+    "type": "INT",
+    "named": false
+  },
+  {
+    "type": "INTERSECT",
+    "named": false
+  },
+  {
+    "type": "IS",
+    "named": false
+  },
+  {
+    "type": "JOIN",
+    "named": false
+  },
+  {
+    "type": "LEFT",
+    "named": false
+  },
+  {
+    "type": "LIMIT",
+    "named": false
+  },
+  {
+    "type": "NATURAL",
+    "named": false
+  },
+  {
+    "type": "NOT",
+    "named": false
+  },
+  {
+    "type": "NULL",
+    "named": false
+  },
+  {
+    "type": "ON",
+    "named": false
+  },
+  {
+    "type": "OR",
+    "named": false
+  },
+  {
+    "type": "ORDER",
+    "named": false
+  },
+  {
+    "type": "OUTER",
+    "named": false
+  },
+  {
+    "type": "OVER",
+    "named": false
+  },
+  {
+    "type": "PARTITION",
+    "named": false
+  },
+  {
+    "type": "PRECEDING",
+    "named": false
+  },
+  {
+    "type": "RIGHT",
+    "named": false
+  },
+  {
+    "type": "ROW",
+    "named": false
+  },
+  {
+    "type": "ROWS",
+    "named": false
+  },
+  {
+    "type": "SELECT",
+    "named": false
+  },
+  {
+    "type": "STRING",
+    "named": false
+  },
+  {
+    "type": "THEN",
+    "named": false
+  },
+  {
+    "type": "TIMESTAMP",
+    "named": false
+  },
+  {
+    "type": "TRUE",
+    "named": false
+  },
+  {
+    "type": "UNBOUNDED",
+    "named": false
+  },
+  {
+    "type": "UNION",
+    "named": false
+  },
+  {
+    "type": "USING",
+    "named": false
+  },
+  {
+    "type": "WHEN",
+    "named": false
+  },
+  {
+    "type": "WHERE",
+    "named": false
+  },
+  {
+    "type": "WITH",
+    "named": false
+  },
+  {
+    "type": "^",
+    "named": false
+  },
+  {
+    "type": "distinct",
+    "named": false
+  },
+  {
+    "type": "function_name",
+    "named": false
+  },
+  {
+    "type": "identifier",
+    "named": true
+  },
+  {
+    "type": "lit_decimal",
+    "named": true
+  },
+  {
+    "type": "lit_integer",
+    "named": true
+  },
+  {
+    "type": "string_literal",
+    "named": true
+  }
+]
