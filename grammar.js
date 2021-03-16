@@ -1,6 +1,21 @@
 
 /*
  *  TODO : Need to figure out what's up with words / missing whitespace?
+ *  TODOD: Need to figure out column and table identifier grammars
+ *      I increasingly think these should be different, and the column
+ *      grammar should support a '*' character... need to figure out if
+ *      that's a postgres quirk or in the SQL spec
+ *
+ *      Ex: select count(table.* is null) from table -- valid
+ */
+
+/*
+ * TODO:
+ *  - handle qualified identifiers in a simpler way
+ *  - have a wrapper around literals?
+ *      (literal (bool (true)))
+ *      (literal (integer))
+ *      (literal (string))
  */
 
 const PREC = {
@@ -17,19 +32,55 @@ const PREC = {
   power: 19,
   equality: 20,
 
+  cast: 25,
+  // todo: do we need this?
   projection: 30,
 }
 
+/*
+ * -- too slow, does not work!
+ *
+function _uncased(string) {
+    var firstChar = string.charAt(0);
+    if (string.length == 1) {
+        return [ firstChar.toLowerCase(), firstChar.toUpperCase() ];
+    }
+
+    var accum = []
+    _uncased(firstChar).forEach((prefix) => {
+        var rest = _uncased(string.slice(1));
+        rest.forEach((suffix) => {
+            accum.push(prefix + suffix);
+        })
+    })
+    return accum;
+}
+
+function uncased(string) {
+    return choice(..._uncased(string).map(entry => {
+        return alias(token(entry), entry);
+    }));
+}
+*/
+
+function simpleUncased(string) {
+    var lower = string.toLowerCase();
+    var upper = string.toUpperCase();
+    return alias(choice(token(lower), token(upper)), string);
+}
+
 String.prototype.toCaseInsensitiv = function () {
-  return alias(
-    token(new RegExp(
-      this
-        .split('')
-        .map(letter => `[${letter}${letter.toLowerCase()}]`)
-        .join('')
-    )),
-    this
-  )
+  return simpleUncased(this);
+
+  //return alias(
+  //  token(new RegExp(
+  //    this
+  //      .split('')
+  //      .map(letter => `[${letter}${letter.toLowerCase()}]`)
+  //      .join('')
+  //  )),
+  //  this
+  //)
 }
 
 function commaSep1(rule, name) {
@@ -50,14 +101,14 @@ module.exports = grammar({
 
   word: $ => $.identifier,
 
+  // todo: is this the right precedence?
+  conflicts: $ => [
+      [$.select_wrapper, $._single_select],
+  ],
+
   rules: {
 
     select_statement: $ => seq(
-        // todo: i don't love combining these two grammars....
-        // how can this work... differently?
-        optional(
-            field('model_config', $.dbt_jinja_config)
-        ),
         optional(
             seq(
                 'WITH'.toCaseInsensitiv(),
@@ -84,17 +135,27 @@ module.exports = grammar({
 
     ),
 
+    _single_select: $ => choice(
+      $.select_body,
+      $.select_compound,
+      seq(
+          '(',
+          $._single_select,
+          ')',
+      )
+    ),
+
     select_wrapper: $ => seq(
-        $.select_body,
-        repeat(
-            seq(
-                $.select_set_operator,
-                $.select_body
-            )
-        ),
+        $._single_select,
         optional(field('order_by_clause', $.order_by_clause)),
         optional(field('limit_clause', $.limit_clause)),
     ),
+
+    select_compound: $ => prec.left(seq(
+        $._single_select,
+        $.select_set_operator,
+        $._single_select,
+    )),
 
     select_set_operator: $ => (
         choice(
@@ -171,77 +232,6 @@ module.exports = grammar({
         ')'
     ),
 
-    dbt_jinja_ref: $ => seq(
-        '{{',
-        'ref',
-        '(',
-        optional(
-            seq(
-                field('dbt_package_name', $.lit_string),
-                ','
-            ),
-        ),
-        field('dbt_model_name', $.lit_string),
-        ')',
-        '}}'
-    ),
-
-    dbt_jinja_source: $ => seq(
-        '{{',
-        'source',
-        '(',
-        field('dbt_source_name', $.lit_string),
-        ',',
-        field('dbt_source_table', $.lit_string),
-        ')',
-        '}}'
-    ),
-
-    // todo: this should be an actual python expression parser
-    jinja_kwargs_expression: $ => seq(
-        commaSep1(
-            seq(
-                field('key', $.identifier),
-                '=',
-                field('value', choice(
-                    // todo: no bueno
-                    $.lit_string,
-                    $.lit_boolean,
-                )),
-            ),
-        ),
-        optional(',')
-    ),
-
-    // todo : this should be an actual python dict parser?
-    jinja_dict_expression: $ => seq(
-        '{',
-            commaSep1(
-                seq(
-                    field('key', $.lit_string),
-                    ':',
-                    field('value', choice(
-                        // todo: no bueno
-                        $.lit_string,
-                        $.lit_boolean,
-                    )),
-                ),
-            ),
-        '}'
-    ),
-
-    dbt_jinja_config: $ => seq(
-        '{{',
-        'config',
-        '(',
-        choice(
-            field('config_kwargs', $.jinja_kwargs_expression),
-            field('config_dict', $.jinja_dict_expression),
-        ),
-        ')',
-        '}}'
-    ),
-
     table_alias: $ => seq(
         optional('AS'.toCaseInsensitiv()),
         field('alias', $.quoted_identifier)
@@ -250,8 +240,6 @@ module.exports = grammar({
     table_reference: $ => seq(
         choice(
             field('identifier', $.qualified_identifier),
-            field('ref', $.dbt_jinja_ref),
-            field('source', $.dbt_jinja_source),
             field('subquery', $.subquery),
         ),
         optional($.table_alias)
@@ -268,7 +256,24 @@ module.exports = grammar({
         $.join_target
     ),
 
-    //todo
+    natural_join: $ => seq(
+        'NATURAL'.toCaseInsensitiv(),
+        optional(
+            choice(
+                seq(
+                    choice(
+                        'LEFT'.toCaseInsensitiv(),
+                        'RIGHT'.toCaseInsensitiv(),
+                    ),
+                    optional('OUTER'.toCaseInsensitiv())
+                ),
+                'INNER'.toCaseInsensitiv()
+            )
+        ),
+        'JOIN'.toCaseInsensitiv(),
+        $.join_target
+    ),
+
     join_clause_on: $ => seq(
         'ON'.toCaseInsensitiv(),
         field('join_condition', $._expression)
@@ -323,8 +328,9 @@ module.exports = grammar({
     ),
 
     join_clause: $ => choice(
-        $.cross_join,
         $.qualified_join,
+        $.cross_join,
+        $.natural_join,
     ),
 
     limit_clause: $ => seq(
@@ -417,6 +423,7 @@ module.exports = grammar({
     // no idea at all if this is right...
     _expression: $ => choice(
       $.comparison_operator,
+      $.not_operator,
       $.boolean_operator,
       $.primary_expression,
     ),
@@ -433,9 +440,15 @@ module.exports = grammar({
           '>',
           '<>',
           'IN'.toCaseInsensitiv(),
-          seq('NOT'.toCaseInsensitiv(), 'IN'.toCaseInsensitiv()),
+          seq(
+              'NOT'.toCaseInsensitiv(),
+              'IN'.toCaseInsensitiv()
+          ),
           'IS'.toCaseInsensitiv(),
-          seq('IS'.toCaseInsensitiv(), 'NOT'.toCaseInsensitiv())
+          seq(
+              'IS'.toCaseInsensitiv(),
+              'NOT'.toCaseInsensitiv(),
+          ),
         ),
         $.primary_expression
       ))
@@ -461,26 +474,67 @@ module.exports = grammar({
       // and thinks that in `select true and false`, "and" is a column alias!
       prec.left(PREC.and, seq(
         field('left', $._expression),
-        choice(
-            'AND',
-            'and'
-        ),
+        'AND'.toCaseInsensitiv(),
         field('right', $._expression)
       )),
       prec.left(PREC.or, seq(
         field('left', $._expression),
-        choice(
-            'OR',
-            'or'
-        ),
+        'OR'.toCaseInsensitiv(),
         field('right', $._expression)
       ))
     ),
 
+    not_operator: $ => prec(PREC.not, seq(
+        'NOT'.toCaseInsensitiv(),
+        field('argument', $._expression)
+    )),
+
     unary_operator: $ => prec(PREC.unary, seq(
-        choice('+', '-', 'NOT'.toCaseInsensitiv()),
+        choice('+', '-'),
         field('argument', $.primary_expression)
     )),
+
+    // todo: not complete!
+    type_name: $ => choice(
+        'INT'.toCaseInsensitiv(),
+        'STRING'.toCaseInsensitiv(),
+        'TIMESTAMP'.toCaseInsensitiv(),
+        'DATE'.toCaseInsensitiv(),
+    ),
+
+    // todo: precedence?
+    // also, this is outside of binary_operator to make
+    // it easier to override for derived databases
+    inline_cast: $ => seq(
+        $.primary_expression,
+        '::',
+        $.type_name
+    ),
+
+    explicit_cast: $ => seq(
+        'CAST'.toCaseInsensitiv(),
+        '(',
+        $._expression,
+        'AS'.toCaseInsensitiv(),
+        $.type_name,
+        ')',
+    ),
+
+    _cast_operator: $ => choice(
+        $.inline_cast,
+        $.explicit_cast,
+    ),
+
+    function_name: $ => alias($.identifier, 'function_name'),
+
+    // todo: do we want this to be more stringent?
+    // i don't think `*` can be a secondary arg
+    function_args: $ => commaSep1(
+        choice(
+            $.select_all,
+            $._expression
+        )
+    ),
 
     binary_operator: $ => {
       const table = [
@@ -500,72 +554,92 @@ module.exports = grammar({
 
     },
 
+    function_name: $ => alias($.identifier, 'function_name'),
+
+    // todo: do we want this to be more stringent?
+    // i don't think `*` can be a secondary arg
+    function_args: $ => commaSep1(
+        choice(
+            $.select_all,
+            $._expression
+        )
+    ),
+
+    distinct: $=> alias('DISTINCT'.toCaseInsensitiv(), 'distinct'),
+
     // todo... special cases... like distinct?
     // also, count(*)
     // also, string agg weirdness... booo
     agg_function: $ => seq(
-        $.identifier,
+        field('function_name', $.function_name),
         '(',
-        optional(commaSep1($._expression)),
+        optional($.distinct),
+        optional($.function_args),
         ')'
+    ),
+
+    window_function: $ => seq(
+        $.function_name,
+        '(',
+        optional($.distinct),
+        optional($.function_args),
+        ')',
+        // todo: why does toCaseInsensitiv not work?
+        'OVER'.toCaseInsensitiv(),
+        $.window_specification,
+    ),
+
+    window_unbounded_preceding: $ => seq(
+        'UNBOUNDED'.toCaseInsensitiv(),
+        'PRECEDING'.toCaseInsensitiv()
+    ),
+
+    window_unbounded_following: $ => seq(
+        'UNBOUNDED'.toCaseInsensitiv(),
+        'FOLLOWING'.toCaseInsensitiv()
+    ),
+
+    window_integer_offset: $ => seq(
+        $.lit_integer,
+        choice(
+            'PRECEDING'.toCaseInsensitiv(),
+            'FOLLOWING'.toCaseInsensitiv()
+        )
+    ),
+
+    window_current_row: $ => seq(
+        'CURRENT'.toCaseInsensitiv(),
+        'ROW'.toCaseInsensitiv(),
     ),
 
     window_frame_start: $ => seq(
         choice(
-            seq(
-                'UNBOUNDED'.toCaseInsensitiv(),
-                'PRECEDING'.toCaseInsensitiv(),
-            ),
-            seq(
-                $.lit_integer,
-                choice(
-                    'PRECEDING'.toCaseInsensitiv(),
-                    'FOLLOWING'.toCaseInsensitiv(),
-                )
-            ),
-            seq(
-                'CURRENT'.toCaseInsensitiv(),
-                'ROW'.toCaseInsensitiv(),
-            ),
+            $.window_unbounded_preceding,
+            $.window_integer_offset,
+            $.window_current_row,
         )
     ),
 
     window_frame_end: $ => seq(
         choice(
-            seq(
-                'UNBOUNDED'.toCaseInsensitiv(),
-                'FOLLOWING'.toCaseInsensitiv(),
-            ),
-            seq(
-                $.lit_integer,
-                choice(
-                    'PRECEDING'.toCaseInsensitiv(),
-                    'FOLLOWING'.toCaseInsensitiv(),
-                )
-            ),
-            seq(
-                'CURRENT'.toCaseInsensitiv(),
-                'ROW'.toCaseInsensitiv(),
-            ),
+            $.window_unbounded_following,
+            $.window_integer_offset,
+            $.window_current_row
         )
     ),
 
+    window_partition_clause: $ => seq(
+        'PARTITION'.toCaseInsensitiv(),
+        'BY'.toCaseInsensitiv(),
+        commaSep1($._expression),
+    ),
+
+    window_order_clause: $ => alias($.order_by_clause, 'window_order_clause'),
+
     window_specification: $ => seq(
         '(',
-        optional(
-            seq(
-                'PARTITION'.toCaseInsensitiv(),
-                'BY'.toCaseInsensitiv(),
-                commaSep1($._expression),
-            )
-        ),
-        optional(
-            seq(
-                'ORDER'.toCaseInsensitiv(),
-                'BY'.toCaseInsensitiv(),
-                commaSep1($._expression),
-            )
-        ),
+        field('window_partition_clause', optional($.window_partition_clause)),
+        field('window_order_clause', optional($.window_order_clause)),
         // todo, not complete
         optional(
             seq(
@@ -579,18 +653,34 @@ module.exports = grammar({
         ')',
     ),
 
-    window_function: $ => seq(
-        $.identifier,
-        '(',
-        optional(commaSep1($._expression)),
-        ')',
-        'OVER'.toCaseInsensitiv(),
-        $.window_specification,
-    ),
-
-    function_call: $ => choice(
+    _function_call: $ => choice(
+        $._cast_operator,
         $.agg_function,
         $.window_function,
+    ),
+
+    case_when_entry: $ => seq(
+        'WHEN'.toCaseInsensitiv(),
+        $._expression,
+        'THEN'.toCaseInsensitiv(),
+        $._expression,
+    ),
+
+    case_when_else: $ => seq(
+        'ELSE'.toCaseInsensitiv(),
+        $._expression
+    ),
+
+    case_when_then_value: $ => seq(
+        // todo: WHYYYYYYYYY
+        'CASE'.toCaseInsensitiv(),
+        repeat1($.case_when_entry),
+        optional($.case_when_else),
+        'END'.toCaseInsensitiv()
+    ),
+
+    _case_when_wrapper: $ => choice(
+        $.case_when_then_value
     ),
 
     primary_expression: $ => choice(
@@ -600,12 +690,15 @@ module.exports = grammar({
         $.lit_decimal,
         $.lit_boolean,
 
-        $.function_call,
+        $._function_call,
         $.unary_operator,
         $.binary_operator,
         $.qualified_identifier,
-        $.parenthesized_expression,
 
+        $._case_when_wrapper,
+
+        $.subquery,
+        $.parenthesized_expression,
     ),
 
   }

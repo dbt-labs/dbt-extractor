@@ -147,9 +147,9 @@ having count(1) > 1 and count(1) < 5
   (select_body
    (column_list
     (select_expr (primary_expression (qualified_identifier (quoted_identifier (identifier)))))
-    (select_expr (primary_expression (function_call (agg_function
-      (identifier)
-      (primary_expression (lit_integer)))))))
+    (select_expr (primary_expression (agg_function
+      (function_name)
+      (function_args (primary_expression (lit_integer)))))))
    (dataset_definition
     (table_reference (qualified_identifier (quoted_identifier (identifier))))
     (group_by_clause
@@ -158,14 +158,14 @@ having count(1) > 1 and count(1) < 5
     (having_clause
      (boolean_operator
       (comparison_operator
-       (primary_expression (function_call (agg_function
-         (identifier)
-         (primary_expression (lit_integer)))))
+       (primary_expression (agg_function
+         (function_name)
+         (function_args (primary_expression (lit_integer)))))
        (primary_expression (lit_integer)))
       (comparison_operator
-       (primary_expression (function_call (agg_function
-         (identifier)
-         (primary_expression (lit_integer)))))
+       (primary_expression (agg_function
+         (function_name)
+         (function_args (primary_expression (lit_integer)))))
        (primary_expression (lit_integer))))
      ) 
    )
