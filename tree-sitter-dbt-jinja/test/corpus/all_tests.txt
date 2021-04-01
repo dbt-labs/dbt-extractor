@@ -1,0 +1,32 @@
+==================
+Ref with string literal
+==================
+
+select * from {{ ref('my_table') }}
+
+---
+
+(source_file 
+  (text) 
+  (dbt_jinja_ref 
+    (lit_string 
+      (identifier)
+    )
+  ) 
+  (text)
+)
+
+==================
+Ref without string literal
+==================
+
+select * from {{ ref(not_a_string) }}
+
+---
+
+(source_file 
+  (text) 
+  (ERROR 
+    (identifier)
+  )
+)
