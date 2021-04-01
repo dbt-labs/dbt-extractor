@@ -22,13 +22,14 @@ def get_file_results(parser, path):
 # [dict] -> dict
 def get_project_results(all_results):
     # TODO if you want the unparsed filename paths, add them to the returned dict from `all_results` here
-    parsed = list(filter(lambda res: res['needs_jinja'] <= 0, all_results))
+    parsed = list(filter(lambda res: res['python_jinja'] <= 0, all_results))
     unparsed_count = len(all_results) - len(parsed)
     return {
         "project_files": len(all_results),
         "percent_parsable": 100 * (len(all_results) - len(parsed) / len(all_results)),
         "files_parsed": len(parsed),
         "files_unparsed": unparsed_count,
+        "raw_data": all_results
     }
 
 # to run on all projects in a directory, use OS-level parallelism ex:

@@ -57,6 +57,9 @@ def extract_refs(string, node, data):
             val_val = strip_quotes(text_at(string, value))
             data['configs'][arg_val] = val_val
 
+    if node.type == 'dbt_python_jinja':
+        data['python_jinja'] += 1
+
     for child in node.children:
         extract_refs(string, child, data)
 
@@ -72,7 +75,7 @@ def parse_string(parser, string):
         'refs': set(),
         'sources': set(),
         'configs': dict(),
-        'needs_jinja': 0
+        'python_jinja': 0
     }
     extract_refs(string, tree.root_node, data)
     return data
