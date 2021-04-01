@@ -1,13 +1,15 @@
 
 from tree_sitter import Language, Parser
 
+
 Language.build_library(
   # Store the library in the `build` directory
   'build/sql.so',
 
   # Include one or more languages
+  # TODO fix this hard coded path to be determined at runtime
   [
-    './tree-sitter-dbt-jinja',
+    '/Users/nate/git/dbt-parser-generator/tree-sitter-dbt-jinja',
   ]
 )
 
@@ -69,7 +71,8 @@ def parse_string(parser, string):
     data = {
         'refs': set(),
         'sources': set(),
-        'configs': dict()
+        'configs': dict(),
+        'needs_jinja': 0
     }
     extract_refs(string, tree.root_node, data)
     return data
