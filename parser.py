@@ -57,7 +57,8 @@ def extract_refs(string, node, data):
             val_val = strip_quotes(text_at(string, value))
             data['configs'][arg_val] = val_val
 
-    if node.type == 'dbt_python_jinja':
+    # if this limited tree-sitter implementaion can't parse it, python jinja will have to
+    if node.type == 'ERROR':
         data['python_jinja'] += 1
 
     for child in node.children:

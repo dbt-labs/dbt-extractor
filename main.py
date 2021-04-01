@@ -26,15 +26,15 @@ def get_project_results(all_results):
     unparsed_count = len(all_results) - len(parsed)
     return {
         "project_files": len(all_results),
-        "percent_parsable": 100 * (len(all_results) - len(parsed) / len(all_results)),
+        "percent_parsable": 100 * (len(parsed) / len(all_results)),
         "files_parsed": len(parsed),
         "files_unparsed": unparsed_count,
-        "raw_data": all_results
+        # "raw_data": all_results # <- uncomment to see the refs, configs, and sources as they are parsed
     }
 
-# to run on all projects in a directory, use OS-level parallelism ex:
+# to run on all projects in a directory, use this line of bash:
 # `for d in ./*/ ; do (cd "$d" && python3 /Users/nate/git/dbt-parser-generator/main.py "."); done`
-# for loop runs in serial, but kicks of a separate os thread at each step
+# runs in serial since bash doesn't easily allow parallel access to stdout.
 # uses absolute paths because they are running in arbitrary system directories
 def main():
     dir = os.path.abspath(sys.argv[1])
