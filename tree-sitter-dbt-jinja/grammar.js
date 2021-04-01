@@ -19,11 +19,10 @@ module.exports = grammar ({
   rules: {
     source_file: $ => repeat(
         choice(
-            prec(10, $.dbt_jinja_ref),
-            prec(10, $.dbt_jinja_source),
-            prec(10, $.dbt_jinja_config),
-            prec(5,  $.dbt_python_jinja),
-            prec(1,  $.text)
+            $.dbt_jinja_ref,
+            $.dbt_jinja_source,
+            $.dbt_jinja_config,
+            $.text
         )
     ),
 
@@ -75,41 +74,6 @@ module.exports = grammar ({
         commaSep1($.kwarg_expression),
         ')',
         '}}'
-    ),
-
-    dbt_python_jinja: $ => choice(
-        seq(
-            '{{',
-            'ref',
-            '(',
-            optional(
-                seq(
-                    field('dbt_package_name', $.text),
-                    ','
-                ),
-            ),
-            field('dbt_model_name', $.text),
-            ')',
-            '}}'
-        ),
-        seq(
-            '{{',
-            'source',
-            '(',
-            field('source_name_param', $.text),
-            ',',
-            field('source_table_param', $.text),
-            ')',
-            '}}'
-        ),
-        seq(
-            '{{',
-            'config',
-            '(',
-            field('config_param', $.text),
-            ')',
-            '}}'
-        )
     ),
 
     identifier: $ => token(/[a-zA-Z_][a-zA-Z0-9_]+/),

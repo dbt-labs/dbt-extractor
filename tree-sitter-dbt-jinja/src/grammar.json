@@ -7,44 +7,20 @@
         "type": "CHOICE",
         "members": [
           {
-            "type": "PREC",
-            "value": 10,
-            "content": {
-              "type": "SYMBOL",
-              "name": "dbt_jinja_ref"
-            }
+            "type": "SYMBOL",
+            "name": "dbt_jinja_ref"
           },
           {
-            "type": "PREC",
-            "value": 10,
-            "content": {
-              "type": "SYMBOL",
-              "name": "dbt_jinja_source"
-            }
+            "type": "SYMBOL",
+            "name": "dbt_jinja_source"
           },
           {
-            "type": "PREC",
-            "value": 10,
-            "content": {
-              "type": "SYMBOL",
-              "name": "dbt_jinja_config"
-            }
+            "type": "SYMBOL",
+            "name": "dbt_jinja_config"
           },
           {
-            "type": "PREC",
-            "value": 5,
-            "content": {
-              "type": "SYMBOL",
-              "name": "dbt_python_jinja"
-            }
-          },
-          {
-            "type": "PREC",
-            "value": 1,
-            "content": {
-              "type": "SYMBOL",
-              "name": "text"
-            }
+            "type": "SYMBOL",
+            "name": "text"
           }
         ]
       }
@@ -251,147 +227,6 @@
         {
           "type": "STRING",
           "value": "}}"
-        }
-      ]
-    },
-    "dbt_python_jinja": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "STRING",
-              "value": "{{"
-            },
-            {
-              "type": "STRING",
-              "value": "ref"
-            },
-            {
-              "type": "STRING",
-              "value": "("
-            },
-            {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SEQ",
-                  "members": [
-                    {
-                      "type": "FIELD",
-                      "name": "dbt_package_name",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "text"
-                      }
-                    },
-                    {
-                      "type": "STRING",
-                      "value": ","
-                    }
-                  ]
-                },
-                {
-                  "type": "BLANK"
-                }
-              ]
-            },
-            {
-              "type": "FIELD",
-              "name": "dbt_model_name",
-              "content": {
-                "type": "SYMBOL",
-                "name": "text"
-              }
-            },
-            {
-              "type": "STRING",
-              "value": ")"
-            },
-            {
-              "type": "STRING",
-              "value": "}}"
-            }
-          ]
-        },
-        {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "STRING",
-              "value": "{{"
-            },
-            {
-              "type": "STRING",
-              "value": "source"
-            },
-            {
-              "type": "STRING",
-              "value": "("
-            },
-            {
-              "type": "FIELD",
-              "name": "source_name_param",
-              "content": {
-                "type": "SYMBOL",
-                "name": "text"
-              }
-            },
-            {
-              "type": "STRING",
-              "value": ","
-            },
-            {
-              "type": "FIELD",
-              "name": "source_table_param",
-              "content": {
-                "type": "SYMBOL",
-                "name": "text"
-              }
-            },
-            {
-              "type": "STRING",
-              "value": ")"
-            },
-            {
-              "type": "STRING",
-              "value": "}}"
-            }
-          ]
-        },
-        {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "STRING",
-              "value": "{{"
-            },
-            {
-              "type": "STRING",
-              "value": "config"
-            },
-            {
-              "type": "STRING",
-              "value": "("
-            },
-            {
-              "type": "FIELD",
-              "name": "config_param",
-              "content": {
-                "type": "SYMBOL",
-                "name": "text"
-              }
-            },
-            {
-              "type": "STRING",
-              "value": ")"
-            },
-            {
-              "type": "STRING",
-              "value": "}}"
-            }
-          ]
         }
       ]
     },

@@ -67,62 +67,6 @@
     }
   },
   {
-    "type": "dbt_python_jinja",
-    "named": true,
-    "fields": {
-      "config_param": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "text",
-            "named": true
-          }
-        ]
-      },
-      "dbt_model_name": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "text",
-            "named": true
-          }
-        ]
-      },
-      "dbt_package_name": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "text",
-            "named": true
-          }
-        ]
-      },
-      "source_name_param": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "text",
-            "named": true
-          }
-        ]
-      },
-      "source_table_param": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "text",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
     "type": "kwarg_expression",
     "named": true,
     "fields": {
@@ -182,10 +126,6 @@
         },
         {
           "type": "dbt_jinja_source",
-          "named": true
-        },
-        {
-          "type": "dbt_python_jinja",
           "named": true
         },
         {
