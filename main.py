@@ -37,7 +37,7 @@ def get_project_results(grouped_results):
             stats['project_models'] += 1
             # if there are no instances where we need python_jinja,
             # we successfully parsed the model. Otherwise, we didn't.
-            if res['python_jinja'] <= 0: 
+            if res['python_jinja'] <= 0 and stats['parsing_mistakes'] <= 0: 
                 stats['models_parsed'] += 1
             else:
                 stats['models_unparsed'] += 1
