@@ -1,21 +1,7 @@
 import itertools
 import parser as parse_lib
 from pprint import pprint
-import sys
-import time
 
-
-# # path -> str
-# def get_file_contents(path):
-#     f = open(path, "r")
-#     contents = f.read()
-#     f.close()
-#     return contents
-
-# # parser -> str -> dict
-# def get_file_results(parser, path):
-#     contents = get_file_contents(path)
-#     return parse_lib.parse_string(parser, contents) # <- actual parsing
 
 def group_by_project(all_processed_rows):
     # local mutation only
