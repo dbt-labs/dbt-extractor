@@ -1,55 +1,110 @@
-
-import glob
-import os
+import itertools
 import parser as parse_lib
-import pprint
+from pprint import pprint
 import sys
 import time
 
 
-# path -> str
-def get_file_contents(path):
-    f = open(path, "r")
-    contents = f.read()
-    f.close()
-    return contents
+# # path -> str
+# def get_file_contents(path):
+#     f = open(path, "r")
+#     contents = f.read()
+#     f.close()
+#     return contents
 
-# parser -> str -> dict
-def get_file_results(parser, path):
-    contents = get_file_contents(path)
-    return parse_lib.parse_string(parser, contents) # <- actual parsing
+# # parser -> str -> dict
+# def get_file_results(parser, path):
+#     contents = get_file_contents(path)
+#     return parse_lib.parse_string(parser, contents) # <- actual parsing
+
+def group_by_project(all_processed_rows):
+    # local mutation only
+    grouped = {}
+
+    # files with the same run_id are assumed to be in the same project 
+    # for this dataset since only one run was collected per account
+    key_func = lambda x: x['run_id']
+    
+    for key, group in itertools.groupby(all_processed_rows, key_func):
+        grouped[key] = list(group)
+    
+    return grouped
 
 # [dict] -> dict
-def get_project_results(all_results):
-    # TODO if you want the unparsed filename paths, add them to the returned dict from `all_results` here
-    parsed = list(filter(lambda res: res['python_jinja'] <= 0, all_results))
-    unparsed_count = len(all_results) - len(parsed)
+def get_project_results(grouped_results):
+    # local mutation for all projects
+    project_stats = {}
+
+
+    for run_id, model_results in grouped_results.items():
+        # scoped local mutation for a single project
+        stats = {
+            'project_models': 0,
+            'models_parsed': 0,
+            'models_unparsed': 0,
+            'parsing_errors': 0,
+            'parsing_mistakes': 0,
+            'percent_parsable': 0,
+        }
+
+        for res in model_results:
+            stats['project_models'] += 1
+            # if there are no instances where we need python_jinja,
+            # we successfully parsed the model. Otherwise, we didn't.
+            if res['python_jinja'] <= 0: 
+                stats['models_parsed'] += 1
+            else:
+                stats['models_unparsed'] += 1
+
+            stats['parsing_mistakes'] += res['parsing_mistakes']
+
+        stats['percent_parsable'] = 100 * (stats['models_parsed'] / stats['project_models'])
+        project_stats[run_id] = stats
+
+    return project_stats
+
+# parser -> row_fields -> dict
+def process_row(parser, run_id, raw_sql, configs, refs, sources):
+    res = parse_lib.parse_string(parser, raw_sql)
+    unparsed_configs = set(configs.items()) - set(res['configs'].items())
+    unparsed_refs    = set(refs.items())    - res['refs']
+    unparsed_sources = set(sources.items()) - res['sources']
+    unparsed_total = len(unparsed_configs) + len(unparsed_refs) + len(unparsed_sources)
+    all_configs_refs_sources_count = len(configs) + len(refs) + len(sources)
+    # the python_jinja count is how many we expect to be wrong, any more than that is a problem.
+    error_count = unparsed_total - res['python_jinja']
     return {
-        "project_files": len(all_results),
-        "percent_parsable": 100 * (len(parsed) / len(all_results)),
-        "files_parsed": len(parsed),
-        "files_unparsed": unparsed_count,
-        # "raw_data": all_results # <- uncomment to see the refs, configs, and sources as they are parsed
+        'run_id': run_id,
+        'python_jinja': res['python_jinja'],
+        'all_configs_refs_sources_count': all_configs_refs_sources_count,
+        'parsing_mistakes': error_count
     }
+
 
 # to run on all projects in a directory, use this line of bash:
 # `for d in ./*/ ; do (cd "$d" && python3 /Users/nate/git/dbt-parser-generator/main.py "."); done`
 # runs in serial since bash doesn't easily allow parallel access to stdout.
 # uses absolute paths because they are running in arbitrary system directories
 def main():
-    dir = os.path.abspath(sys.argv[1])
-    rel_paths = glob.glob(f"{dir}/*.txt") # <- TODO fetch actual dbt model paths
-    if not rel_paths:
-        print(f"\n{dir}\n-- no parsable files found --")
-    else:
-        abs_paths = list(map(os.path.abspath, rel_paths))
-        parser = parse_lib.get_parser()
-        all_results = list(map(lambda path: get_file_results(parser, path), abs_paths))
-        res = get_project_results(all_results)
-        pres = pprint.pformat(res, indent=2)
-        
-        # print results all at once to avoid interleaving print statements from os threads
-        print(f"\n{dir}\n{pres}")
+    def apply_row(parser, row):
+        return process_row(parser, row['run_id'], row['raw_sql'], row['configs'], row['refs'], row['sources'])
+    
+    # TODO actually get these as input somehow
+    # using dummy data for debugging fns
+    all_rows = [
+        {'run_id': 123, 'raw_sql':"", 'configs': {}, 'refs': {}, 'sources': {}}
+    ]
+    
+    parser = parse_lib.get_parser()
+    all_results = list(map(lambda row: apply_row(parser, row), all_rows))
+    grouped_results = group_by_project(all_results)
+    all_project_results = get_project_results(grouped_results)
+    
+    for run_id, stats in all_project_results.items():
+        print()
+        print(f"run_id = {run_id}:")
+        pprint(stats)
+        print()
 
 
 if __name__ == "__main__":
