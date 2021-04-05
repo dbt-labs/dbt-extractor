@@ -1,26 +1,23 @@
 import itertools
+import json
 import parser as parse_lib
 from pprint import pprint
 
 
-# lazily get json objects from a file
-def stream_json_from(file_path):
-    import json
-    start_pos = 0
-    with open(file_path, 'r') as f:
-        while True:
-            try:
-                obj = json.load(f)
-                yield obj
-                return
-            # if the previously attempted segment isn't valid json adjust
-            # the section of the file we're reading from and try again
-            except json.JSONDecodeError as e:
-                f.seek(start_pos)
-                json_str = f.read(e.pos)
-                obj = json.loads(json_str)
-                start_pos += e.pos
-                yield obj
+# like set difference `-` but using eq not hash so it can be used on mutable types
+# a = [1,2,2,3]
+# b = [2,3,4]
+# print(difference(a, b)) # [1, 2]
+# print(difference(b, a)) # [4]
+def difference(list_a, list_b):
+    list_b_copy = list(list_b)
+    diff = []
+    for a in list_a:
+        if a in list_b_copy:
+            list_b_copy.remove(a)
+        else:
+            diff.append(a)
+    return diff
 
 # requires the entire processed dataset to be in memory
 def group_by_project(all_processed_rows):
@@ -54,9 +51,7 @@ def get_project_results(grouped_results):
 
         for res in model_results:
             stats['project_models'] += 1
-            # if there are no instances where we need python_jinja,
-            # we successfully parsed the model. Otherwise, we didn't.
-            if res['python_jinja'] <= 0 and stats['parsing_mistakes'] <= 0: 
+            if parsed: 
                 stats['models_parsed'] += 1
             else:
                 stats['models_unparsed'] += 1
@@ -71,39 +66,48 @@ def get_project_results(grouped_results):
 # parser -> row_fields -> dict
 def process_row(parser, project_id, raw_sql, configs, refs, sources):
     res = parse_lib.parse_string(parser, raw_sql)
-    unparsed_configs = set(configs.items()) - set(res['configs'].items())
-    unparsed_refs    = set(refs)    - res['refs'] # TODO turning lists into sets will produce an undercount
-    unparsed_sources = set(sources) - res['sources']
+
+    unparsed_configs = difference(res['configs'], configs)
+    unparsed_refs    = difference(res['refs'], refs)
+    unparsed_sources = difference(res['sources'], sources)
     unparsed_total = len(unparsed_configs) + len(unparsed_refs) + len(unparsed_sources)
     all_configs_refs_sources_count = len(configs) + len(refs) + len(sources)
-    # the python_jinja count is how many we expect to be wrong, any more than that is a problem.
-    error_count = unparsed_total - res['python_jinja']
+    
+    misparsed_configs = difference(configs, res['configs'])
+    misparsed_refs    = difference(refs, res['refs'])
+    misparsed_sources = difference(sources, res['sources'])
+    misparsed_total = len(misparsed_configs) + len(misparsed_refs) + len(misparsed_sources)
+
+    # if there are no instances where we need python_jinja, and we didn't 
+    # make any mistakes we successfully parsed the model.
+    parsed = res['python_jinja'] <= 0 and misparsed_total <= 0
     return {
         'manifest_file_name': project_id,
+        'parsed': parsed,
         'python_jinja': res['python_jinja'],
         'all_configs_refs_sources_count': all_configs_refs_sources_count,
-        'parsing_mistakes': error_count
+        'parsing_mistakes': misparsed_total
     }
 
 
-# to run on all projects in a directory, use this line of bash:
-# `for d in ./*/ ; do (cd "$d" && python3 /Users/nate/git/dbt-parser-generator/main.py "."); done`
-# runs in serial since bash doesn't easily allow parallel access to stdout.
-# uses absolute paths because they are running in arbitrary system directories
+# change data_path to your own path TODO use args
 def main():
     def apply_row(parser, row):
         return process_row(parser, row['manifest_file_name'], row['raw_sql'], row['config'], row['refs'], row['sources'])
 
-    # TODO use the big file once this works
-    all_rows = stream_json_from('/Users/nate/data/customer-manifest-raw-sql/temp_backup/data_0_2_0.json')
+    data_path = '/Users/nate/data/customer-manifest-raw-sql/temp_backup/del/pasted.json'
+
+    # read whole file in
+    with open(data_path, 'r') as f:
+        all_rows = json.loads(f"[{f.read()}]")
+
     parser = parse_lib.get_parser()
-    # lazily processes each entry one at a time so the raw dataset doesn't have to be in memory at the same time
-    # post processed data necessarily _must_ be in memory at the same time to group the results. For extremely
-    # large datasets, get the file sorted by 'manifest_file_name' which is being used as the id and `adjust group_by_project`.
     all_results = list(map(lambda row: apply_row(parser, row), all_rows))
     grouped_results = group_by_project(all_results)
     all_project_results = get_project_results(grouped_results)
     
+    # TODO do some stats across projects
+
     for project_id, stats in all_project_results.items():
         print()
         print(f"project_id = {project_id}:")
