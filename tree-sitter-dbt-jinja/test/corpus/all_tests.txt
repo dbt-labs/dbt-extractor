@@ -58,3 +58,24 @@ Config with two kwargs
     )
   )
 )
+
+==================
+Fn with mixed lit and kwarg parameters
+==================
+
+{{ config(key='value', 'lit', key2='value2', 'lit2') }}
+
+---
+
+(source_file
+  (fn
+    (kwarg
+      (lit_string)
+    )
+    (lit_string)
+    (kwarg
+      (lit_string)
+    )
+    (lit_string)
+  )
+)
