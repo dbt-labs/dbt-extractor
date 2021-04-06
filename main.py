@@ -44,7 +44,6 @@ def get_project_results(grouped_results):
             'project_models': 0,
             'models_parsed': 0,
             'models_unparsed': 0,
-            'parsing_errors': 0,
             'parsing_mistakes': 0,
             'percent_parsable': 0,
         }
@@ -107,14 +106,45 @@ def main():
     all_results = list(map(lambda row: apply_row(parser, row), all_rows))
     grouped_results = group_by_project(all_results)
     all_project_results = get_project_results(grouped_results)
-    
-    # TODO do some stats across projects
+
+    all_project_stats = {
+        'model_count': 0,
+        'models_parsed': 0,
+        'percentage_models_parseable': 0,
+        'models_with_mistakes': 0,
+        'percentage_models_mistakes': 0,
+        'project_count': 0,
+        'projects_parsed': 0,
+        'percentage_projects_parseable': 0,
+        'projects_with_mistakes': 0,
+        'percentage_projects_mistakes': 0
+    }
 
     for project_id, stats in all_project_results.items():
-        print()
-        print(f"project_id = {project_id}:")
-        pprint(stats)
-        print()
+        all_project_stats['model_count'] += stats['project_models']
+        all_project_stats['models_parsed'] += stats['models_parsed']
+        all_project_stats['models_with_mistakes'] += stats['parsing_mistakes']
+        all_project_stats['model_count'] += 1
+        if stats['models_parsed'] == stats['project_models']:
+            all_project_stats['projects_parsed'] += 1
+        if stats['parsing_mistakes'] > 0:
+            all_project_stats['projects_with_mistakes'] += 1
+
+    if all_project_stats['model_count'] == 0:
+        all_project_stats['percentage_models_parseable'] = 100.0
+        all_project_stats['percentage_models_mistakes'] = 0.0
+    else:
+        all_project_stats['percentage_models_parseable'] = 100 * all_project_stats['models_parsed'] / all_project_stats['model_count']
+        all_project_stats['percentage_models_mistakes'] = 100 * all_project_stats['models_with_mistakes'] / all_project_stats['model_count']
+
+    if all_project_stats['project_count'] == 0:
+        all_project_stats['percentage_projects_parseable'] = 100.0
+        all_project_stats['percentage_projects_mistakes'] = 0.0
+    else:
+        all_project_stats['percentage_projects_parseable'] = 100 * all_project_stats['projects_parsed'] / all_project_stats['project_count']
+        all_project_stats['percentage_projects_mistakes'] = 100* all_project_stats['projects_with_mistakes'] / all_project_stats['project_count']
+
+    pprint(all_project_stats)
 
 
 if __name__ == "__main__":
