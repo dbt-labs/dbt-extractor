@@ -67,12 +67,14 @@ def get_project_results(grouped_results):
 def process_row(parser, project_id, raw_sql, configs, refs, sources):
     res = parse_lib.parse_string(parser, raw_sql)
 
+    # the set of real parsed values minus the set we found is the set of unparsed values
     unparsed_configs = difference(configs, res['configs'])
     unparsed_refs    = difference(refs, res['refs'])
     unparsed_sources = difference(sources, res['sources'])
     unparsed_total = len(unparsed_configs) + len(unparsed_refs) + len(unparsed_sources)
     all_configs_refs_sources_count = len(configs) + len(refs) + len(sources)
     
+    # the set of tree-sitter parsed values minus the set of real parsed values should be empty if we made no mistakes
     misparsed_configs = difference(res['configs'], configs)
     misparsed_refs    = difference(res['refs'], refs)
     misparsed_sources = difference(res['sources'], sources)
