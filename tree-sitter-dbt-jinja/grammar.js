@@ -76,7 +76,7 @@ module.exports = grammar ({
         '}}'
     ),
 
-    identifier: $ => token(/[a-zA-Z_][a-zA-Z0-9_]+/),
+    identifier: $ => token(/[a-zA-Z_][a-zA-Z0-9_]*/),
 
     kwarg_expression: $ => seq(
         field("arg", $.identifier),
