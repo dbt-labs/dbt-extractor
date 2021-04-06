@@ -67,6 +67,48 @@
     }
   },
   {
+    "type": "expr",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "dbt_jinja_config",
+          "named": true
+        },
+        {
+          "type": "dbt_jinja_ref",
+          "named": true
+        },
+        {
+          "type": "dbt_jinja_source",
+          "named": true
+        },
+        {
+          "type": "lit_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "jinja_block",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "expr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "kwarg_expression",
     "named": true,
     "fields": {
@@ -106,15 +148,7 @@
       "required": false,
       "types": [
         {
-          "type": "dbt_jinja_config",
-          "named": true
-        },
-        {
-          "type": "dbt_jinja_ref",
-          "named": true
-        },
-        {
-          "type": "dbt_jinja_source",
+          "type": "jinja_block",
           "named": true
         },
         {

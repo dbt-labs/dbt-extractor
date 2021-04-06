@@ -8,15 +8,7 @@
         "members": [
           {
             "type": "SYMBOL",
-            "name": "dbt_jinja_ref"
-          },
-          {
-            "type": "SYMBOL",
-            "name": "dbt_jinja_source"
-          },
-          {
-            "type": "SYMBOL",
-            "name": "dbt_jinja_config"
+            "name": "jinja_block"
           },
           {
             "type": "SYMBOL",
@@ -24,6 +16,44 @@
           }
         ]
       }
+    },
+    "jinja_block": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "{{"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "expr"
+        },
+        {
+          "type": "STRING",
+          "value": "}}"
+        }
+      ]
+    },
+    "expr": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "dbt_jinja_ref"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "dbt_jinja_source"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "dbt_jinja_config"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "lit_string"
+        }
+      ]
     },
     "lit_string": {
       "type": "SEQ",
@@ -80,10 +110,6 @@
       "members": [
         {
           "type": "STRING",
-          "value": "{{"
-        },
-        {
-          "type": "STRING",
           "value": "ref"
         },
         {
@@ -126,20 +152,12 @@
         {
           "type": "STRING",
           "value": ")"
-        },
-        {
-          "type": "STRING",
-          "value": "}}"
         }
       ]
     },
     "dbt_jinja_source": {
       "type": "SEQ",
       "members": [
-        {
-          "type": "STRING",
-          "value": "{{"
-        },
         {
           "type": "STRING",
           "value": "source"
@@ -171,20 +189,12 @@
         {
           "type": "STRING",
           "value": ")"
-        },
-        {
-          "type": "STRING",
-          "value": "}}"
         }
       ]
     },
     "dbt_jinja_config": {
       "type": "SEQ",
       "members": [
-        {
-          "type": "STRING",
-          "value": "{{"
-        },
         {
           "type": "STRING",
           "value": "config"
@@ -221,10 +231,6 @@
         {
           "type": "STRING",
           "value": ")"
-        },
-        {
-          "type": "STRING",
-          "value": "}}"
         }
       ]
     },
