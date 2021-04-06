@@ -30,3 +30,51 @@ select * from {{ ref(not_a_string) }}
     (identifier)
   )
 )
+
+==================
+Config with one kwarg
+==================
+
+{{ config(key='value') }}
+
+---
+
+(source_file
+  (text)
+  (dbt_jinja_config
+    (kwarg_expression
+      (identifier)
+      (lit_string
+        (identifier)
+      )
+    )
+  )
+  (text)
+)
+
+==================
+Config with two kwargs
+==================
+
+{{ config(key='value', key2='value2') }}
+
+---
+
+(source_file
+  (text)
+  (dbt_jinja_config
+    (kwarg_expression
+      (identifier)
+      (lit_string
+        (identifier)
+      )
+    )
+    (kwarg_expression
+      (identifier)
+      (lit_string
+        (identifier)
+      )
+    )
+  )
+  (text)
+)
