@@ -39,8 +39,7 @@
                   "value": "'"
                 },
                 {
-                  "type": "FIELD",
-                  "name": "string_val",
+                  "type": "TOKEN",
                   "content": {
                     "type": "PATTERN",
                     "value": "[^']*"
@@ -60,8 +59,7 @@
                   "value": "\""
                 },
                 {
-                  "type": "FIELD",
-                  "name": "string_val",
+                  "type": "TOKEN",
                   "content": {
                     "type": "PATTERN",
                     "value": "[^\"]*"

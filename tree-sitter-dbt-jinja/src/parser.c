@@ -12,9 +12,9 @@
 #define ALIAS_COUNT 0
 #define TOKEN_COUNT 16
 #define EXTERNAL_TOKEN_COUNT 0
-#define FIELD_COUNT 7
+#define FIELD_COUNT 6
 #define MAX_ALIAS_SEQUENCE_LENGTH 8
-#define PRODUCTION_ID_COUNT 6
+#define PRODUCTION_ID_COUNT 5
 
 enum {
   anon_sym_SQUOTE = 1,
@@ -201,8 +201,7 @@ enum {
   field_dbt_package_name = 3,
   field_dbt_source_name = 4,
   field_dbt_source_table = 5,
-  field_string_val = 6,
-  field_value = 7,
+  field_value = 6,
 };
 
 static const char *ts_field_names[] = {
@@ -212,30 +211,26 @@ static const char *ts_field_names[] = {
   [field_dbt_package_name] = "dbt_package_name",
   [field_dbt_source_name] = "dbt_source_name",
   [field_dbt_source_table] = "dbt_source_table",
-  [field_string_val] = "string_val",
   [field_value] = "value",
 };
 
 static const TSFieldMapSlice ts_field_map_slices[PRODUCTION_ID_COUNT] = {
   [1] = {.index = 0, .length = 1},
-  [2] = {.index = 1, .length = 1},
-  [3] = {.index = 2, .length = 2},
-  [4] = {.index = 4, .length = 2},
-  [5] = {.index = 6, .length = 2},
+  [2] = {.index = 1, .length = 2},
+  [3] = {.index = 3, .length = 2},
+  [4] = {.index = 5, .length = 2},
 };
 
 static const TSFieldMapEntry ts_field_map_entries[] = {
   [0] =
-    {field_string_val, 1},
-  [1] =
     {field_dbt_model_name, 3},
-  [2] =
+  [1] =
     {field_arg, 0},
     {field_value, 2},
-  [4] =
+  [3] =
     {field_dbt_model_name, 5},
     {field_dbt_package_name, 3},
-  [6] =
+  [5] =
     {field_dbt_source_name, 3},
     {field_dbt_source_table, 5},
 };
@@ -880,26 +875,26 @@ static TSParseActionEntry ts_parse_actions[] = {
   [25] = {.entry = {.count = 1, .reusable = true}}, SHIFT(25),
   [27] = {.entry = {.count = 1, .reusable = true}}, SHIFT(40),
   [29] = {.entry = {.count = 1, .reusable = true}}, SHIFT(39),
-  [31] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_dbt_jinja_source, 8, .production_id = 5),
-  [33] = {.entry = {.count = 1, .reusable = false}}, REDUCE(sym_dbt_jinja_source, 8, .production_id = 5),
+  [31] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_dbt_jinja_source, 8, .production_id = 4),
+  [33] = {.entry = {.count = 1, .reusable = false}}, REDUCE(sym_dbt_jinja_source, 8, .production_id = 4),
   [35] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_dbt_jinja_config, 7),
   [37] = {.entry = {.count = 1, .reusable = false}}, REDUCE(sym_dbt_jinja_config, 7),
   [39] = {.entry = {.count = 2, .reusable = true}}, REDUCE(aux_sym_dbt_jinja_config_repeat1, 2), SHIFT_REPEAT(22),
   [42] = {.entry = {.count = 1, .reusable = true}}, REDUCE(aux_sym_dbt_jinja_config_repeat1, 2),
   [44] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_dbt_jinja_config, 6),
   [46] = {.entry = {.count = 1, .reusable = false}}, REDUCE(sym_dbt_jinja_config, 6),
-  [48] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_dbt_jinja_ref, 6, .production_id = 2),
-  [50] = {.entry = {.count = 1, .reusable = false}}, REDUCE(sym_dbt_jinja_ref, 6, .production_id = 2),
+  [48] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_dbt_jinja_ref, 6, .production_id = 1),
+  [50] = {.entry = {.count = 1, .reusable = false}}, REDUCE(sym_dbt_jinja_ref, 6, .production_id = 1),
   [52] = {.entry = {.count = 1, .reusable = true}}, SHIFT(22),
   [54] = {.entry = {.count = 1, .reusable = true}}, SHIFT(34),
   [56] = {.entry = {.count = 1, .reusable = true}}, SHIFT(26),
-  [58] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_dbt_jinja_ref, 8, .production_id = 4),
-  [60] = {.entry = {.count = 1, .reusable = false}}, REDUCE(sym_dbt_jinja_ref, 8, .production_id = 4),
+  [58] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_dbt_jinja_ref, 8, .production_id = 3),
+  [60] = {.entry = {.count = 1, .reusable = false}}, REDUCE(sym_dbt_jinja_ref, 8, .production_id = 3),
   [62] = {.entry = {.count = 1, .reusable = true}}, SHIFT(4),
   [64] = {.entry = {.count = 1, .reusable = true}}, SHIFT(32),
-  [66] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_kwarg_expression, 3, .production_id = 3),
+  [66] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_kwarg_expression, 3, .production_id = 2),
   [68] = {.entry = {.count = 1, .reusable = true}}, SHIFT(29),
-  [70] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_lit_string, 3, .production_id = 1),
+  [70] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_lit_string, 3),
   [72] = {.entry = {.count = 1, .reusable = true}},  ACCEPT_INPUT(),
   [74] = {.entry = {.count = 1, .reusable = true}}, SHIFT(9),
   [76] = {.entry = {.count = 1, .reusable = true}}, SHIFT(12),
