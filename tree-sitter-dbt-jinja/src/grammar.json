@@ -51,13 +51,18 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "FIELD",
-          "name": "fn_name",
-          "content": {
-            "type": "SYMBOL",
-            "name": "identifier"
-          }
+          "type": "SYMBOL",
+          "name": "identifier"
         },
+        {
+          "type": "SYMBOL",
+          "name": "argument_list"
+        }
+      ]
+    },
+    "argument_list": {
+      "type": "SEQ",
+      "members": [
         {
           "type": "STRING",
           "value": "("

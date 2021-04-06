@@ -1,19 +1,8 @@
 [
   {
-    "type": "fn_call",
+    "type": "argument_list",
     "named": true,
-    "fields": {
-      "fn_name": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "identifier",
-            "named": true
-          }
-        ]
-      }
-    },
+    "fields": {},
     "children": {
       "multiple": true,
       "required": false,
@@ -28,6 +17,25 @@
         },
         {
           "type": "lit_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "fn_call",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "argument_list",
+          "named": true
+        },
+        {
+          "type": "identifier",
           "named": true
         }
       ]

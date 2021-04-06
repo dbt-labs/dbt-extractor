@@ -32,7 +32,11 @@ module.exports = grammar ({
     ),
 
     fn_call: $ => seq(
-        field("fn_name", $.identifier),
+        $.identifier,
+        $.argument_list
+    ),
+
+    argument_list: $ => seq(
         '(',
         optional(commaSep1(
             choice(
