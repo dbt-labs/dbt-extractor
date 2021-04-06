@@ -7,9 +7,8 @@ Language.build_library(
   'build/sql.so',
 
   # Include one or more languages
-  # TODO fix this hard coded path to be determined at runtime
   [
-    '/Users/nate/git/dbt-parser-generator/tree-sitter-dbt-jinja',
+    './tree-sitter-dbt-jinja',
   ]
 )
 
