@@ -1,14 +1,25 @@
 [
   {
-    "type": "fn",
+    "type": "fn_call",
     "named": true,
-    "fields": {},
+    "fields": {
+      "fn_name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
-          "type": "fn",
+          "type": "fn_call",
           "named": true
         },
         {
@@ -21,6 +32,11 @@
         }
       ]
     }
+  },
+  {
+    "type": "identifier",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "kwarg",
@@ -52,7 +68,7 @@
       "required": false,
       "types": [
         {
-          "type": "fn",
+          "type": "fn_call",
           "named": true
         },
         {

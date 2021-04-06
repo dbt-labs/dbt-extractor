@@ -1,15 +1,10 @@
 
-function commaSep1(rule, name) {
-  return sep1(rule, ',', name);
+function commaSep1(rule) {
+    return sep1(rule, ',');
 }
 
-function sep1(rule, separator, name) {
-  var sequence = seq(rule, repeat(seq(separator, rule)));
-  if (name) {
-      return field(name, sequence);
-  } else {
-      return sequence;
-  }
+function sep1(rule, separator) {
+    return seq(rule, repeat(seq(separator, rule)))
 }
 
 
@@ -32,19 +27,19 @@ module.exports = grammar ({
 
     // This defines all the meat of the parser
     _expr: $ => choice(
-        $.fn,
+        $.fn_call,
         $.lit_string
     ),
 
-    fn: $ => seq(
-        field("fn_name", $._identifier),
+    fn_call: $ => seq(
+        field("fn_name", $.identifier),
         '(',
-        commaSep1(
+        optional(commaSep1(
             choice(
                 $._expr,
                 $.kwarg
             )
-        ),
+        )),
         ')'
     ),
 
@@ -62,6 +57,8 @@ module.exports = grammar ({
             )
         )
     ),
+
+    identifier: $ => $._identifier,
 
     _identifier: $ => token(/[a-zA-Z_][a-zA-Z0-9_]*/),
 

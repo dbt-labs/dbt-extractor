@@ -39,7 +39,7 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "fn"
+          "name": "fn_call"
         },
         {
           "type": "SYMBOL",
@@ -47,7 +47,7 @@
         }
       ]
     },
-    "fn": {
+    "fn_call": {
       "type": "SEQ",
       "members": [
         {
@@ -55,7 +55,7 @@
           "name": "fn_name",
           "content": {
             "type": "SYMBOL",
-            "name": "_identifier"
+            "name": "identifier"
           }
         },
         {
@@ -63,45 +63,53 @@
           "value": "("
         },
         {
-          "type": "SEQ",
+          "type": "CHOICE",
           "members": [
             {
-              "type": "CHOICE",
+              "type": "SEQ",
               "members": [
                 {
-                  "type": "SYMBOL",
-                  "name": "_expr"
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "_expr"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "kwarg"
+                    }
+                  ]
                 },
                 {
-                  "type": "SYMBOL",
-                  "name": "kwarg"
+                  "type": "REPEAT",
+                  "content": {
+                    "type": "SEQ",
+                    "members": [
+                      {
+                        "type": "STRING",
+                        "value": ","
+                      },
+                      {
+                        "type": "CHOICE",
+                        "members": [
+                          {
+                            "type": "SYMBOL",
+                            "name": "_expr"
+                          },
+                          {
+                            "type": "SYMBOL",
+                            "name": "kwarg"
+                          }
+                        ]
+                      }
+                    ]
+                  }
                 }
               ]
             },
             {
-              "type": "REPEAT",
-              "content": {
-                "type": "SEQ",
-                "members": [
-                  {
-                    "type": "STRING",
-                    "value": ","
-                  },
-                  {
-                    "type": "CHOICE",
-                    "members": [
-                      {
-                        "type": "SYMBOL",
-                        "name": "_expr"
-                      },
-                      {
-                        "type": "SYMBOL",
-                        "name": "kwarg"
-                      }
-                    ]
-                  }
-                ]
-              }
+              "type": "BLANK"
             }
           ]
         },
@@ -160,6 +168,10 @@
           ]
         }
       ]
+    },
+    "identifier": {
+      "type": "SYMBOL",
+      "name": "_identifier"
     },
     "_identifier": {
       "type": "TOKEN",

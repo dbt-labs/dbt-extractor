@@ -7,7 +7,8 @@ select * from {{ ref('my_table') }}
 ---
 
 (source_file 
-  (fn 
+  (fn_call
+    (identifier) 
     (lit_string)
   )
 )
@@ -21,7 +22,10 @@ select * from {{ ref(not_a_string) }}
 ---
 
 (source_file 
-  (ERROR)
+  (fn_call
+    (identifier)
+    (ERROR)
+  )
 )
 
 ==================
@@ -33,7 +37,8 @@ Config with one kwarg
 ---
 
 (source_file
-  (fn
+  (fn_call
+    (identifier)
     (kwarg
       (lit_string)
     )
@@ -49,7 +54,8 @@ Config with two kwargs
 ---
 
 (source_file
-  (fn
+  (fn_call
+    (identifier)
     (kwarg
       (lit_string)
     )
@@ -68,7 +74,8 @@ Fn with mixed lit and kwarg parameters
 ---
 
 (source_file
-  (fn
+  (fn_call
+    (identifier)
     (kwarg
       (lit_string)
     )
