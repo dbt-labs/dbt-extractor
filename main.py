@@ -1,7 +1,6 @@
 import itertools
 import json
 import parser as parse_lib
-from pprint import pprint
 
 
 # like set difference `-` but using eq not hash so it can be used on mutable types
@@ -94,13 +93,33 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
 # change data_path to your own path TODO use args
 def main():
     def apply_row(parser, row):
-        return process_row(parser, row['manifest_file_name'], row['raw_sql'], row['config'], row['refs'], row['sources'])
+        # defaults for runs that don't include these fields
+        row_config  = {}
+        row_refs    = []
+        row_sources = []
 
-    data_path = '/Users/nate/data/customer-manifest-raw-sql/temp_backup/del/pasted.json'
+        try:
+            row_config = row['config']
+        except:
+            pass
+
+        try:
+            row_refs = row['refs']
+        except:
+            pass
+
+        try:
+            row_sources = row['sources']
+        except:
+            pass
+
+        return process_row(parser, row['manifest_file_name'], row['raw_sql'], row_config, row_refs, row_sources)
+
+    data_path = '/Users/nate/data/customer-manifest-raw-sql/temp_playground/output'
 
     # read whole file in
     with open(data_path, 'r') as f:
-        all_rows = json.loads(f"[{f.read()}]")
+        all_rows = json.loads(f.read())
 
     parser = parse_lib.get_parser()
     all_results = list(map(lambda row: apply_row(parser, row), all_rows))
@@ -130,6 +149,7 @@ def main():
         if stats['parsing_mistakes'] > 0:
             all_project_stats['projects_with_mistakes'] += 1
 
+    all_project_stats['project_count'] = len(all_project_results.keys())
     if all_project_stats['model_count'] == 0:
         all_project_stats['percentage_models_parseable'] = 100.0
         all_project_stats['percentage_models_mistakes'] = 0.0
@@ -144,19 +164,23 @@ def main():
         all_project_stats['percentage_projects_parseable'] = 100 * all_project_stats['projects_parsed'] / all_project_stats['project_count']
         all_project_stats['percentage_projects_mistakes'] = 100* all_project_stats['projects_with_mistakes'] / all_project_stats['project_count']
 
-    pprint(all_project_stats)
+    # manually printing so they come out in the right order
+    field_order = [
+        'model_count',
+        'models_parsed',
+        'percentage_models_parseable',
+        'models_with_mistakes',
+        'percentage_models_mistakes',
+        'project_count',
+        'projects_parsed',
+        'percentage_projects_parseable',
+        'projects_with_mistakes',
+        'percentage_projects_mistakes'
+    ]
+
+    for field in field_order:
+        print(f"{field} : {all_project_stats[field]}")
 
 
 if __name__ == "__main__":
     main()
-
-
-# tree-sitter example output
-# { 'example': [ { 'configs': {'enabled': 'True', 'materialized': 'table'},
-#                   'python_jinja': 0,
-#                   'refs': {(None, 'my_model'), ('some_package', 'some_model')},
-#                   'sources': {('some', 'source')}},
-#                 { 'configs': {'enabled': 'True', 'materialized': 'table'},
-#                   'python_jinja': 0,
-#                   'refs': {(None, 'my_model'), ('some_package', 'some_model')},
-#                   'sources': {('some', 'source')}}]}
