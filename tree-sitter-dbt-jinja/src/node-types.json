@@ -1,6 +1,6 @@
 [
   {
-    "type": "dbt_jinja_config",
+    "type": "fn",
     "named": true,
     "fields": {},
     "children": {
@@ -8,82 +8,11 @@
       "required": true,
       "types": [
         {
-          "type": "kwarg_expression",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "dbt_jinja_ref",
-    "named": true,
-    "fields": {
-      "dbt_model_name": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "lit_string",
-            "named": true
-          }
-        ]
-      },
-      "dbt_package_name": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "lit_string",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
-    "type": "dbt_jinja_source",
-    "named": true,
-    "fields": {
-      "dbt_source_name": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "lit_string",
-            "named": true
-          }
-        ]
-      },
-      "dbt_source_table": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "lit_string",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
-    "type": "expr",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "dbt_jinja_config",
+          "type": "fn",
           "named": true
         },
         {
-          "type": "dbt_jinja_ref",
-          "named": true
-        },
-        {
-          "type": "dbt_jinja_source",
+          "type": "kwarg",
           "named": true
         },
         {
@@ -94,34 +23,9 @@
     }
   },
   {
-    "type": "jinja_block",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "expr",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "kwarg_expression",
+    "type": "kwarg",
     "named": true,
     "fields": {
-      "arg": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "identifier",
-            "named": true
-          }
-        ]
-      },
       "value": {
         "multiple": false,
         "required": true,
@@ -148,11 +52,11 @@
       "required": false,
       "types": [
         {
-          "type": "jinja_block",
+          "type": "fn",
           "named": true
         },
         {
-          "type": "text",
+          "type": "lit_string",
           "named": true
         }
       ]
@@ -181,26 +85,6 @@
   {
     "type": "=",
     "named": false
-  },
-  {
-    "type": "config",
-    "named": false
-  },
-  {
-    "type": "identifier",
-    "named": true
-  },
-  {
-    "type": "ref",
-    "named": false
-  },
-  {
-    "type": "source",
-    "named": false
-  },
-  {
-    "type": "text",
-    "named": true
   },
   {
     "type": "{{",

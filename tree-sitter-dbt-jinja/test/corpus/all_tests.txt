@@ -7,11 +7,9 @@ select * from {{ ref('my_table') }}
 ---
 
 (source_file 
-  (text) 
-  (dbt_jinja_ref 
+  (fn 
     (lit_string)
-  ) 
-  (text)
+  )
 )
 
 ==================
@@ -23,10 +21,7 @@ select * from {{ ref(not_a_string) }}
 ---
 
 (source_file 
-  (text) 
-  (ERROR 
-    (identifier)
-  )
+  (ERROR)
 )
 
 ==================
@@ -38,14 +33,11 @@ Config with one kwarg
 ---
 
 (source_file
-  (text)
-  (dbt_jinja_config
-    (kwarg_expression
-      (identifier)
+  (fn
+    (kwarg
       (lit_string)
     )
   )
-  (text)
 )
 
 ==================
@@ -57,16 +49,12 @@ Config with two kwargs
 ---
 
 (source_file
-  (text)
-  (dbt_jinja_config
-    (kwarg_expression
-      (identifier)
+  (fn
+    (kwarg
       (lit_string)
     )
-    (kwarg_expression
-      (identifier)
+    (kwarg
       (lit_string)
     )
   )
-  (text)
 )

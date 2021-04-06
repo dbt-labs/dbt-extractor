@@ -8,16 +8,16 @@
         "members": [
           {
             "type": "SYMBOL",
-            "name": "jinja_block"
+            "name": "_jinja_block"
           },
           {
             "type": "SYMBOL",
-            "name": "text"
+            "name": "_text"
           }
         ]
       }
     },
-    "jinja_block": {
+    "_jinja_block": {
       "type": "SEQ",
       "members": [
         {
@@ -26,7 +26,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "expr"
+          "name": "_expr"
         },
         {
           "type": "STRING",
@@ -34,24 +34,80 @@
         }
       ]
     },
-    "expr": {
+    "_expr": {
       "type": "CHOICE",
       "members": [
         {
           "type": "SYMBOL",
-          "name": "dbt_jinja_ref"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "dbt_jinja_source"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "dbt_jinja_config"
+          "name": "fn"
         },
         {
           "type": "SYMBOL",
           "name": "lit_string"
+        }
+      ]
+    },
+    "fn": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "fn_name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_identifier"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "kwarg"
+                }
+              ]
+            },
+            {
+              "type": "REPEAT",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": ","
+                  },
+                  {
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "SYMBOL",
+                        "name": "_expr"
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "kwarg"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "type": "STRING",
+          "value": ")"
         }
       ]
     },
@@ -105,143 +161,14 @@
         }
       ]
     },
-    "dbt_jinja_ref": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "ref"
-        },
-        {
-          "type": "STRING",
-          "value": "("
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SEQ",
-              "members": [
-                {
-                  "type": "FIELD",
-                  "name": "dbt_package_name",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "lit_string"
-                  }
-                },
-                {
-                  "type": "STRING",
-                  "value": ","
-                }
-              ]
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
-        },
-        {
-          "type": "FIELD",
-          "name": "dbt_model_name",
-          "content": {
-            "type": "SYMBOL",
-            "name": "lit_string"
-          }
-        },
-        {
-          "type": "STRING",
-          "value": ")"
-        }
-      ]
-    },
-    "dbt_jinja_source": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "source"
-        },
-        {
-          "type": "STRING",
-          "value": "("
-        },
-        {
-          "type": "FIELD",
-          "name": "dbt_source_name",
-          "content": {
-            "type": "SYMBOL",
-            "name": "lit_string"
-          }
-        },
-        {
-          "type": "STRING",
-          "value": ","
-        },
-        {
-          "type": "FIELD",
-          "name": "dbt_source_table",
-          "content": {
-            "type": "SYMBOL",
-            "name": "lit_string"
-          }
-        },
-        {
-          "type": "STRING",
-          "value": ")"
-        }
-      ]
-    },
-    "dbt_jinja_config": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "STRING",
-          "value": "config"
-        },
-        {
-          "type": "STRING",
-          "value": "("
-        },
-        {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "kwarg_expression"
-            },
-            {
-              "type": "REPEAT",
-              "content": {
-                "type": "SEQ",
-                "members": [
-                  {
-                    "type": "STRING",
-                    "value": ","
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "kwarg_expression"
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "type": "STRING",
-          "value": ")"
-        }
-      ]
-    },
-    "identifier": {
+    "_identifier": {
       "type": "TOKEN",
       "content": {
         "type": "PATTERN",
         "value": "[a-zA-Z_][a-zA-Z0-9_]*"
       }
     },
-    "kwarg_expression": {
+    "kwarg": {
       "type": "SEQ",
       "members": [
         {
@@ -249,7 +176,7 @@
           "name": "arg",
           "content": {
             "type": "SYMBOL",
-            "name": "identifier"
+            "name": "_identifier"
           }
         },
         {
@@ -266,7 +193,7 @@
         }
       ]
     },
-    "text": {
+    "_text": {
       "type": "PATTERN",
       "value": "[^{}]+"
     }

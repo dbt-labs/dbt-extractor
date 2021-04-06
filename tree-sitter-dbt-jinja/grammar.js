@@ -19,23 +19,33 @@ module.exports = grammar ({
   rules: {
     source_file: $ => repeat(
         choice(
-            $.jinja_block,
-            $.text
+            $._jinja_block,
+            $._text
         )
     ),
 
-    jinja_block: $ => seq(
+    _jinja_block: $ => seq(
         '{{',
-        $.expr,
+        $._expr,
         '}}'
     ),
 
     // This defines all the meat of the parser
-    expr: $ => choice(
-        $.dbt_jinja_ref,
-        $.dbt_jinja_source,
-        $.dbt_jinja_config,
+    _expr: $ => choice(
+        $.fn,
         $.lit_string
+    ),
+
+    fn: $ => seq(
+        field("fn_name", $._identifier),
+        '(',
+        commaSep1(
+            choice(
+                $._expr,
+                $.kwarg
+            )
+        ),
+        ')'
     ),
 
     lit_string: $ => seq(
@@ -53,44 +63,15 @@ module.exports = grammar ({
         )
     ),
 
-    dbt_jinja_ref: $ => seq(
-        'ref',
-        '(',
-        optional(
-            seq(
-                field('dbt_package_name', $.lit_string),
-                ','
-            ),
-        ),
-        field('dbt_model_name', $.lit_string),
-        ')',
-    ),
+    _identifier: $ => token(/[a-zA-Z_][a-zA-Z0-9_]*/),
 
-    dbt_jinja_source: $ => seq(
-        'source',
-        '(',
-        field('dbt_source_name', $.lit_string),
-        ',',
-        field('dbt_source_table', $.lit_string),
-        ')',
-    ),
-
-    dbt_jinja_config: $ => seq(
-        'config',
-        '(',
-        commaSep1($.kwarg_expression),
-        ')',
-    ),
-
-    identifier: $ => token(/[a-zA-Z_][a-zA-Z0-9_]*/),
-
-    kwarg_expression: $ => seq(
-        field("arg", $.identifier),
+    kwarg: $ => seq(
+        field("arg", $._identifier),
         '=',
         field("value", $.lit_string),
     ),
 
-    text: $ => /[^{}]+/
+    _text: $ => /[^{}]+/
 
   }
 });
