@@ -42,8 +42,8 @@
                   "type": "FIELD",
                   "name": "string_val",
                   "content": {
-                    "type": "SYMBOL",
-                    "name": "identifier"
+                    "type": "PATTERN",
+                    "value": "[^']*"
                   }
                 },
                 {
@@ -63,8 +63,8 @@
                   "type": "FIELD",
                   "name": "string_val",
                   "content": {
-                    "type": "SYMBOL",
-                    "name": "identifier"
+                    "type": "PATTERN",
+                    "value": "[^\"]*"
                   }
                 },
                 {
@@ -234,7 +234,7 @@
       "type": "TOKEN",
       "content": {
         "type": "PATTERN",
-        "value": "[a-zA-Z_][a-zA-Z0-9_]+"
+        "value": "[a-zA-Z_][a-zA-Z0-9_]*"
       }
     },
     "kwarg_expression": {

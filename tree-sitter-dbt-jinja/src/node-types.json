@@ -95,18 +95,7 @@
   {
     "type": "lit_string",
     "named": true,
-    "fields": {
-      "string_val": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "identifier",
-            "named": true
-          }
-        ]
-      }
-    }
+    "fields": {}
   },
   {
     "type": "source_file",

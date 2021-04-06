@@ -30,12 +30,12 @@ module.exports = grammar ({
         choice(
             seq(
                 "'",
-                field('string_val', $.identifier),
+                field('string_val', /[^']*/),
                 "'",
             ),
             seq(
                 '"',
-                field('string_val', $.identifier),
+                field('string_val', /[^"]*/),
                 '"',
             )
         )

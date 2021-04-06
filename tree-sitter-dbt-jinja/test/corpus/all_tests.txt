@@ -9,9 +9,7 @@ select * from {{ ref('my_table') }}
 (source_file 
   (text) 
   (dbt_jinja_ref 
-    (lit_string 
-      (identifier)
-    )
+    (lit_string)
   ) 
   (text)
 )
@@ -44,9 +42,7 @@ Config with one kwarg
   (dbt_jinja_config
     (kwarg_expression
       (identifier)
-      (lit_string
-        (identifier)
-      )
+      (lit_string)
     )
   )
   (text)
@@ -65,15 +61,11 @@ Config with two kwargs
   (dbt_jinja_config
     (kwarg_expression
       (identifier)
-      (lit_string
-        (identifier)
-      )
+      (lit_string)
     )
     (kwarg_expression
       (identifier)
-      (lit_string
-        (identifier)
-      )
+      (lit_string)
     )
   )
   (text)
