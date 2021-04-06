@@ -51,7 +51,7 @@ def get_project_results(grouped_results):
 
         for res in model_results:
             stats['project_models'] += 1
-            if parsed: 
+            if res['parsed']: 
                 stats['models_parsed'] += 1
             else:
                 stats['models_unparsed'] += 1
@@ -67,22 +67,22 @@ def get_project_results(grouped_results):
 def process_row(parser, project_id, raw_sql, configs, refs, sources):
     res = parse_lib.parse_string(parser, raw_sql)
 
-    unparsed_configs = difference(res['configs'], configs)
-    unparsed_refs    = difference(res['refs'], refs)
-    unparsed_sources = difference(res['sources'], sources)
+    unparsed_configs = difference(configs, res['configs'])
+    unparsed_refs    = difference(refs, res['refs'])
+    unparsed_sources = difference(sources, res['sources'])
     unparsed_total = len(unparsed_configs) + len(unparsed_refs) + len(unparsed_sources)
     all_configs_refs_sources_count = len(configs) + len(refs) + len(sources)
     
-    misparsed_configs = difference(configs, res['configs'])
-    misparsed_refs    = difference(refs, res['refs'])
-    misparsed_sources = difference(sources, res['sources'])
+    misparsed_configs = difference(res['configs'], configs)
+    misparsed_refs    = difference(res['refs'], refs)
+    misparsed_sources = difference(res['sources'], sources)
     misparsed_total = len(misparsed_configs) + len(misparsed_refs) + len(misparsed_sources)
 
     # if there are no instances where we need python_jinja, and we didn't 
     # make any mistakes we successfully parsed the model.
     parsed = res['python_jinja'] <= 0 and misparsed_total <= 0
     return {
-        'manifest_file_name': project_id,
+        'project_id': project_id,
         'parsed': parsed,
         'python_jinja': res['python_jinja'],
         'all_configs_refs_sources_count': all_configs_refs_sources_count,
