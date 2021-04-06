@@ -28,18 +28,9 @@ def strip_quotes(text):
     if text:
         return text[1:-1]
 
+# expects node to have NO ERRORS in any of its subtrees
 def extract_refs(string, node, data):
-    # local mutation to avoid mutating the input
-    data2 = dict(data)
-    # flag so we can bail when an error is found
-    no_error = True
-
-    # if this limited tree-sitter implementaion can't parse it, python jinja will have to
-    if node.type == 'ERROR':
-        no_error = False
-        data2['python_jinja'] += 1
-
-    elif node.type == 'dbt_jinja_ref':
+    if node.type == 'dbt_jinja_ref':
         package_name = node.child_by_field_name('dbt_package_name')
         model_name = node.child_by_field_name('dbt_model_name') 
         fmodel_name = strip_quotes(text_at(string, model_name))
@@ -50,7 +41,7 @@ def extract_refs(string, node, data):
                 strip_quotes(text_at(string, package_name)),
                 fmodel_name
             )
-        data2['refs'].add(ref)
+        data['refs'].add(ref)
 
     elif node.type == 'dbt_jinja_source':
         source_name = node.child_by_field_name('dbt_source_name')
@@ -59,7 +50,7 @@ def extract_refs(string, node, data):
             strip_quotes(text_at(string, source_name)),
             strip_quotes(text_at(string, table_name))
         )
-        data2['sources'].add(source)
+        data['sources'].add(source)
 
     elif node.type == 'dbt_jinja_config':
         config_nodes = [child for child in node.children if child.type == 'kwarg_expression']
@@ -67,20 +58,24 @@ def extract_refs(string, node, data):
             try:
                 arg, _, value = config.children
             except Exception as e:
-                print('----------')
-                print(config.children)
-                print('----------')
                 raise e
 
             arg_val = text_at(string, arg)
             val_val = strip_quotes(text_at(string, value))
-            data2['configs'][arg_val] = val_val
+            data['configs'][arg_val] = val_val
 
-    if no_error:
-        for child in node.children:
-            extract_refs(string, child, data2)
+    for child in node.children:
+        extract_refs(string, child, data)
 
-    return data2
+def error_count(node, count):
+    total = count
+    if node.type == 'ERROR':
+        total += 1
+
+    for child in node.children:
+        total += error_count(child, total)
+
+    return total
 
 def get_parser():
     parser = Parser()
@@ -89,11 +84,26 @@ def get_parser():
 
 def parse_string(parser, string):
     tree = parser.parse(bytes(string, "utf8"))
-
+    count = error_count(tree.root_node, 0)
+    # error_query = JINJA2_LANGUAGE.query('ERROR')
+    # errors = error_query.captures(tree.root_node)
     data = {
         'refs': set(),
         'sources': set(),
         'configs': dict(),
         'python_jinja': 0
     }
-    return extract_refs(string, tree.root_node, data)
+    # if this limited tree-sitter implementaion can't parse it, python jinja will have to
+    if count <= 0:
+        data2 = dict(data)
+        extract_refs(string, tree.root_node, data2)
+        return data2
+    else:
+        data2 = dict(data)
+        # error count isn't a perfect count of unsupported instances
+        # but it'll be pretty close
+        data2['python_jinja'] = count
+        return data2
+
+    
+    
