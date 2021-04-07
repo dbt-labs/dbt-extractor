@@ -1,5 +1,6 @@
 
 from tree_sitter import Language, Parser
+import type_check
 
 
 Language.build_library(
@@ -85,25 +86,32 @@ def get_parser():
 def parse_string(parser, string):
     tree = parser.parse(bytes(string, "utf8"))
     count = error_count(tree.root_node, 0)
-    # error_query = JINJA2_LANGUAGE.query('ERROR')
-    # errors = error_query.captures(tree.root_node)
     data = {
         'refs': set(),
         'sources': set(),
         'configs': dict(),
         'python_jinja': 0
     }
-    # if this limited tree-sitter implementaion can't parse it, python jinja will have to
+    # if there are no _parsing errors_ check for _type errors_
     if count <= 0:
+        # checked should be a new typed ast, but we don't have that machinery yet.
+        # this is the same untyped ast for now.
+        checked_ast_or_error_list = type_check.type_check(tree.root_node)
         data2 = dict(data)
-        extract_refs(string, tree.root_node, data2)
-        return data2
+        # if there are type errors
+        if isinstance(checked_ast_or_error_list, list):
+            error_list = checked_ast_or_error_list
+            data2['python_jinja'] = len(error_list)
+            return data2
+        # if there are no parsing errors and no type errors, extract stuff!
+        else:
+            checked_tree = checked_ast_or_error_list
+            extract_refs(string, checked_tree, data2)
+            return data2
+    # if this limited tree-sitter implementaion can't parse it, python jinja will have to
     else:
         data2 = dict(data)
         # error count isn't a perfect count of unsupported instances
         # but it'll be pretty close
         data2['python_jinja'] = count
         return data2
-
-    
-    
