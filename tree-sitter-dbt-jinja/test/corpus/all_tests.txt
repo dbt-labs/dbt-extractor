@@ -96,3 +96,15 @@ Fn with mixed lit and kwarg parameters
     )
   )
 )
+
+==================
+floating string literal
+==================
+
+{{ 'floating lit' }}
+
+---
+
+(source_file 
+  (lit_string)
+)
