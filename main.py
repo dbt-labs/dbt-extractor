@@ -1,6 +1,6 @@
 import itertools
 import json
-import parser as parse_lib
+import compiler
 
 
 # like set difference `-` but using eq not hash so it can be used on mutable types
@@ -63,7 +63,7 @@ def get_project_results(grouped_results):
 
 # parser -> row_fields -> dict
 def process_row(parser, project_id, raw_sql, configs, refs, sources):
-    res = parse_lib.parse_string(parser, raw_sql)
+    res = compiler.parse_typecheck_extract(parser, raw_sql)
 
     # the set of real parsed values minus the set we found is the set of unparsed values
     unparsed_configs = difference(configs, res['configs'])
@@ -121,7 +121,7 @@ def main():
     with open(data_path, 'r') as f:
         all_rows = json.loads(f.read())
 
-    parser = parse_lib.get_parser()
+    parser = compiler.get_parser()
     all_results = list(map(lambda row: apply_row(parser, row), all_rows))
     grouped_results = group_by_project(all_results)
     all_project_results = get_project_results(grouped_results)

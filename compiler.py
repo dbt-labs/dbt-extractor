@@ -83,7 +83,8 @@ def get_parser():
     parser.set_language(JINJA2_LANGUAGE)
     return parser
 
-def parse_string(parser, string):
+# entry point function
+def parse_typecheck_extract(parser, string):
     tree = parser.parse(bytes(string, "utf8"))
     count = error_count(tree.root_node, 0)
     data = {
