@@ -115,7 +115,7 @@ def main():
 
         return process_row(parser, row['manifest_file_name'], row['raw_sql'], row_config, row_refs, row_sources)
 
-    data_path = '/Users/nate/data/customer-manifest-raw-sql/temp_playground/output'
+    data_path = '/Users/nate/data/customer-manifest-raw-sql/data.json'
 
     # read whole file in
     with open(data_path, 'r') as f:
