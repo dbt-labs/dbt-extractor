@@ -32,8 +32,8 @@ module.exports = grammar ({
     ),
 
     fn_call: $ => seq(
-        $.identifier,
-        $.argument_list
+        field('fn_name', $.identifier),
+        field('argument_list', $.argument_list)
     ),
 
     argument_list: $ => seq(

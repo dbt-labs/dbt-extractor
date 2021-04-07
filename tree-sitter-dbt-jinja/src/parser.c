@@ -12,9 +12,9 @@
 #define ALIAS_COUNT 0
 #define TOKEN_COUNT 13
 #define EXTERNAL_TOKEN_COUNT 0
-#define FIELD_COUNT 2
+#define FIELD_COUNT 4
 #define MAX_ALIAS_SEQUENCE_LENGTH 4
-#define PRODUCTION_ID_COUNT 2
+#define PRODUCTION_ID_COUNT 3
 
 enum {
   anon_sym_LBRACE_LBRACE = 1,
@@ -190,21 +190,29 @@ static const TSSymbolMetadata ts_symbol_metadata[] = {
 
 enum {
   field_arg = 1,
-  field_value = 2,
+  field_argument_list = 2,
+  field_fn_name = 3,
+  field_value = 4,
 };
 
 static const char *ts_field_names[] = {
   [0] = NULL,
   [field_arg] = "arg",
+  [field_argument_list] = "argument_list",
+  [field_fn_name] = "fn_name",
   [field_value] = "value",
 };
 
 static const TSFieldMapSlice ts_field_map_slices[PRODUCTION_ID_COUNT] = {
   [1] = {.index = 0, .length = 2},
+  [2] = {.index = 2, .length = 2},
 };
 
 static const TSFieldMapEntry ts_field_map_entries[] = {
   [0] =
+    {field_argument_list, 1},
+    {field_fn_name, 0},
+  [2] =
     {field_arg, 0},
     {field_value, 2},
 };
@@ -604,7 +612,7 @@ static TSParseActionEntry ts_parse_actions[] = {
   [31] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_lit_string, 3),
   [33] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym__jinja_block, 3),
   [35] = {.entry = {.count = 1, .reusable = false}}, REDUCE(sym__jinja_block, 3),
-  [37] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_fn_call, 2),
+  [37] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_fn_call, 2, .production_id = 1),
   [39] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_argument_list, 2),
   [41] = {.entry = {.count = 1, .reusable = true}}, SHIFT(3),
   [43] = {.entry = {.count = 1, .reusable = true}}, SHIFT(13),
@@ -616,7 +624,7 @@ static TSParseActionEntry ts_parse_actions[] = {
   [56] = {.entry = {.count = 1, .reusable = true}}, SHIFT(2),
   [58] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_identifier, 1),
   [60] = {.entry = {.count = 1, .reusable = true}}, SHIFT(12),
-  [62] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_kwarg, 3, .production_id = 1),
+  [62] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_kwarg, 3, .production_id = 2),
   [64] = {.entry = {.count = 1, .reusable = true}}, SHIFT(8),
   [66] = {.entry = {.count = 1, .reusable = true}}, SHIFT(7),
   [68] = {.entry = {.count = 1, .reusable = true}}, SHIFT(23),
