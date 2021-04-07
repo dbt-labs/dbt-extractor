@@ -110,6 +110,20 @@ floating string literal
 )
 
 ==================
+bare words fail
+==================
+
+{{ text }}
+
+---
+
+(source_file
+  (ERROR
+    (identifier)
+  )
+)
+
+==================
 multiple jinja blocks
 ==================
 
