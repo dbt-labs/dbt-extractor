@@ -108,3 +108,19 @@ floating string literal
 (source_file 
   (lit_string)
 )
+
+==================
+multiple jinja blocks
+==================
+
+some text {{ 'floating lit' }} more text {{ fn() }} text.
+
+---
+
+(source_file
+  (lit_string)
+  (fn_call
+    (identifier)
+    (argument_list)
+  )
+)
