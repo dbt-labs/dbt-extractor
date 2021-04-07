@@ -43,7 +43,7 @@ def get_project_results(grouped_results):
             'project_models': 0,
             'models_parsed': 0,
             'models_unparsed': 0,
-            'parsing_mistakes': 0,
+            'parsing_false_positives': 0,
             'percent_parsable': 0,
         }
 
@@ -54,7 +54,7 @@ def get_project_results(grouped_results):
             else:
                 stats['models_unparsed'] += 1
 
-            stats['parsing_mistakes'] += res['parsing_mistakes']
+            stats['parsing_false_positives'] += res['parsing_false_positives']
 
         stats['percent_parsable'] = 100 * (stats['models_parsed'] / stats['project_models'])
         project_stats[project_id] = stats
@@ -86,9 +86,8 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
         'parsed': parsed,
         'python_jinja': res['python_jinja'],
         'all_configs_refs_sources_count': all_configs_refs_sources_count,
-        'parsing_mistakes': misparsed_total
+        'parsing_false_positives': misparsed_total
     }
-
 
 # change data_path to your own path TODO use args
 def main():
@@ -130,52 +129,52 @@ def main():
         'model_count': 0,
         'models_parsed': 0,
         'percentage_models_parseable': 0,
-        'models_with_mistakes': 0,
-        'percentage_models_mistakes': 0,
+        'models_with_false_positives': 0,
+        'percentage_models_false_positives': 0,
         'project_count': 0,
         'projects_parsed': 0,
         'percentage_projects_parseable': 0,
-        'projects_with_mistakes': 0,
-        'percentage_projects_mistakes': 0
+        'projects_with_false_positives': 0,
+        'percentage_projects_false_positives': 0
     }
 
     for project_id, stats in all_project_results.items():
         all_project_stats['model_count'] += stats['project_models']
         all_project_stats['models_parsed'] += stats['models_parsed']
-        all_project_stats['models_with_mistakes'] += stats['parsing_mistakes']
+        all_project_stats['models_with_false_positives'] += stats['parsing_false_positives']
         all_project_stats['model_count'] += 1
         if stats['models_parsed'] == stats['project_models']:
             all_project_stats['projects_parsed'] += 1
-        if stats['parsing_mistakes'] > 0:
-            all_project_stats['projects_with_mistakes'] += 1
+        if stats['parsing_false_positives'] > 0:
+            all_project_stats['projects_with_false_positives'] += 1
 
     all_project_stats['project_count'] = len(all_project_results.keys())
     if all_project_stats['model_count'] == 0:
         all_project_stats['percentage_models_parseable'] = 100.0
-        all_project_stats['percentage_models_mistakes'] = 0.0
+        all_project_stats['percentage_models_false_positives'] = 0.0
     else:
         all_project_stats['percentage_models_parseable'] = 100 * all_project_stats['models_parsed'] / all_project_stats['model_count']
-        all_project_stats['percentage_models_mistakes'] = 100 * all_project_stats['models_with_mistakes'] / all_project_stats['model_count']
+        all_project_stats['percentage_models_false_positives'] = 100 * all_project_stats['models_with_false_positives'] / all_project_stats['model_count']
 
     if all_project_stats['project_count'] == 0:
         all_project_stats['percentage_projects_parseable'] = 100.0
-        all_project_stats['percentage_projects_mistakes'] = 0.0
+        all_project_stats['percentage_projects_false_positives'] = 0.0
     else:
         all_project_stats['percentage_projects_parseable'] = 100 * all_project_stats['projects_parsed'] / all_project_stats['project_count']
-        all_project_stats['percentage_projects_mistakes'] = 100* all_project_stats['projects_with_mistakes'] / all_project_stats['project_count']
+        all_project_stats['percentage_projects_false_positives'] = 100* all_project_stats['projects_with_false_positives'] / all_project_stats['project_count']
 
     # manually printing so they come out in the right order
     field_order = [
         'model_count',
         'models_parsed',
         'percentage_models_parseable',
-        'models_with_mistakes',
-        'percentage_models_mistakes',
+        'models_with_false_positives',
+        'percentage_models_false_positives',
         'project_count',
         'projects_parsed',
         'percentage_projects_parseable',
-        'projects_with_mistakes',
-        'percentage_projects_mistakes'
+        'projects_with_false_positives',
+        'percentage_projects_false_positives'
     ]
 
     for field in field_order:
