@@ -51,13 +51,21 @@ def source_check(args):
 
 def list_check(elems):
     for elem in elems:
-        if elem.type != 'lit_string':
-            return TypeCheckFailure(f"all list elements must be string literals")
+        if elem.type == 'fn_call':
+            return TypeCheckFailure(f"list elements cannot be function calls")
     return TypeCheckPass()
 
 def kwarg_check(value):
-    if elem.type != 'lit_string' and elem.type != 'list':
-        return TypeCheckFailure(f"keyword arguments can only be strings and lists")
+    if elem.type == 'fn_call':
+        return TypeCheckFailure(f"keyword arguments can not be function calls")
+    return TypeCheckPass()
+
+def dict_check(pairs):
+    for pair in pairs:
+        if pair.child_by_field_name('key') != 'lit_string':
+            return TypeCheckFailure(f"all dict keys must be string literals")
+        if pair.child_by_field_name('value').type == 'fn_call':
+            return TypeCheckFailure(f"dict values cannot be function calls")
     return TypeCheckPass()
 
 # hack
@@ -68,7 +76,8 @@ type_checkers = {
         'sources': source_check
     },
     'list': list_check,
-    'kwarg': kwarg_check
+    'kwarg': kwarg_check,
+    'dict': dict_check
 }
 
 def flatten(list_of_lists):
@@ -85,6 +94,8 @@ def _type_check(results, node):
         type_checkers['list'](node.children)
     elif node.type == 'kwarg':
         type_checkers['kwarg'](node.child_by_field_name('value'))
+    elif node.type == 'dict':
+        type_checkers['dict'](node.children)
     else:
         return results + [TypeCheckPass()]
 

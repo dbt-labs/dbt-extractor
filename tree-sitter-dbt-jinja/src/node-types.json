@@ -8,6 +8,10 @@
       "required": false,
       "types": [
         {
+          "type": "dict",
+          "named": true
+        },
+        {
           "type": "fn_call",
           "named": true
         },
@@ -21,6 +25,21 @@
         },
         {
           "type": "lit_string",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "dict",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "pair",
           "named": true
         }
       ]
@@ -66,6 +85,10 @@
         "required": true,
         "types": [
           {
+            "type": "dict",
+            "named": true
+          },
+          {
             "type": "fn_call",
             "named": true
           },
@@ -90,6 +113,10 @@
       "required": false,
       "types": [
         {
+          "type": "dict",
+          "named": true
+        },
+        {
           "type": "fn_call",
           "named": true
         },
@@ -110,6 +137,44 @@
     "fields": {}
   },
   {
+    "type": "pair",
+    "named": true,
+    "fields": {
+      "key": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "lit_string",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "dict",
+            "named": true
+          },
+          {
+            "type": "fn_call",
+            "named": true
+          },
+          {
+            "type": "list",
+            "named": true
+          },
+          {
+            "type": "lit_string",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "source_file",
     "named": true,
     "fields": {},
@@ -117,6 +182,10 @@
       "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "dict",
+          "named": true
+        },
         {
           "type": "fn_call",
           "named": true
@@ -153,6 +222,10 @@
     "named": false
   },
   {
+    "type": ":",
+    "named": false
+  },
+  {
     "type": "=",
     "named": false
   },
@@ -165,7 +238,15 @@
     "named": false
   },
   {
+    "type": "{",
+    "named": false
+  },
+  {
     "type": "{{",
+    "named": false
+  },
+  {
+    "type": "}",
     "named": false
   },
   {

@@ -29,7 +29,8 @@ module.exports = grammar ({
     _expr: $ => choice(
         $.fn_call,
         $.lit_string,
-        $.list
+        $.list,
+        $.dict
     ),
 
     fn_call: $ => seq(
@@ -68,6 +69,19 @@ module.exports = grammar ({
         optional(commaSep1($._expr)),
         optional(','),
         ']'
+    ),
+
+    dict: $ => seq(
+        '{',
+        optional(commaSep1($.pair)),
+        optional(','),
+        '}'
+    ),
+
+    pair: $ => seq(
+        field('key', $.lit_string),
+        ':',
+        field('value', $._expr)
     ),
 
     identifier: $ => $._identifier,
