@@ -18,12 +18,12 @@ tree-sitter-dbt-jinja/node_modules/tree-sitter-cli/tree-sitter:
 install: $(VENV)/bin/activate tree-sitter-dbt-jinja/node_modules/tree-sitter-cli/tree-sitter
 
 build: install
-	cd tree-sitter-dbt-jinja && tree-sitter-dbt-jinja/node_modules/tree-sitter-cli/tree-sitter generate
+	cd tree-sitter-dbt-jinja && node_modules/tree-sitter-cli/tree-sitter generate
 
 # runs the tree-sitter tests
 # TODO add python unit tests
 test: build
-	cd tree-sitter-dbt-jinja && tree-sitter-dbt-jinja/node_modules/tree-sitter-cli/tree-sitter test
+	cd tree-sitter-dbt-jinja && node_modules/tree-sitter-cli/tree-sitter test
 
 # runs the python application
 # arguments must be passed like `make run ARGS="arg1 arg2"`
