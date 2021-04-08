@@ -11,28 +11,28 @@ $(VENV)/bin/activate: requirements.txt
 	./$(VENV)/bin/pip install -r requirements.txt
 
 # installs npm dependencies
-tree-sitter-dbt-jinja/node_modules/tree-sitter-cli/tree-sitter:
-	cd tree-sitter-dbt-jinja && npm install
+node_modules/tree-sitter-cli/tree-sitter:
+	npm install
 
 # install just needs the venv and tree-sitter binary
-install: $(VENV)/bin/activate tree-sitter-dbt-jinja/node_modules/tree-sitter-cli/tree-sitter
+install: $(VENV)/bin/activate node_modules/tree-sitter-cli/tree-sitter
 
 build: install
-	cd tree-sitter-dbt-jinja && node_modules/tree-sitter-cli/tree-sitter generate
+	cd tree-sitter-dbt-jinja && ../node_modules/tree-sitter-cli/tree-sitter generate
 
 # runs the tree-sitter tests
 # TODO add python unit tests
 test: build
-	cd tree-sitter-dbt-jinja && node_modules/tree-sitter-cli/tree-sitter test
+	cd tree-sitter-dbt-jinja && ../node_modules/tree-sitter-cli/tree-sitter test
 
 # runs the python application
 # arguments must be passed like `make run ARGS="arg1 arg2"`
 run: install
-	./$(VENV)/bin/python3 main.py $(ARGS)
+	./$(VENV)/bin/python3 src/main.py $(ARGS)
 
 clean:
 	rm -rf $(VENV)
-	rm -rf tree-sitter-dbt-jinja/node_modules
+	rm -rf node_modules
 	find . -type f -name '*.pyc' -delete
 	rm tree-sitter-dbt-jinja/src/grammar.json
 	rm tree-sitter-dbt-jinja/src/node-types.json
