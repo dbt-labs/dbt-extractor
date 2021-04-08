@@ -49,13 +49,26 @@ def source_check(args):
             return TypeCheckFailure(f"second keyword argument in source must be table_name found {arg[0].child_by_field_name('arg')}")
     return TypeCheckPass()
 
+def list_check(elems):
+    for elem in elems:
+        if elem.type != 'lit_string':
+            return TypeCheckFailure(f"all list elements must be string literals")
+    return TypeCheckPass()
+
+def kwarg_check(value):
+    if elem.type != 'lit_string' and elem.type != 'list':
+        return TypeCheckFailure(f"keyword arguments can only be strings and lists")
+    return TypeCheckPass()
+
 # hack
 type_checkers = { 
     'fn_call': {
         'ref': ref_check,
         'config': config_check,
         'sources': source_check
-    }
+    },
+    'list': list_check,
+    'kwarg': kwarg_check
 }
 
 def flatten(list_of_lists):
@@ -68,6 +81,10 @@ def _type_check(results, node):
         args = node.child_by_field_name('argument_list')
         res = type_checkers['fn_call'][name](args)
         return results + [res] + flatten(list(map(lambda x: _type_check([], x), node.children)))
+    elif node.type == 'list':
+        type_checkers['list'](node.children)
+    elif node.type == 'kwarg':
+        type_checkers['kwarg'](node.child_by_field_name('value'))
     else:
         return results + [TypeCheckPass()]
 

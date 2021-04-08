@@ -28,7 +28,8 @@ module.exports = grammar ({
     // This defines all the meat of the parser
     _expr: $ => choice(
         $.fn_call,
-        $.lit_string
+        $.lit_string,
+        $.list
     ),
 
     fn_call: $ => seq(
@@ -62,6 +63,12 @@ module.exports = grammar ({
         )
     ),
 
+    list: $ => seq(
+        '[',
+        commaSep1($._expr),
+        ']'
+    ),
+
     identifier: $ => $._identifier,
 
     _identifier: $ => token(/[a-zA-Z_][a-zA-Z0-9_]*/),
@@ -69,7 +76,7 @@ module.exports = grammar ({
     kwarg: $ => seq(
         field("arg", $._identifier),
         '=',
-        field("value", $.lit_string),
+        field("value", $._expr),
     ),
 
     _text: $ => /[^{}]+/
