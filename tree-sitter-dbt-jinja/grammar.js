@@ -65,7 +65,8 @@ module.exports = grammar ({
 
     list: $ => seq(
         '[',
-        commaSep1($._expr),
+        optional(commaSep1($._expr)),
+        optional(','),
         ']'
     ),
 

@@ -156,6 +156,34 @@ list of string lits
 )
 
 ==================
+empty list
+==================
+
+{{ [] }}
+
+---
+
+(source_file
+  (list)
+)
+
+==================
+list with trailing comma
+==================
+
+{{ ['a','bc','def',] }}
+
+---
+
+(source_file
+  (list
+    (lit_string)
+    (lit_string)
+    (lit_string)
+  )
+)
+
+==================
 config with list of string lits
 ==================
 
