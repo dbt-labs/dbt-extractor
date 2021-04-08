@@ -76,44 +76,18 @@ def all_parse_errors(parser, string):
     block_strings = list(map(lambda tuple: source_bytes[tuple[0]:tuple[1]].decode('utf8'), pairs))  
     return block_strings
 
-def main():
+def run_on(data_path, out_file):
     def apply_row(parser, row):
-        # defaults for runs that don't include these fields
-        row_config  = {}
-        row_refs    = []
-        row_sources = []
-
-        try:
-            row_config = row['config']
-        except:
-            pass
-
-        try:
-            row_refs = row['refs']
-        except:
-            pass
-
-        try:
-            row_sources = row['sources']
-        except:
-            pass
-
         return all_parse_errors(parser, row['raw_sql'])
 
     # read whole file in
     with open(data_path, 'r') as f:
         all_rows = json.loads(f.read())
 
-    # all_rows = [
-    #     {'raw_sql': "select * from {{ ref(not_a_literal) }} more stuff {{ bare }}"},
-    #     {'raw_sql': "select * from {{ 5 }}"}]
     parser = compiler.get_parser()
     all_results = flatten(list(map(lambda row: apply_row(parser, row), all_rows)))
 
+    f = open(out_file, 'w')
     for res in all_results:
-        print(res)
-        print()
-
-
-if __name__ == "__main__":
-    main()
+        f.write(f"{res}\n")
+    f.close()
