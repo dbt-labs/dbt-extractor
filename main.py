@@ -134,6 +134,8 @@ def main():
         'project_count': 0,
         'projects_parsed': 0,
         'percentage_projects_parseable': 0,
+        'projects_completely_unparsed': 0,
+        'percentage_projects_completely_unparsed': 0,
         'projects_with_false_positives': 0,
         'percentage_projects_false_positives': 0
     }
@@ -141,6 +143,8 @@ def main():
     for project_id, stats in all_project_results.items():
         all_project_stats['model_count'] += stats['project_models']
         all_project_stats['models_parsed'] += stats['models_parsed']
+        if stats['models_parsed'] == 0:
+            all_project_stats['projects_completely_unparsed'] += 1
         all_project_stats['models_with_false_positives'] += stats['parsing_false_positives']
         all_project_stats['model_count'] += 1
         if stats['models_parsed'] == stats['project_models']:
@@ -159,9 +163,11 @@ def main():
     if all_project_stats['project_count'] == 0:
         all_project_stats['percentage_projects_parseable'] = 100.0
         all_project_stats['percentage_projects_false_positives'] = 0.0
+        all_project_stats['percentage_projects_completely_unparsed'] = 0.0
     else:
         all_project_stats['percentage_projects_parseable'] = 100 * all_project_stats['projects_parsed'] / all_project_stats['project_count']
-        all_project_stats['percentage_projects_false_positives'] = 100* all_project_stats['projects_with_false_positives'] / all_project_stats['project_count']
+        all_project_stats['percentage_projects_false_positives'] = 100 * all_project_stats['projects_with_false_positives'] / all_project_stats['project_count']
+        all_project_stats['percentage_projects_completely_unparsed'] = 100 * all_project_stats['projects_completely_unparsed'] / all_project_stats['project_count']
 
     # manually printing so they come out in the right order
     field_order = [
@@ -173,6 +179,8 @@ def main():
         'project_count',
         'projects_parsed',
         'percentage_projects_parseable',
+        'projects_completely_unparsed',
+        'percentage_projects_completely_unparsed',
         'projects_with_false_positives',
         'percentage_projects_false_positives'
     ]
