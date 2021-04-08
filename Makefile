@@ -35,7 +35,7 @@ clean:
 	rm -rf tree-sitter-dbt-jinja/node_modules
 	find . -type f -name '*.pyc' -delete
 	rm tree-sitter-dbt-jinja/src/grammar.json
-	rm tree-sitter-dbt-jinjas/src/node-types.json
+	rm tree-sitter-dbt-jinja/src/node-types.json
 	rm tree-sitter-dbt-jinja/src/parser.c
 
 # these stages don't output files by the same name
