@@ -45,3 +45,6 @@ If you have sample files in the form
 {json}
 ```
 Use the `jsonify.sh` script provided in this repo to stitch them together into one large JSON array before running the above commands.
+
+## Future Work
+- Create input path for a manifest file so it can be run on any project without additional pre-processing
