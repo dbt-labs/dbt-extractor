@@ -34,7 +34,7 @@ make run ARGS="results your-data-file.json"
 
 To write all the jinja blocks that this parser failed to parse to a file:
 ```
-make run ARGS="results your-data-file.json ./out-file.txt"
+make run ARGS="missed your-data-file.json ./out-file.txt"
 ```
 
 If you have sample files in the form 
