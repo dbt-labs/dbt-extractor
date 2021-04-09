@@ -10,7 +10,7 @@ def print_errors(errors):
         print(f"- {error}")
     print(":::::::::::::::::::::::::::::::::::::::")
 
-# throws away the type check error message if there is one
+# skips printing the type check error message if there is one.
 # prevents poluting stdout when many tests fail
 def type_checks(source_text):
     return type_checks_debug(source_text, False)
@@ -36,7 +36,7 @@ def type_checks_debug(source_text, debug=True):
 def type_checks_all(l):
     return reduce(lambda x, y: x and y, map(type_checks, l))
 
-# same as `type_checks_all` but also prints the list of error messages
+# same as `type_checks_all` but also prints all error messages
 def type_checks_all_debug(l):
     return reduce(lambda x, y: x and y, map(type_checks_debug, l))
     
