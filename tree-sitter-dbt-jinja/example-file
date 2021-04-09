@@ -1,6 +1,0 @@
-
-{{ config(materialized='table') }}
-
-
-select * from {{ ref('my_model') }} as my_model
-join {{ source('my_source', 'my_table') }} as the_table on the_table.id = my_model.id

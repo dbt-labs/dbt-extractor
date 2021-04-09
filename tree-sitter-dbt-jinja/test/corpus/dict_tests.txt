@@ -1,0 +1,46 @@
+==================
+floating dict
+==================
+
+{{ {'k':'v', 'list': ['a', 'b']} }}
+
+---
+
+(source_file
+  (dict
+    (pair 
+      (lit_string)
+      (lit_string)
+    )
+    (pair 
+      (lit_string)
+      (list 
+        (lit_string)
+        (lit_string)
+      )
+    )
+  )
+)
+
+==================
+dict as arg
+==================
+
+{{ fn('', {'k':'v'}) }}
+
+---
+
+(source_file
+  (fn_call
+    (identifier)
+    (argument_list
+      (lit_string)
+      (dict
+        (pair 
+          (lit_string)
+          (lit_string)
+        )
+      )
+    )
+  )
+)

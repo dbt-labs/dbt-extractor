@@ -1,8 +1,0 @@
-
-with abc as (
-	select 1 as id
-    from some_table
-)
-
-select *
-from abc

@@ -1,0 +1,78 @@
+==================
+list of string lits
+==================
+
+{{ ['a','bc','def'] }}
+
+---
+
+(source_file
+  (list
+    (lit_string)
+    (lit_string)
+    (lit_string)
+  )
+)
+
+==================
+empty list
+==================
+
+{{ [] }}
+
+---
+
+(source_file
+  (list)
+)
+
+==================
+list with trailing comma
+==================
+
+{{ ['a','bc','def',] }}
+
+---
+
+(source_file
+  (list
+    (lit_string)
+    (lit_string)
+    (lit_string)
+  )
+)
+
+==================
+config with list of string lits
+==================
+
+{{
+  config(
+    k='v',
+    k2='v2',
+    list=['a','bc','def']
+  )
+}}
+
+---
+
+(source_file
+  (fn_call
+    (identifier)
+    (argument_list
+      (kwarg
+        (lit_string)
+      )
+      (kwarg
+        (lit_string)
+      )
+      (kwarg
+        (list
+          (lit_string)
+          (lit_string)
+          (lit_string)
+        )
+      )
+    )
+  )
+)

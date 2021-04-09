@@ -1,15 +1,10 @@
 
-function commaSep1(rule, name) {
-  return sep1(rule, ',', name);
+function commaSep1(rule) {
+    return sep1(rule, ',');
 }
 
-function sep1(rule, separator, name) {
-  var sequence = seq(rule, repeat(seq(separator, rule)));
-  if (name) {
-      return field(name, sequence);
-  } else {
-      return sequence;
-  }
+function sep1(rule, separator) {
+    return seq(rule, repeat(seq(separator, rule)))
 }
 
 
@@ -19,72 +14,87 @@ module.exports = grammar ({
   rules: {
     source_file: $ => repeat(
         choice(
-            $.dbt_jinja_ref,
-            $.dbt_jinja_source,
-            $.dbt_jinja_config,
-            $.text
+            $._jinja_block,
+            $._text
         )
+    ),
+
+    _jinja_block: $ => seq(
+        '{{',
+        $._expr,
+        '}}'
+    ),
+
+    // This defines all the meat of the parser
+    _expr: $ => choice(
+        $.fn_call,
+        $.lit_string,
+        $.list,
+        $.dict
+    ),
+
+    fn_call: $ => seq(
+        field('fn_name', $.identifier),
+        field('argument_list', $.argument_list)
+    ),
+
+    argument_list: $ => seq(
+        '(',
+        optional(commaSep1(
+            choice(
+                $._expr,
+                $.kwarg
+            )
+        )),
+        ')'
     ),
 
     lit_string: $ => seq(
         choice(
             seq(
                 "'",
-                field('string_val', $.identifier),
+                token(/[^']*/),
                 "'",
             ),
             seq(
                 '"',
-                field('string_val', $.identifier),
+                token(/[^"]*/),
                 '"',
             )
         )
     ),
 
-    dbt_jinja_ref: $ => seq(
-        '{{',
-        'ref',
-        '(',
-        optional(
-            seq(
-                field('dbt_package_name', $.lit_string),
-                ','
-            ),
-        ),
-        field('dbt_model_name', $.lit_string),
-        ')',
-        '}}'
+    list: $ => seq(
+        '[',
+        optional(commaSep1($._expr)),
+        optional(','),
+        ']'
     ),
 
-    dbt_jinja_source: $ => seq(
-        '{{',
-        'source',
-        '(',
-        field('dbt_source_name', $.lit_string),
-        ',',
-        field('dbt_source_table', $.lit_string),
-        ')',
-        '}}'
+    dict: $ => seq(
+        '{',
+        optional(commaSep1($.pair)),
+        optional(','),
+        '}'
     ),
 
-    dbt_jinja_config: $ => seq(
-        '{{',
-        'config',
-        '(',
-        commaSep1($.kwarg_expression),
-        ')',
-        '}}'
+    pair: $ => seq(
+        field('key', $.lit_string),
+        ':',
+        field('value', $._expr)
     ),
 
-    identifier: $ => token(/[a-zA-Z_][a-zA-Z0-9_]+/),
+    identifier: $ => $._identifier,
 
-    kwarg_expression: $ => seq(
-        field("arg", $.identifier),
+    _identifier: $ => token(/[a-zA-Z_][a-zA-Z0-9_]*/),
+
+    kwarg: $ => seq(
+        field("arg", $._identifier),
         '=',
-        field("value", $.lit_string),
+        field("value", $._expr),
     ),
 
-    text: $ => /[^{}]+/
+    _text: $ => /[^{}]+/
 
   }
 });

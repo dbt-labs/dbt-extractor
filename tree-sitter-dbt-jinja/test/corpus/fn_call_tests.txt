@@ -1,0 +1,109 @@
+==================
+Ref with string literal
+==================
+
+select * from {{ ref('my_table') }}
+
+---
+
+(source_file 
+  (fn_call
+    (identifier) 
+    (argument_list
+      (lit_string)
+    )
+  )
+)
+
+==================
+Ref with bare words fails
+==================
+
+select * from {{ ref(not_a_string) }}
+
+---
+
+(source_file 
+  (fn_call
+    (identifier)
+    (argument_list
+      (ERROR)
+    )
+  )
+)
+
+==================
+Config with one kwarg
+==================
+
+{{ config(key='value') }}
+
+---
+
+(source_file
+  (fn_call
+    (identifier)
+    (argument_list
+      (kwarg
+        (lit_string)
+      )
+    )
+  )
+)
+
+==================
+Config with two kwargs
+==================
+
+{{ config(key='value', key2='value2') }}
+
+---
+
+(source_file
+  (fn_call
+    (identifier)
+    (argument_list
+      (kwarg
+        (lit_string)
+      )
+      (kwarg
+        (lit_string)
+      )
+    )
+  )
+)
+
+==================
+Fn with a kwarg, string lit, list, and dict
+==================
+
+{{ config(
+    key='value',
+    'lit',
+    {'key':'value'},
+    ['a','b']
+) }}
+
+---
+
+(source_file
+  (fn_call
+    (identifier)
+    (argument_list
+      (kwarg
+        (lit_string)
+      )
+      (lit_string)
+      (dict
+        (pair
+          (lit_string)
+          (lit_string)
+        )
+      )
+      (list
+        (lit_string)
+        (lit_string)
+      )
+    )
+  )
+)

@@ -1,0 +1,41 @@
+==================
+floating string literal
+==================
+
+{{ 'floating lit' }}
+
+---
+
+(source_file 
+  (lit_string)
+)
+
+==================
+bare words fail
+==================
+
+{{ text }}
+
+---
+
+(source_file
+  (ERROR
+    (identifier)
+  )
+)
+
+==================
+multiple jinja blocks
+==================
+
+some text {{ 'floating lit' }} more text {{ fn() }} text.
+
+---
+
+(source_file
+  (lit_string)
+  (fn_call
+    (identifier)
+    (argument_list)
+  )
+)

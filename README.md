@@ -1,69 +1,47 @@
 
-### How to use me
+# dbt Jinja tree-sitter Parser
 
-**Installing requirements**
+This repository contains a tree-sitter grammar for the most common non-macro jinja calls as well as a python app that can run the parser against example model file contents and collect either the aggregated stats for how well it does, or output all the jinja blocks it could not parse to a file.
 
+The parser additionally has a thin type checker written in python that does arity checks on the built in `ref`, `config`, and `source` functions as well as scope checking for nested function calls which this implementation does not support.
+
+## Installing Requirements
 ```
-python3 -m venv env
-source env/bin/activate
-pip install -r requirements.txt
-```
-
-**Proof of concept**
-_This script pulls out tables referenced and columns emitted from a SQL
-statement_.
-
-```
-$ python extractor.py
-
-========================================
-Query:
-    select
-        name,
-        age * 2 as twiceage
-    from some_table
-
- - Inputs (tables): {'some_table'}
- - Outputs (columns): {'name', 'twiceage'}
-========================================
-Query:
-    select *,
-        lower(name) as lower_name,
-        row_number() over () as idx
-
-    from some_table
-    join other_table using (id)
-
- - Inputs (tables): {'other_table', 'some_table'}
- - Outputs (columns): {'lower_name', 'idx', '*'}
+make install
 ```
 
-### Performance
-_See `timing.py`. Example timing on my machine:_
-
+## Building The Project
 ```
-Tree-sitter-------------------
-  Ran 10000 parse cycles in 0.86s (0.09ms/node)
-  Parsed:
-{'configs': {'enabled': 'True', 'materialized': 'table'},
- 'refs': {(None, 'my_model'), ('some_package', 'some_model')},
- 'sources': {('some', 'source')}}
-
-
-Jinja-------------------------
-  Ran 10000 parse cycles in 21.73s (2.17ms/node)
-  Parsed:
-{'configs': {'enabled': 'True', 'materialized': 'table'},
- 'refs': {('some_package', 'some_model'), ('my_model',)},
- 'sources': {('some', 'source')}}
+make build
 ```
 
-### Using tree-sitter
-View the README.md file in `tree-sitter-sql` for usage information. The
-relevant grammar files live in `tree-sitter-sql/grammar.js` and
-`tree-sitter-dbt-jinja/grammar.js`.
+Since the python app does not need to be built this only builds the tree-sitter parser. This only needs to be run if you change the `grammar.js` file.
 
+## Testing The Project
+```
+make test
+```
 
-### Relevant docs
-- https://tree-sitter.github.io/tree-sitter/creating-parsers
-- https://github.com/tree-sitter/py-tree-sitter
+- Tests for the grammar are in `tree-sitter-dbt-jinja/test/corpus`
+- Tests for the type checker are coming
+- Tests for the python app runner are coming
+
+## Running The Python App
+To collect aggregated results on how well the parser does on the sample data:
+```
+make run ARGS="results your-data-file.json"
+```
+
+To write all the jinja blocks that this parser failed to parse to a file:
+```
+make run ARGS="results your-data-file.json ./out-file.txt"
+```
+
+If you have sample files in the form 
+```
+{json}
+{json}
+...
+{json}
+```
+Use the `jsonify.sh` script provided in this repo to stitch them together into one large JSON array before running the above commands.
