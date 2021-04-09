@@ -1,3 +1,4 @@
+from functools import reduce
 import src.compiler
 import src.type_check
 
@@ -11,6 +12,13 @@ def type_checks(source_text):
     res = src.type_check.type_check(tree.root_node)
     # if it returned a list of errors, it didn't typecheck
     return not isinstance(res, list)
+
+def type_checks_all(l):
+    return reduce(lambda x, y: x and y, map(type_checks, l))
     
-def test_dummy():
-    assert type_checks("select * from {{ ref('my_table') }}")
+def test_recognizes_ref_source_config():
+    assert type_checks_all([
+        "select * from {{ ref('my_table') }}",
+        "{{ config('str') }}"
+        "{{ source('a', 'b') }}"
+    ])
