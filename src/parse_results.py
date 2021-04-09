@@ -1,6 +1,6 @@
 import itertools
 import json
-import compiler
+import src.compiler
 
 
 # like set difference `-` but using eq not hash so it can be used on mutable types

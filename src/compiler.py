@@ -1,19 +1,19 @@
 
 from tree_sitter import Language, Parser
-import type_check
+import src.type_check
 
 
 Language.build_library(
   # Store the library in the `build` directory
-  'build/sql.so',
+  '../build/sql.so',
 
   # Include one or more languages
   [
-    './tree-sitter-dbt-jinja',
+    '../tree-sitter-dbt-jinja',
   ]
 )
 
-JINJA2_LANGUAGE = Language('build/sql.so', 'dbt_jinja')
+JINJA2_LANGUAGE = Language('../build/sql.so', 'dbt_jinja')
 
 refs = set()
 sources = set()

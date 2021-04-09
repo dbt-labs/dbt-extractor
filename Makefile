@@ -18,12 +18,18 @@ node_modules/tree-sitter-cli/tree-sitter:
 install: $(VENV)/bin/activate node_modules/tree-sitter-cli/tree-sitter
 
 build: install
-	cd tree-sitter-dbt-jinja && ../node_modules/tree-sitter-cli/tree-sitter generate
+	cd tree-sitter-dbt-jinja \
+	&& ../node_modules/tree-sitter-cli/tree-sitter generate
 
-# runs the tree-sitter tests
-# TODO add python unit tests
+# runs the tree-sitter tests and python unit tests
+# python unit tests have a hard-coded relative path for the generated tree-sitter
+# code, so the test runner needs to be run from the src directory
+# using && so that unit tests don't run if tree-sitter tests fail.
 test: build
-	cd tree-sitter-dbt-jinja && ../node_modules/tree-sitter-cli/tree-sitter test
+	cd tree-sitter-dbt-jinja \
+	&& ../node_modules/tree-sitter-cli/tree-sitter test \
+	&& cd ../src \
+	&& ../$(VENV)/bin/pytest ..
 
 # runs the python application
 # arguments must be passed like `make run ARGS="arg1 arg2"`

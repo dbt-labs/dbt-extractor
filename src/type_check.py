@@ -88,6 +88,7 @@ def _type_check(results, node):
     if node.type == 'fn_call':
         name = node.child_by_field_name('fn_name')
         args = node.child_by_field_name('argument_list')
+        # TODO this will throw on differently named functions
         res = type_checkers['fn_call'][name](args)
         return results + [res] + flatten(list(map(lambda x: _type_check([], x), node.children)))
     elif node.type == 'list':
@@ -107,5 +108,3 @@ def type_check(node):
         return node
     else:
         return all_type_errors
-
-
