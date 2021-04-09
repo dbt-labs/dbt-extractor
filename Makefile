@@ -27,7 +27,7 @@ test: build
 
 # runs the python application
 # arguments must be passed like `make run ARGS="arg1 arg2"`
-run: install
+run: build
 	./$(VENV)/bin/python3 src/main.py $(ARGS)
 
 clean:
