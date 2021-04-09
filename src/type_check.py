@@ -83,24 +83,28 @@ type_checkers = {
 def flatten(list_of_lists):
     return [item for sublist in list_of_lists for item in sublist]
 
-# return ALL the results. don't just stop at the first error
-def _type_check(results, node):
-    if node.type == 'fn_call':
-        name = node.child_by_field_name('fn_name')
-        args = node.child_by_field_name('argument_list')
-        # TODO this will throw on differently named functions
-        res = type_checkers['fn_call'][name](args)
-        return results + [res] + flatten(list(map(lambda x: _type_check([], x), node.children)))
-    elif node.type == 'list':
-        type_checkers['list'](node.children)
-    elif node.type == 'kwarg':
-        type_checkers['kwarg'](node.child_by_field_name('value'))
-    elif node.type == 'dict':
-        type_checkers['dict'](node.children)
-    else:
-        return results + [TypeCheckPass()]
-
 def type_check(node):
+    # locally mutate results
+    results = []
+    # return ALL the results. don't just stop at the first error
+    def _type_check(results, node):
+        if node.type == 'fn_call':
+            name = node.child_by_field_name('fn_name')
+            args = node.child_by_field_name('argument_list')
+            if name not in type_checkers['fn_call'].keys():
+                return [TypeCheckFailure(f"only ref, source, and config function calls allowed")]
+            res = type_checkers['fn_call'][name](args)
+            results = results + [res]
+        elif node.type == 'list':
+            type_checkers['list'](node.children)
+        elif node.type == 'kwarg':
+            type_checkers['kwarg'](node.child_by_field_name('value'))
+        elif node.type == 'dict':
+            type_checkers['dict'](node.children)
+        else:
+            for child in node.children:
+                _type_check(results, child)
+
     all_type_errors = list(filter(lambda x: isinstance(x, TypeCheckFailure), _type_check([], node)))
     if len(all_type_errors) <= 0:
         # This ast would normally be a new typed ast, but we're not doing any of that yet.

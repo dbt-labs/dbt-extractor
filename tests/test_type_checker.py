@@ -54,3 +54,6 @@ def test_config_all_inputs():
         "{{ config(['list']) }}"
         "{{ config({'dict2': 'v'}) }}"
     ])
+
+def test_custom_functions():
+    assert not type_checks("{{ please_fail('str') }}")
