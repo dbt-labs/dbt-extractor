@@ -25,36 +25,36 @@ def type_check_fails(source_text):
     return not type_checks(source_text)
 
 # same as `type_checks` but operates on a list of source strings
-def type_checks_all(l):
+def all_type_check(l):
     return reduce(lambda x, y: x and y, map(type_checks, l))
 
 # same as `type_checks_all` but returns true iff none of the strings typecheck
-def type_checks_none(l):
+def none_type_check(l):
     return reduce(lambda x, y: x and y, map(type_check_fails, l))
     
 def test_recognizes_ref_source_config():
-    assert type_checks_all([
+    assert all_type_check([
         "select * from {{ ref('my_table') }}",
         "{{ config(key='value') }}",
         "{{ source('a', 'b') }}"
     ])
 
 def test_fails_on_other_fn_names():
-    assert type_checks_none([
+    assert none_type_check([
         "select * from {{ reff('my_table') }}",
         "{{ fn(key='value') }}",
         "{{ REF('a', 'b') }}"
     ])
 
 def test_config_all_inputs():
-    assert type_checks_all([
+    assert all_type_check([
         "{{ config(key='value') }}"
         "{{ config(key=['v1,','v2']) }}"
         "{{ config(key={'k': 'v'}) }}"
     ])
 
 def test_config_fails_non_kwarg_inputs():
-    assert type_checks_none([
+    assert none_type_check([
         "{{ config('value') }}"
         "{{ config(['v1,','v2']) }}"
         "{{ config({'k': 'v'}) }}"
@@ -68,11 +68,11 @@ def test_source_keyword_args():
     ])
 
 def test_source_keyword_args():
-    assert type_checks_none([
+    assert none_type_check([
         "{{ source(source_name='src', BAD_NAME='table') }}"
         "{{ source(BAD_NAME='src', table_name='table') }}"
         "{{ source(BAD_NAME='src', BAD_NAME='table') }}"
     ])
 
 def test_ref_bad_inputs_fail():
-    assert type_check_fails("{{ ref('too', 'many', 'strings') }}")
+    assert none_type_check(["{{ ref('too', 'many', 'strings') }}"])
