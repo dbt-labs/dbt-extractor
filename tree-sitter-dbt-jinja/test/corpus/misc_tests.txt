@@ -33,7 +33,7 @@ some text {{ 'floating lit' }} more text {{ config() }} text.
 (source_file
   (lit_string)
   (fn_call
-    (keyword)
+    (config)
     (argument_list)
   )
 )

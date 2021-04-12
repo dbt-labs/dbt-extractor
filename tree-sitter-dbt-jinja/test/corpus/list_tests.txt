@@ -58,7 +58,7 @@ config with list of string lits
 
 (source_file
   (fn_call
-    (keyword)
+    (config)
     (argument_list
       (kwarg
         (lit_string)

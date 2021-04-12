@@ -35,7 +35,7 @@ module.exports = grammar ({
 
     fn_call: $ => seq(
         // Only built-in keyword function calls parse.
-        field('fn_name', $.keyword),
+        field('fn_name', $._keyword),
         field('argument_list', $.argument_list)
     ),
 
@@ -87,11 +87,17 @@ module.exports = grammar ({
 
     // these are only for built-in functions.
     // will need to refactor if a non-function keyword needs to be added.
-    keyword: $ => choice(
-        'ref',
-        'source',
-        'config'
+    _keyword: $ => choice(
+        $.ref,
+        $.source,
+        $.config,
     ),
+
+    // parsing keywords individually so they can be type-checked without
+    // referring to the source in the type-checker.
+    ref: $ => 'ref',
+    source: $ => 'source',
+    config: $ => 'config',
 
     identifier: $ => $._identifier,
 
