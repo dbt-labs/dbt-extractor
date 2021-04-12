@@ -21,14 +21,16 @@ def type_checks(source_text):
     else:
         return True
 
+def type_check_fails(source_text):
+    return not type_checks(source_text)
+
 # same as `type_checks` but operates on a list of source strings
 def type_checks_all(l):
     return reduce(lambda x, y: x and y, map(type_checks, l))
 
-# TODO Add type_check_fails and compose with that
 # same as `type_checks_all` but returns true iff none of the strings typecheck
 def type_checks_none(l):
-    return reduce(lambda x, y: x and y, map(lambda x: not x, map(type_checks, l)))
+    return reduce(lambda x, y: x and y, map(type_check_fails, l))
     
 def test_recognizes_ref_source_config():
     assert type_checks_all([
@@ -51,12 +53,12 @@ def test_source_keyword_args():
         "{{ source(source_name='src', 'table') }}"
     ])
 
-# def test_source_keyword_args():
-#     assert type_checks_none([
-#         "{{ source(source_name='src', BAD_NAME='table') }}"
-#         "{{ source(BAD_NAME='src', table_name='table') }}"
-#         "{{ source(BAD_NAME='src', BAD_NAME='table') }}"
-#     ])
+def test_source_keyword_args():
+    assert type_checks_none([
+        "{{ source(source_name='src', BAD_NAME='table') }}"
+        "{{ source(BAD_NAME='src', table_name='table') }}"
+        "{{ source(BAD_NAME='src', BAD_NAME='table') }}"
+    ])
 
 def test_ref_bad_inputs_fail():
-    assert not type_checks("{{ ref('too', 'many', 'strings') }}")
+    assert type_check_fails("{{ ref('too', 'many', 'strings') }}")
