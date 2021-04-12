@@ -88,18 +88,6 @@ def dict_check(pairs):
             return TypeCheckFailure(f"dict values cannot be function calls")
     return TypeCheckPass()
 
-# hack
-type_checkers = { 
-    'fn_call': {
-        'ref': ref_check,
-        'config': config_check,
-        'source': source_check
-    },
-    'list': list_check,
-    'kwarg': kwarg_check,
-    'dict': dict_check
-}
-
 # flatten([[1,2],[3,4]) = [1,2,3,4]
 def flatten(list_of_lists):
     return [item for sublist in list_of_lists for item in sublist]
@@ -115,11 +103,11 @@ def type_check(source_bytes, node):
         if node.type == 'fn_call':
             results.append(fn_call_check(source_bytes, node))
         elif node.type == 'list':
-            results.append(type_checkers['list'](node.children))
+            results.append(list_check(node.children))
         elif node.type == 'kwarg':
-            results.append(type_checkers['kwarg'](node.child_by_field_name('value')))
+            results.append(kwarg_check(node.child_by_field_name('value')))
         elif node.type == 'dict':
-            results.append(type_checkers['dict'](node.children))
+            results.append(dict_check(node))
         elif node.children:
             for child in node.children:
                 _type_check(child)
