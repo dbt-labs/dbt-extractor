@@ -103,7 +103,7 @@ def parse_typecheck_extract(parser, string):
     if count <= 0:
         # checked should be a new typed ast, but we don't have that machinery yet.
         # this is the same untyped ast for now.
-        checked_ast_or_error_list = type_check.type_check(srouce_bytes, tree.root_node)
+        checked_ast_or_error_list = type_check.type_check(source_bytes, tree.root_node)
         data2 = dict(data)
         # if there are type errors
         if isinstance(checked_ast_or_error_list, list):
