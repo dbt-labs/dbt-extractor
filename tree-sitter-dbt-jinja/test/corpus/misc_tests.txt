@@ -37,3 +37,25 @@ some text {{ 'floating lit' }} more text {{ config() }} text.
     (argument_list)
   )
 )
+
+==================
+kwargs retain both key and value
+==================
+
+{{ config(key='value') }}
+
+---
+
+(source_file
+  (fn_call
+    (config)
+    (argument_list
+      (kwarg
+        (identifier)
+        (lit_string)
+      )
+    )
+  )
+)
+
+

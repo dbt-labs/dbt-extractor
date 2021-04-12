@@ -104,7 +104,7 @@ module.exports = grammar ({
     _identifier: $ => token(/[a-zA-Z_][a-zA-Z0-9_]*/),
 
     kwarg: $ => seq(
-        field("arg", $._identifier),
+        field("arg", $.identifier),
         '=',
         field("value", $._expr),
     ),
