@@ -16,6 +16,9 @@ class TypeCheckPass():
 def named_children(node):
     return list(filter(lambda x: x.is_named, node.children))
 
+def text_from_node(source_bytes, node):
+    return source_bytes[node.start_byte:node.end_byte].decode('utf8')
+
 # These type checking functions are naive and too concrete
 # Error messages are to be read by dbt devs to determine where tree-sitter is failing.
 # All failures will simply pass to python-jina, this will just prevent the successfully parsing
@@ -47,6 +50,7 @@ def source_check(arg_list):
     for arg in args:
         if arg.type != 'kwarg' and arg.type != 'lit_string':
             return TypeCheckFailure(f"unexpected argument type in source")
+    print(args[0].children)
     if args[0].type == 'kwarg' and args[0].child_by_field_name('arg') != 'source_name':
         return TypeCheckFailure(f"first keyword argument in source must be source_name found {args[0].child_by_field_name('arg')}")
     if args[1].type == 'kwarg' and args[1].child_by_field_name('arg') != 'table_name':
@@ -88,13 +92,13 @@ type_checkers = {
 def flatten(list_of_lists):
     return [item for sublist in list_of_lists for item in sublist]
 
-def type_check(node):
+def type_check(source_bytes, node):
     # locally mutate results
     results = []
     # return ALL the results. don't just stop at the first error
     def _type_check(node):
         if node.type == 'fn_call':
-            name = node.child_by_field_name('fn_name').type
+            name = text_from_node(source_bytes, node.child_by_field_name('fn_name'))
             arg_list = node.child_by_field_name('argument_list')
             # this will always succeed because the parser only parses built-in functions by keyword
             results.append(type_checkers['fn_call'][name](arg_list))

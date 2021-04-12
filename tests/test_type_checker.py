@@ -6,12 +6,13 @@ parser = src.compiler.get_parser()
 
 # runs the parser and type checker and prints debug messaging if it fails
 def type_checks(source_text):
-    tree = parser.parse(bytes(source_text, "utf8"))
+    source_bytes = bytes(source_text, "utf8")
+    tree = parser.parse(source_bytes)
     # If we couldn't parse the source we can't typecheck it.
     if src.compiler.error_count(tree.root_node, 0) > 0:
         print("parser failed")
         return False
-    res = src.type_check.type_check(tree.root_node)
+    res = src.type_check.type_check(source_bytes, tree.root_node)
     # if it returned a list of errors, it didn't typecheck
     if isinstance(res, list):
         for err in res:
@@ -23,6 +24,10 @@ def type_checks(source_text):
 # same as `type_checks` but operates on a list of source strings
 def type_checks_all(l):
     return reduce(lambda x, y: x and y, map(type_checks, l))
+
+# same as `type_checks_all` but returns true iff none of the strings typecheck
+def type_checks_none(l):
+    return reduce(lambda x, y: x and y, map(lambda x: not x, map(type_checks, l)))
     
 def test_recognizes_ref_source_config():
     assert type_checks_all([
@@ -44,6 +49,13 @@ def test_source_keyword_args():
         "{{ source('src', table_name='table') }}"
         "{{ source(source_name='src', 'table') }}"
     ])
+
+# def test_source_keyword_args():
+#     assert type_checks_none([
+#         "{{ source(source_name='src', BAD_NAME='table') }}"
+#         "{{ source(BAD_NAME='src', table_name='table') }}"
+#         "{{ source(BAD_NAME='src', BAD_NAME='table') }}"
+#     ])
 
 def test_ref_bad_inputs_fail():
     assert not type_checks("{{ ref('too', 'many', 'strings') }}")
