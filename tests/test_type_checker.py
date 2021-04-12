@@ -46,6 +46,13 @@ def test_config_all_inputs():
         "{{ config(key={'k': 'v'}) }}"
     ])
 
+def test_config_fails_non_kwarg_inputs():
+    assert type_checks_none([
+        "{{ config('value') }}"
+        "{{ config(['v1,','v2']) }}"
+        "{{ config({'k': 'v'}) }}"
+    ])
+
 def test_source_keyword_args():
     assert type_checks_all([
         "{{ source(source_name='src', table_name='table') }}"
