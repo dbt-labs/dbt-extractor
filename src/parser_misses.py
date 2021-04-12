@@ -1,6 +1,6 @@
 import itertools
 import json
-import src.compiler
+import compiler
 
 # TODO make this not hard coded
 data_path = '/Users/nate/data/customer-manifest-raw-sql/data.json'

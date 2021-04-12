@@ -1,7 +1,7 @@
 import argparse
-import src.compiler
-import src.parse_results
-import src.parser_misses
+import compiler
+import parse_results
+import parser_misses
 import sys
 
 
