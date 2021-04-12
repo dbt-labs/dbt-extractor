@@ -26,13 +26,13 @@ floating dict
 dict as arg
 ==================
 
-{{ fn('', {'k':'v'}) }}
+{{ config('x', {'k':'v'}) }}
 
 ---
 
 (source_file
   (fn_call
-    (identifier)
+    (keyword)
     (argument_list
       (lit_string)
       (dict

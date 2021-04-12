@@ -19,23 +19,21 @@ bare words fail
 ---
 
 (source_file
-  (ERROR
-    (identifier)
-  )
+  (ERROR)
 )
 
 ==================
 multiple jinja blocks
 ==================
 
-some text {{ 'floating lit' }} more text {{ fn() }} text.
+some text {{ 'floating lit' }} more text {{ config() }} text.
 
 ---
 
 (source_file
   (lit_string)
   (fn_call
-    (identifier)
+    (keyword)
     (argument_list)
   )
 )
