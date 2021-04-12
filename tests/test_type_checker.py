@@ -75,4 +75,9 @@ def test_source_keyword_args():
     ])
 
 def test_ref_bad_inputs_fail():
-    assert none_type_check(["{{ ref('too', 'many', 'strings') }}"])
+    assert none_type_check([
+        "{{ ref('too', 'many', 'strings') }}",
+        "{{ ref() }}"
+        "{{ ref(kwarg='is_wrong') }}"
+        "{{ ref(['list is wrong']) }}"
+    ])
