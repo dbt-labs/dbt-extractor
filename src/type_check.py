@@ -25,6 +25,18 @@ def text_from_node(source_bytes, node):
 # incorrect dbt jinja.
 # TODO make these more abstract so they can apply to future functions for free.
 
+def fn_call_check(source_bytes, fn_call):
+    name = text_from_node(source_bytes, fn_call.child_by_field_name('fn_name'))
+    arg_list = fn_call.child_by_field_name('argument_list')
+    if name == "ref":
+        return ref_check(arg_list)
+    elif name == "source":
+        return source_check(source_bytes, arg_list)
+    elif name == "config":
+        return config_check(arg_list)
+    else:
+        return TypeCheckFailure(f"can only use the three built in functions: ref, source, config. Found {name}")
+
 def ref_check(arg_list):
     named_child_count = arg_list.named_child_count
     if named_child_count < 1 or named_child_count > 2:
@@ -92,22 +104,16 @@ type_checkers = {
 def flatten(list_of_lists):
     return [item for sublist in list_of_lists for item in sublist]
 
+# Depends on the source because we check for built-ins. It's a bit of a hack,
+# but it works well at this scale.
 def type_check(source_bytes, node):
     # locally mutate results
     results = []
     # return ALL the results. don't just stop at the first error
     def _type_check(node):
+        # special because it refers back to source
         if node.type == 'fn_call':
-            name = text_from_node(source_bytes, node.child_by_field_name('fn_name'))
-            arg_list = node.child_by_field_name('argument_list')
-            if name == "ref":
-                results.append(ref_check(arg_list))
-            elif name == "source":
-                results.append(source_check(source_bytes, arg_list))
-            elif name == "config":
-                results.append(config_check(arg_list))
-            else:
-                TypeCheckFailure(f"can only use the three built in functions: ref, source, config. Found {name}")
+            results.append(fn_call_check(source_bytes, node))
         elif node.type == 'list':
             results.append(type_checkers['list'](node.children))
         elif node.type == 'kwarg':
