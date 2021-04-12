@@ -28,7 +28,7 @@ def text_at(text, node):
     return text[node.start_byte:node.end_byte]
 
 def text_from_node(source_bytes, node):
-    source_bytes[node.start_byte:node.end_byte].decode('utf8')
+    return source_bytes[node.start_byte:node.end_byte].decode('utf8')
 
 def strip_quotes(text):
     if text:
@@ -90,7 +90,8 @@ def get_parser():
 
 # entry point function
 def parse_typecheck_extract(parser, string):
-    tree = parser.parse(bytes(string, "utf8"))
+    source_bytes = bytes(string, "utf8")
+    tree = parser.parse(source_bytes)
     count = error_count(tree.root_node, 0)
     data = {
         'refs': set(),
@@ -102,7 +103,7 @@ def parse_typecheck_extract(parser, string):
     if count <= 0:
         # checked should be a new typed ast, but we don't have that machinery yet.
         # this is the same untyped ast for now.
-        checked_ast_or_error_list = type_check.type_check(tree.root_node)
+        checked_ast_or_error_list = type_check.type_check(srouce_bytes, tree.root_node)
         data2 = dict(data)
         # if there are type errors
         if isinstance(checked_ast_or_error_list, list):
