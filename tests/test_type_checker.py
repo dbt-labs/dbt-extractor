@@ -25,6 +25,7 @@ def type_checks(source_text):
 def type_checks_all(l):
     return reduce(lambda x, y: x and y, map(type_checks, l))
 
+# TODO Add type_check_fails and compose with that
 # same as `type_checks_all` but returns true iff none of the strings typecheck
 def type_checks_none(l):
     return reduce(lambda x, y: x and y, map(lambda x: not x, map(type_checks, l)))

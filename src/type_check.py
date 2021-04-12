@@ -26,8 +26,9 @@ def text_from_node(source_bytes, node):
 # TODO make these more abstract so they can apply to future functions for free.
 
 def ref_check(arg_list):
-    if arg_list.named_child_count < 1 or arg_list.named_child_count > 2:
-        return TypeCheckFailure(f"expected ref to have 1 or 2 arguments. found {arg_list.named_child_count}")
+    named_child_count = arg_list.named_child_count
+    if named_child_count < 1 or named_child_count > 2:
+        return TypeCheckFailure(f"expected ref to have 1 or 2 arguments. found {named_child_count}")
     for arg in named_children(arg_list):
         if arg.type == 'kwarg':
             return TypeCheckFailure(f"unexpected keyword argument in ref")
@@ -43,17 +44,16 @@ def config_check(arg_list):
             return TypeCheckFailure(f"unexpected non keyword argument in config")
     return TypeCheckPass()
 
-def source_check(arg_list):
+def source_check(source_bytes, arg_list):
     if arg_list.named_child_count != 2:
         return TypeCheckFailure(f"expected source to 2 arguments. found {arg_list.named_child_count}")
     args = named_children(arg_list)
     for arg in args:
         if arg.type != 'kwarg' and arg.type != 'lit_string':
-            return TypeCheckFailure(f"unexpected argument type in source")
-    print(args[0].children)
-    if args[0].type == 'kwarg' and args[0].child_by_field_name('arg') != 'source_name':
+            return TypeCheckFailure(f"unexpected argument type in source. Found {arg.type}")
+    if args[0].type == 'kwarg' and text_from_node(source_bytes, args[0].child_by_field_name('arg')) != 'source_name':
         return TypeCheckFailure(f"first keyword argument in source must be source_name found {args[0].child_by_field_name('arg')}")
-    if args[1].type == 'kwarg' and args[1].child_by_field_name('arg') != 'table_name':
+    if args[1].type == 'kwarg' and text_from_node(source_bytes, args[1].child_by_field_name('arg')) != 'table_name':
         return TypeCheckFailure(f"second keyword argument in source must be table_name found {args[1].child_by_field_name('arg')}")
     return TypeCheckPass()
 
@@ -100,8 +100,14 @@ def type_check(source_bytes, node):
         if node.type == 'fn_call':
             name = text_from_node(source_bytes, node.child_by_field_name('fn_name'))
             arg_list = node.child_by_field_name('argument_list')
-            # this will always succeed because the parser only parses built-in functions by keyword
-            results.append(type_checkers['fn_call'][name](arg_list))
+            if name == "ref":
+                results.append(ref_check(arg_list))
+            elif name == "source":
+                results.append(source_check(source_bytes, arg_list))
+            elif name == "config":
+                results.append(config_check(arg_list))
+            else:
+                TypeCheckFailure(f"can only use the three built in functions: ref, source, config. Found {name}")
         elif node.type == 'list':
             results.append(type_checkers['list'](node.children))
         elif node.type == 'kwarg':
