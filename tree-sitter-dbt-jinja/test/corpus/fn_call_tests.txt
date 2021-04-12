@@ -113,3 +113,18 @@ Fn with a kwarg, string lit, list, and dict
     )
   )
 )
+
+==================
+parses other fn names
+==================
+
+{{ fn() }}
+
+---
+
+(source_file 
+  (fn_call
+    (identifier) 
+    (argument_list)
+  )
+)
