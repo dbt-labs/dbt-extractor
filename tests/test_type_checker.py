@@ -43,8 +43,8 @@ def type_checks_all_debug(l):
 def test_recognizes_ref_source_config():
     assert type_checks_all_debug([
         "select * from {{ ref('my_table') }}",
-        "{{ config(key='value') }}"
-        # "{{ source('a', 'b') }}"
+        "{{ config(key='value') }}",
+        "{{ source('a', 'b') }}"
     ])
 
 def test_config_all_inputs():

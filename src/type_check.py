@@ -44,13 +44,14 @@ def config_check(arg_list):
 def source_check(arg_list):
     if arg_list.named_child_count != 2:
         return TypeCheckFailure(f"expected source to 2 arguments. found {arg_list.named_child_count}")
-    for arg in named_children(arg_list):
+    args = named_children(arg_list)
+    for arg in args:
         if arg.type != 'kwarg' and arg.type != 'lit_string':
             return TypeCheckFailure(f"unexpected argument type in source")
-        if arg[0].type == 'kwarg' and arg[0].child_by_field_name('arg') != 'source_name':
-            return TypeCheckFailure(f"first keyword argument in source must be source_name found {arg[0].child_by_field_name('arg')}")
-        if arg[1].type == 'kwarg' and arg[1].child_by_field_name('arg') != 'table_name':
-            return TypeCheckFailure(f"second keyword argument in source must be table_name found {arg[0].child_by_field_name('arg')}")
+    if args[0].type == 'kwarg' and args[0].child_by_field_name('arg') != 'source_name':
+        return TypeCheckFailure(f"first keyword argument in source must be source_name found {arg[0].child_by_field_name('arg')}")
+    if args[1].type == 'kwarg' and args[1].child_by_field_name('arg') != 'table_name':
+        return TypeCheckFailure(f"second keyword argument in source must be table_name found {arg[0].child_by_field_name('arg')}")
     return TypeCheckPass()
 
 def list_check(elems):
