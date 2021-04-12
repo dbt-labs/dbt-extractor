@@ -41,19 +41,18 @@ def type_checks_all_debug(l):
     return reduce(lambda x, y: x and y, map(type_checks_debug, l))
     
 def test_recognizes_ref_source_config():
-    assert type_checks_all([
+    assert type_checks_all_debug([
         "select * from {{ ref('my_table') }}",
-        "{{ config('str') }}"
-        "{{ source('a', 'b') }}"
+        "{{ config(key='value') }}"
+        # "{{ source('a', 'b') }}"
     ])
 
 def test_config_all_inputs():
-    assert type_checks_all([
-        "{{ config('str') }}",
-        "{{ config(key='value') }}",
-        "{{ config(['list']) }}"
-        "{{ config({'dict2': 'v'}) }}"
+    assert type_checks_all_debug([
+        "{{ config(key='value') }}"
+        "{{ config(key=['v1,','v2']) }}"
+        "{{ config(key={'k': 'v'}) }}"
     ])
 
-def test_custom_functions():
-    assert not type_checks("{{ please_fail('str') }}")
+def test_ref_bad_inputs_fail():
+    assert not type_checks_debug("{{ ref('too', 'many', 'strings') }}")

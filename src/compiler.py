@@ -19,11 +19,16 @@ refs = set()
 sources = set()
 configs = dict()
 
+# TODO I think this is broken because it's not bytes....
+# text_from_node is probably the right way to do this
 def text_at(text, node):
     if not node:
         return None
 
     return text[node.start_byte:node.end_byte]
+
+def text_from_node(source_bytes, node):
+    source_bytes[node.start_byte:node.end_byte].decode('utf8')
 
 def strip_quotes(text):
     if text:

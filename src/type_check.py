@@ -13,34 +13,38 @@ class TypeCheckFailure():
 class TypeCheckPass():
     pass
 
+def named_children(node):
+    return list(filter(lambda x: x.is_named, node.children))
+
 # These type checking functions are naive and too concrete
 # Error messages are to be read by dbt devs to determine where tree-sitter is failing.
 # All failures will simply pass to python-jina, this will just prevent the successfully parsing
 # incorrect dbt jinja.
 # TODO make these more abstract so they can apply to future functions for free.
 
-def ref_check(args):
-    if len(args) < 1 or len(args) > 2:
-        return TypeCheckFailure(f"expected ref to have 1 or 2 arguments. found {len(args)}")
-    for arg in args:
+def ref_check(arg_list):
+    print(f"args: {arg_list.named_child_count}")
+    if arg_list.named_child_count < 1 or arg_list.named_child_count > 2:
+        return TypeCheckFailure(f"expected ref to have 1 or 2 arguments. found {arg_list.named_child_count}")
+    for arg in named_children(arg_list):
         if arg.type == 'kwarg':
             return TypeCheckFailure(f"unexpected keyword argument in ref")
         if arg.type != 'lit_string':
             return TypeCheckFailure(f"unexpected argument type in ref")
     return TypeCheckPass()
 
-def config_check(args):
-    if len(args) < 1:
-        return TypeCheckFailure(f"expected config to have at least one argument. found {len(args)}")
-    for arg in args:
+def config_check(arg_list):
+    if arg_list.named_child_count < 1:
+        return TypeCheckFailure(f"expected config to have at least one argument. found {arg_list.named_child_count}")
+    for arg in named_children(arg_list):
         if arg.type != 'kwarg':
             return TypeCheckFailure(f"unexpected non keyword argument in config")
     return TypeCheckPass()
 
-def source_check(args):
-    if len(args) != 2:
-        return TypeCheckFailure(f"expected source to 2 arguments. found {len(args)}")
-    for arg in args:
+def source_check(arg_list):
+    if arg_list.named_child_count != 2:
+        return TypeCheckFailure(f"expected source to 2 arguments. found {arg_list.named_child_count}")
+    for arg in named_children(arg_list):
         if arg.type != 'kwarg' and arg.type != 'lit_string':
             return TypeCheckFailure(f"unexpected argument type in source")
         if arg[0].type == 'kwarg' and arg[0].child_by_field_name('arg') != 'source_name':
@@ -73,13 +77,14 @@ type_checkers = {
     'fn_call': {
         'ref': ref_check,
         'config': config_check,
-        'sources': source_check
+        'source': source_check
     },
     'list': list_check,
     'kwarg': kwarg_check,
     'dict': dict_check
 }
 
+# flatten([[1,2],[3,4]) = [1,2,3,4]
 def flatten(list_of_lists):
     return [item for sublist in list_of_lists for item in sublist]
 
@@ -87,25 +92,27 @@ def type_check(node):
     # locally mutate results
     results = []
     # return ALL the results. don't just stop at the first error
-    def _type_check(results, node):
+    def _type_check(node):
         if node.type == 'fn_call':
-            name = node.child_by_field_name('fn_name')
-            args = node.child_by_field_name('argument_list')
-            if name not in type_checkers['fn_call'].keys():
-                return [TypeCheckFailure(f"only ref, source, and config function calls allowed")]
-            res = type_checkers['fn_call'][name](args)
-            results = results + [res]
+            name = node.child_by_field_name('fn_name').type
+            arg_list = node.child_by_field_name('argument_list')
+            # this will always succeed because the parser only parses built-in functions by keyword
+            results.append(type_checkers['fn_call'][name](arg_list))
         elif node.type == 'list':
-            type_checkers['list'](node.children)
+            results.append(type_checkers['list'](node.children))
         elif node.type == 'kwarg':
-            type_checkers['kwarg'](node.child_by_field_name('value'))
+            results.append(type_checkers['kwarg'](node.child_by_field_name('value')))
         elif node.type == 'dict':
-            type_checkers['dict'](node.children)
-        else:
+            results.append(type_checkers['dict'](node.children))
+        elif node.children:
             for child in node.children:
-                _type_check(results, child)
+                _type_check(child)
+        else:
+            return
 
-    all_type_errors = list(filter(lambda x: isinstance(x, TypeCheckFailure), _type_check([], node)))
+    # impure call: populates `results` with type check results
+    _type_check(node)
+    all_type_errors = list(filter(lambda x: isinstance(x, TypeCheckFailure), results))
     if len(all_type_errors) <= 0:
         # This ast would normally be a new typed ast, but we're not doing any of that yet.
         # Just know we can safely take the info out of the untyped ast is good enough for now.
