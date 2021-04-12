@@ -19,7 +19,9 @@ bare words fail
 ---
 
 (source_file
-  (ERROR)
+  (ERROR
+    (identifier)
+  )
 )
 
 ==================
@@ -33,7 +35,7 @@ some text {{ 'floating lit' }} more text {{ config() }} text.
 (source_file
   (lit_string)
   (fn_call
-    (config)
+    (identifier)
     (argument_list)
   )
 )
@@ -48,7 +50,7 @@ kwargs retain both key and value
 
 (source_file
   (fn_call
-    (config)
+    (identifier)
     (argument_list
       (kwarg
         (identifier)

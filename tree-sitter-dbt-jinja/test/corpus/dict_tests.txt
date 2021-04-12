@@ -32,7 +32,7 @@ dict as arg
 
 (source_file
   (fn_call
-    (config)
+    (identifier)
     (argument_list
       (lit_string)
       (dict
