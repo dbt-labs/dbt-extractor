@@ -54,5 +54,12 @@ def test_config_all_inputs():
         "{{ config(key={'k': 'v'}) }}"
     ])
 
+def test_source_keyword_args():
+    assert type_checks_all_debug([
+        "{{ source(source_name='src', table_name='table') }}"
+        "{{ source('src', table_name='table') }}"
+        "{{ source(source_name='src', 'table') }}"
+    ])
+
 def test_ref_bad_inputs_fail():
     assert not type_checks_debug("{{ ref('too', 'many', 'strings') }}")

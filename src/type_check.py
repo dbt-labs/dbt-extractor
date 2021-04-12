@@ -23,7 +23,6 @@ def named_children(node):
 # TODO make these more abstract so they can apply to future functions for free.
 
 def ref_check(arg_list):
-    print(f"args: {arg_list.named_child_count}")
     if arg_list.named_child_count < 1 or arg_list.named_child_count > 2:
         return TypeCheckFailure(f"expected ref to have 1 or 2 arguments. found {arg_list.named_child_count}")
     for arg in named_children(arg_list):
@@ -49,9 +48,9 @@ def source_check(arg_list):
         if arg.type != 'kwarg' and arg.type != 'lit_string':
             return TypeCheckFailure(f"unexpected argument type in source")
     if args[0].type == 'kwarg' and args[0].child_by_field_name('arg') != 'source_name':
-        return TypeCheckFailure(f"first keyword argument in source must be source_name found {arg[0].child_by_field_name('arg')}")
+        return TypeCheckFailure(f"first keyword argument in source must be source_name found {args[0].child_by_field_name('arg')}")
     if args[1].type == 'kwarg' and args[1].child_by_field_name('arg') != 'table_name':
-        return TypeCheckFailure(f"second keyword argument in source must be table_name found {arg[0].child_by_field_name('arg')}")
+        return TypeCheckFailure(f"second keyword argument in source must be table_name found {args[1].child_by_field_name('arg')}")
     return TypeCheckPass()
 
 def list_check(elems):
