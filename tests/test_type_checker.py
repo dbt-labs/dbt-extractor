@@ -39,6 +39,13 @@ def test_recognizes_ref_source_config():
         "{{ source('a', 'b') }}"
     ])
 
+def test_fails_on_other_fn_names():
+    assert type_checks_none([
+        "select * from {{ reff('my_table') }}",
+        "{{ fn(key='value') }}",
+        "{{ REF('a', 'b') }}"
+    ])
+
 def test_config_all_inputs():
     assert type_checks_all([
         "{{ config(key='value') }}"
