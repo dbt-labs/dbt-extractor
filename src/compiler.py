@@ -49,19 +49,6 @@ def extract_refs(source_bytes, node, data):
 
     # generator statement evaluated as tuple for effects
     tuple(extract_refs(source_bytes, child, data) for child in node[1:])
-        
-
-    # elif node.type == 'dbt_jinja_source':
-    #     source_name = node.child_by_field_name('dbt_source_name')
-    #     table_name = node.child_by_field_name('dbt_source_table')
-    #     source = (
-    #         strip_quotes(text_at(string, source_name)),
-    #         strip_quotes(text_at(string, table_name))
-    #     )
-    #     data['sources'].add(source)
-
-    # for child in node.children:
-    #     extract_refs(string, child, data)
 
 def error_count(node, count):
     total = count
