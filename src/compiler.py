@@ -19,59 +19,68 @@ refs = set()
 sources = set()
 configs = dict()
 
-# TODO I think this is broken because it's not bytes....
-# text_from_node is probably the right way to do this
-def text_at(text, node):
-    if not node:
-        return None
-
-    return text[node.start_byte:node.end_byte]
-
 def text_from_node(source_bytes, node):
     return source_bytes[node.start_byte:node.end_byte].decode('utf8')
+
+def named_children(node):
+    return list(filter(lambda x: x.is_named, node.children))
 
 def strip_quotes(text):
     if text:
         return text[1:-1]
 
 # expects node to have NO ERRORS in any of its subtrees
-def extract_refs(string, node, data):
-    if node.type == 'dbt_jinja_ref':
-        package_name = node.child_by_field_name('dbt_package_name')
-        model_name = node.child_by_field_name('dbt_model_name') 
-        fmodel_name = strip_quotes(text_at(string, model_name))
-        if not package_name:
-            ref = fmodel_name
-        else:
-            ref = (
-                strip_quotes(text_at(string, package_name)),
-                fmodel_name
-            )
-        data['refs'].add(ref)
-
-    elif node.type == 'dbt_jinja_source':
-        source_name = node.child_by_field_name('dbt_source_name')
-        table_name = node.child_by_field_name('dbt_source_table')
-        source = (
-            strip_quotes(text_at(string, source_name)),
-            strip_quotes(text_at(string, table_name))
-        )
-        data['sources'].add(source)
-
-    elif node.type == 'dbt_jinja_config':
-        config_nodes = [child for child in node.children if child.type == 'kwarg_expression']
-        for config in config_nodes:
-            try:
-                arg, _, value = config.children
-            except Exception as e:
-                raise e
-
-            arg_val = text_at(string, arg)
-            val_val = strip_quotes(text_at(string, value))
-            data['configs'][arg_val] = val_val
+def extract_refs(source_bytes, node, data):
+    if node.type == 'fn_call':
+        name = text_from_node(source_bytes, node.child_by_field_name('fn_name'))
+        arg_list = node.child_by_field_name('argument_list')
+        args = named_children(arg_list)
+        
+        if name == 'ref':
+            if len(args) == 1:
+                data['refs'].add(strip_quotes(text_from_node(source_bytes, args[0])))
+            if len(args) == 2:
+                data['refs'].add((text_from_node(source_bytes, args[0]), strip_quotes(text_from_node(source_bytes, args[1]))))
 
     for child in node.children:
-        extract_refs(string, child, data)
+        extract_refs(source_bytes, child, data)
+
+    # if node.type == 'dbt_jinja_ref':
+    #     package_name = node.child_by_field_name('dbt_package_name')
+    #     model_name = node.child_by_field_name('dbt_model_name') 
+    #     fmodel_name = strip_quotes(text_at(string, model_name))
+    #     if not package_name:
+    #         ref = fmodel_name
+    #     else:
+    #         ref = (
+    #             strip_quotes(text_at(string, package_name)),
+    #             fmodel_name
+    #         )
+    #     data['refs'].add(ref)
+
+    # elif node.type == 'dbt_jinja_source':
+    #     source_name = node.child_by_field_name('dbt_source_name')
+    #     table_name = node.child_by_field_name('dbt_source_table')
+    #     source = (
+    #         strip_quotes(text_at(string, source_name)),
+    #         strip_quotes(text_at(string, table_name))
+    #     )
+    #     data['sources'].add(source)
+
+    # elif node.type == 'dbt_jinja_config':
+    #     config_nodes = [child for child in node.children if child.type == 'kwarg_expression']
+    #     for config in config_nodes:
+    #         try:
+    #             arg, _, value = config.children
+    #         except Exception as e:
+    #             raise e
+
+    #         arg_val = text_at(string, arg)
+    #         val_val = strip_quotes(text_at(string, value))
+    #         data['configs'][arg_val] = val_val
+
+    # for child in node.children:
+    #     extract_refs(string, child, data)
 
 def error_count(node, count):
     total = count
@@ -112,8 +121,8 @@ def parse_typecheck_extract(parser, string):
             return data2
         # if there are no parsing errors and no type errors, extract stuff!
         else:
-            checked_tree = checked_ast_or_error_list
-            extract_refs(string, checked_tree, data2)
+            checked_root = checked_ast_or_error_list
+            extract_refs(source_bytes, checked_root, data2)
             return data2
     # if this limited tree-sitter implementaion can't parse it, python jinja will have to
     else:
