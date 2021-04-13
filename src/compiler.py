@@ -35,7 +35,6 @@ def extract(node, data):
         return list(extract(child, data) for child in node[1:])
 
     if node[0] == 'dict':
-        print(node)
         return { node[1][0]: extract(node[1][1], data) }
 
     if node[0] == 'ref':
