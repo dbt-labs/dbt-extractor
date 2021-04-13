@@ -21,23 +21,49 @@ def exctracted(refs=[], sources=[], configs={}, python_jinja=False):
         'python_jinja': python_jinja
     }
 
-def test_extracts_ref():
+def test_ref():
     assert extraction(
         "{{ ref('my_table') }} {{ ref('other_table')}}"
         ,
-        exctracted(refs=['my_table', 'other_table'])
+        exctracted(
+            refs=['my_table', 'other_table']
+        )
     )
 
-def test_extracts_config():
+def test_config():
     assert extraction(
         "{{ config(key='value') }}"
         ,
-        exctracted(configs={'key': 'value'})
+        exctracted(
+            configs={'key': 'value'}
+        )
     )
 
-def test_extracts_source():
+def test_source():
     assert extraction(
         "{{ source('package', 'table') }} {{ source('x', 'y') }}"
         ,
-        exctracted(sources=[('package', 'table'), ('x', 'y')])
+        exctracted(
+            sources=[('package', 'table'), ('x', 'y')]
+        )
+    )
+
+def test_all():
+    assert extraction(
+        "{{ source('package', 'table') }} {{ ref('x') }} {{ config(key='v') }}"
+        ,
+        exctracted(
+            sources=[('package', 'table')],
+            refs=['x'],
+            configs={'key': 'v'}
+        )
+    )
+
+def test_deeply_nested_config():
+    assert extraction(
+        "{{ config(key=[{'k':['v', {'x': 'y'}]}, ['a', 'b', 'c']]) }}"
+        ,
+        exctracted(
+            configs={'key': [{'k':['v', {'x': 'y'}]}, ['a', 'b', 'c']]}
+        )
     )

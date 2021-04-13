@@ -79,3 +79,35 @@ config with list of string lits
     )
   )
 )
+
+==================
+deeply nested lists and dicts
+==================
+
+"{{ [{'k':['v', {'x': 'y'}]}, ['a', 'b', 'c']] }}"
+
+---
+
+(source_file
+  (list
+    (dict
+      (pair
+        (lit_string)
+        (list
+          (lit_string)
+          (dict 
+            (pair
+              (lit_string)
+              (lit_string)
+            )
+          )
+        )
+      )
+    ) 
+    (list 
+      (lit_string)
+      (lit_string)
+      (lit_string)
+    )
+  )
+)

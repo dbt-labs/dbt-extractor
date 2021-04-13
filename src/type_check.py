@@ -53,7 +53,7 @@ def _to_typed(source_bytes, node):
             if value.type == 'fn_call':
                 raise TypeCheckFailure(f"dict values cannot be function calls")
             pairs.append((key, value))
-        return ('dict', *tuple((pair[0], _to_typed(source_bytes, pair[1])) for pair in pairs))
+        return ('dict', *tuple((strip_quotes(text_from_node(source_bytes, pair[0])), _to_typed(source_bytes, pair[1])) for pair in pairs))
 
     elif node.type == 'source_file':
         children = named_children(node)

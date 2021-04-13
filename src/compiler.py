@@ -26,10 +26,17 @@ def named_children(node):
     return list(filter(lambda x: x.is_named, node.children))
 
 # expects node to have NO ERRORS in any of its subtrees
-def extract_refs(source_bytes, node, data):
+def extract(node, data):
     # reached a leaf
     if not isinstance(node, tuple):
-        return
+        return node
+
+    if node[0] == 'list':
+        return list(extract(child, data) for child in node[1:])
+
+    if node[0] == 'dict':
+        print(node)
+        return { node[1][0]: extract(node[1][1], data) }
 
     if node[0] == 'ref':
         # no package name
@@ -39,16 +46,18 @@ def extract_refs(source_bytes, node, data):
             ref = node[1], node[2]
         data['refs'].add(ref)
 
+    # configs are the only ones that can recurse like this
+    # e.g. {{ config(key=[{'nested':'values'}]) }}
     if node[0] == 'config':
         for kwarg in node[1:]:
-            data['configs'][kwarg[1]] = kwarg[2]
+            data['configs'][kwarg[1]] = extract(kwarg[2], data)
 
     if node[0] == 'source':
         for arg in node[1:]:
             data['sources'].add((node[1], node[2]))
 
     # generator statement evaluated as tuple for effects
-    tuple(extract_refs(source_bytes, child, data) for child in node[1:])
+    tuple(extract(child, data) for child in node[1:])
 
 def error_count(node, count):
     total = count
@@ -89,7 +98,7 @@ def parse_typecheck_extract(parser, string):
         # if there are no parsing errors and no type errors, extract stuff!
         else:
             typed_root = checked_ast_or_error
-            extract_refs(source_bytes, typed_root, data2)
+            extract(typed_root, data2)
             return data2
     # if this limited tree-sitter implementaion can't parse it, python jinja will have to
     else:

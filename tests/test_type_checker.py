@@ -58,7 +58,8 @@ def test_config_all_inputs():
     assert all_type_check([
         "{{ config(key='value') }}",
         "{{ config(key=['v1,','v2']) }}",
-        "{{ config(key={'k': 'v'}) }}"
+        "{{ config(key={'k': 'v'}) }}",
+        "{{ config(key=[{'k':['v', {'x': 'y'}]}, ['a', 'b', 'c']]) }}"
     ])
 
 def test_config_fails_non_kwarg_inputs():
