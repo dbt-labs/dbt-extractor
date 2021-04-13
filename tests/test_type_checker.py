@@ -14,9 +14,8 @@ def type_checks(source_text):
         return False
     res = src.type_check.type_check(source_bytes, tree.root_node)
     # if it returned a list of errors, it didn't typecheck
-    if isinstance(res, list):
-        for err in res:
-            print(err)
+    if isinstance(res, src.type_check.TypeCheckFailure):
+        print(res)
         return False
     else:
         return True

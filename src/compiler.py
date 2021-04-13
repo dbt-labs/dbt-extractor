@@ -31,19 +31,7 @@ def strip_quotes(text):
 
 # expects node to have NO ERRORS in any of its subtrees
 def extract_refs(source_bytes, node, data):
-    if node.type == 'fn_call':
-        name = text_from_node(source_bytes, node.child_by_field_name('fn_name'))
-        arg_list = node.child_by_field_name('argument_list')
-        args = named_children(arg_list)
-        
-        if name == 'ref':
-            if len(args) == 1:
-                data['refs'].add(strip_quotes(text_from_node(source_bytes, args[0])))
-            if len(args) == 2:
-                data['refs'].add((text_from_node(source_bytes, args[0]), strip_quotes(text_from_node(source_bytes, args[1]))))
-
-    for child in node.children:
-        extract_refs(source_bytes, child, data)
+    return data # TODO STUB
 
     # if node.type == 'dbt_jinja_ref':
     #     package_name = node.child_by_field_name('dbt_package_name')
@@ -106,28 +94,25 @@ def parse_typecheck_extract(parser, string):
         'refs': set(),
         'sources': set(),
         'configs': dict(),
-        'python_jinja': 0
+        'python_jinja': False
     }
     # if there are no _parsing errors_ check for _type errors_
     if count <= 0:
         # checked should be a new typed ast, but we don't have that machinery yet.
         # this is the same untyped ast for now.
-        checked_ast_or_error_list = type_check.type_check(source_bytes, tree.root_node)
+        checked_ast_or_error = type_check.type_check(source_bytes, tree.root_node)
         data2 = dict(data)
         # if there are type errors
-        if isinstance(checked_ast_or_error_list, list):
-            error_list = checked_ast_or_error_list
-            data2['python_jinja'] = len(error_list)
+        if isinstance(checked_ast_or_error, type_check.TypeCheckFailure):
+            data2['python_jinja'] = True
             return data2
         # if there are no parsing errors and no type errors, extract stuff!
         else:
-            checked_root = checked_ast_or_error_list
-            extract_refs(source_bytes, checked_root, data2)
+            typed_root = checked_ast_or_error
+            extract_refs(source_bytes, typed_root, data2)
             return data2
     # if this limited tree-sitter implementaion can't parse it, python jinja will have to
     else:
         data2 = dict(data)
-        # error count isn't a perfect count of unsupported instances
-        # but it'll be pretty close
-        data2['python_jinja'] = count
+        data2['python_jinja'] = False
         return data2
