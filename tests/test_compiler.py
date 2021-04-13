@@ -1,19 +1,29 @@
+from pprint import pprint
 import src.compiler
 
 parser = src.compiler.get_parser()
 
-def assert_extracts_refs(in_out_list):
-    def run(in_out):
-        return src.compiler.parse_typecheck_extract(parser, in_out[0])['refs']
+def extraction(input, expected):
+    got = src.compiler.parse_typecheck_extract(parser, input)
+    passed = expected == got
+    if not passed:
+        print(":: EXPECTED ::")
+        pprint(expected)
+        print("::   GOT    ::")
+        pprint(got)
+    return passed
 
-    # if any pair doesn't match, the list of tests fails
-    for pair in in_out_list:
-        got = run(pair)
-        expected = set(pair[1])
-        assert expected == got
-
+def exctracted(refs=[], sources=[], configs={}, python_jinja=False):
+    return {
+        'refs': set(refs),
+        'sources': set(sources),
+        'configs': configs,
+        'python_jinja': python_jinja
+    }
 
 def test_extracts_ref():
-    assert_extracts_refs([
-        ("{{ ref('my_table') }} {{ ref('other_table')}}", ['my_table', 'other_table'])
-    ])
+    assert extraction(
+        "{{ ref('my_table') }} {{ ref('other_table')}}"
+        ,
+        exctracted(refs=['my_table', 'other_table'])
+    )

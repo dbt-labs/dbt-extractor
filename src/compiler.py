@@ -29,11 +29,9 @@ def named_children(node):
 def extract_refs(source_bytes, node, data):
     # reached a leaf
     if not isinstance(node, tuple):
-        print(f"not tuple: {node}")
         return
 
     if node[0] == 'ref':
-        print("GOT HERE")
         # no package name
         if len(node) == 2:
             ref = node[1]
