@@ -27,3 +27,10 @@ def test_extracts_ref():
         ,
         exctracted(refs=['my_table', 'other_table'])
     )
+
+def test_extracts_config():
+    assert extraction(
+        "{{ config(key='value') }}"
+        ,
+        exctracted(configs={'key': 'value'})
+    )

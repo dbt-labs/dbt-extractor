@@ -27,6 +27,8 @@ def named_children(node):
 
 # expects node to have NO ERRORS in any of its subtrees
 def extract_refs(source_bytes, node, data):
+    print(node)
+
     # reached a leaf
     if not isinstance(node, tuple):
         return
@@ -39,8 +41,11 @@ def extract_refs(source_bytes, node, data):
             ref = node[1], node[2]
         data['refs'].add(ref)
 
+    if node[0] == 'config':
+        for kwarg in node[1:]:
+            data['configs'][kwarg[1]] = kwarg[2]
+
     # generator statement evaluated as tuple for effects
-    print(node)
     tuple(extract_refs(source_bytes, child, data) for child in node[1:])
         
 
