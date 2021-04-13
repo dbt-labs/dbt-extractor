@@ -34,7 +34,6 @@ module.exports = grammar ({
     ),
 
     fn_call: $ => seq(
-        // Only built-in keyword function calls parse.
         field('fn_name', $.identifier),
         field('argument_list', $.argument_list)
     ),
