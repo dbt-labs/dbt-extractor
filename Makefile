@@ -28,8 +28,8 @@ build: install
 test: build
 	cd tree-sitter-dbt-jinja \
 	&& ../node_modules/tree-sitter-cli/tree-sitter test \
-	&& cd ../src \
-	&& ../$(VENV)/bin/pytest ..
+	&& cd .. \
+	&& PYTHONPATH=src ./$(VENV)/bin/pytest
 
 # runs the python application
 # arguments must be passed like `make run ARGS="arg1 arg2"`
