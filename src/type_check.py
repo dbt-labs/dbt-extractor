@@ -14,6 +14,10 @@ def named_children(node):
 def text_from_node(source_bytes, node):
     return source_bytes[node.start_byte:node.end_byte].decode('utf8')
 
+def strip_quotes(text):
+    if text:
+        return text[1:-1]
+
 # flatten([[1,2],[3,4]]) = [1,2,3,4]
 def flatten(list_of_lists):
     return [item for sublist in list_of_lists for item in sublist]
@@ -21,14 +25,14 @@ def flatten(list_of_lists):
 # throws a TypeCheckError or returns a typed ast in the form of a nested tuple
 def _to_typed(source_bytes, node):
     if node.type == 'lit_string':
-        return text_from_node(source_bytes, node)
+        return strip_quotes(text_from_node(source_bytes, node))
 
     elif node.type == 'list':
         elems = named_children(node)
         for elem in elems:
             if elem.type == 'fn_call':
                 raise TypeCheckFailure(f"list elements cannot be function calls")
-        return ('list', tuple(_to_typed(source_bytes, elem) for elem in elems))
+        return ('list', *tuple(_to_typed(source_bytes, elem) for elem in elems))
 
     elif node.type == 'kwarg':
         value_node = node.child_by_field_name('value')
@@ -36,7 +40,7 @@ def _to_typed(source_bytes, node):
             raise TypeCheckFailure(f"keyword arguments can not be function calls")
         key_node = node.child_by_field_name('arg')
         key_text = text_from_node(source_bytes, key_node)
-        return ('kwarg', (key_text, _to_typed(source_bytes, value_node)))
+        return ('kwarg', key_text, _to_typed(source_bytes, value_node))
 
     elif node.type == 'dict':
         # locally mutate list of kv pairs
@@ -49,11 +53,11 @@ def _to_typed(source_bytes, node):
             if value.type == 'fn_call':
                 raise TypeCheckFailure(f"dict values cannot be function calls")
             pairs.append((key, value))
-        return ('dict', tuple((pair[0], _to_typed(source_bytes, pair[1])) for pair in pairs))
+        return ('dict', *tuple((pair[0], _to_typed(source_bytes, pair[1])) for pair in pairs))
 
     elif node.type == 'source_file':
         children = named_children(node)
-        return ('root', tuple(_to_typed(source_bytes, child) for child in children))
+        return ('root', *tuple(_to_typed(source_bytes, child) for child in children))
 
     elif node.type == 'fn_call':
         name = text_from_node(source_bytes, node.child_by_field_name('fn_name'))
@@ -67,7 +71,7 @@ def _to_typed(source_bytes, node):
             for arg in args:
                 if arg.type != 'lit_string':
                     raise TypeCheckFailure(f"all ref arguments must be strings. found {arg.type}")
-            return ('ref', tuple(_to_typed(source_bytes, arg) for arg in args))
+            return ('ref', *tuple(_to_typed(source_bytes, arg) for arg in args))
         
         elif name == 'source':
             if arg_count != 2:
@@ -81,7 +85,7 @@ def _to_typed(source_bytes, node):
                 raise TypeCheckFailure(f"second keyword argument in source must be table_name found {args[1].child_by_field_name('arg')}")
             # TODO this isn't quite right. regardless of how they call it,
             # (kwarg vs string lits) I want it to come out the same
-            return ('source', tuple(_to_typed(source_bytes, arg) for arg in args)) 
+            return ('source', *tuple(_to_typed(source_bytes, arg) for arg in args)) 
 
         elif name == 'config':
             if arg_count < 1:
@@ -89,7 +93,7 @@ def _to_typed(source_bytes, node):
             for arg in args:
                 if arg.type != 'kwarg':
                     raise TypeCheckFailure(f"unexpected non keyword argument in config. found {arg.type}")
-            return ('config', tuple(_to_typed(source_bytes, arg) for arg in args))
+            return ('config', *tuple(_to_typed(source_bytes, arg) for arg in args))
 
         else:
             raise TypeCheckFailure(f"unexpected function call to {name}")
@@ -103,7 +107,7 @@ def _to_typed(source_bytes, node):
 # but it works well at this scale.
 def type_check(source_bytes, node):
     try:
-        _to_typed(source_bytes, node)
+        return _to_typed(source_bytes, node)
     # if an error was thrown, return it instead.
     except TypeCheckFailure as e:
         return e

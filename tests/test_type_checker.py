@@ -31,6 +31,8 @@ def all_type_check(l):
 def none_type_check(l):
     return reduce(lambda x, y: x and y, map(type_check_fails, l))
     
+# TODO rework these tests to be like the tree-sitter tests with expected ast outputs too.
+
 def test_recognizes_ref_source_config():
     assert all_type_check([
         "select * from {{ ref('my_table') }}",

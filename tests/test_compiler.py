@@ -2,25 +2,18 @@ import src.compiler
 
 parser = src.compiler.get_parser()
 
-def extracts_refs(in_out_list):
+def assert_extracts_refs(in_out_list):
     def run(in_out):
         return src.compiler.parse_typecheck_extract(parser, in_out[0])['refs']
 
     # if any pair doesn't match, the list of tests fails
     for pair in in_out_list:
         got = run(pair)
-        expected = set([pair[1]])
-        if expected != got:
-            print(f"expected {expected} got {got}")
-            return False
-
-    # if nothing failed, it passed
-    return True
+        expected = set(pair[1])
+        assert expected == got
 
 
-# TODO skips test
 def test_extracts_ref():
-    assert True
-    # assert extracts_refs([
-    #     ("{{ ref('my_table') }}", 'my_table')
-    # ])
+    assert_extracts_refs([
+        ("{{ ref('my_table') }} {{ ref('other_table')}}", ['my_table', 'other_table'])
+    ])

@@ -25,26 +25,26 @@ def text_from_node(source_bytes, node):
 def named_children(node):
     return list(filter(lambda x: x.is_named, node.children))
 
-def strip_quotes(text):
-    if text:
-        return text[1:-1]
-
 # expects node to have NO ERRORS in any of its subtrees
 def extract_refs(source_bytes, node, data):
-    return data # TODO STUB
+    # reached a leaf
+    if not isinstance(node, tuple):
+        print(f"not tuple: {node}")
+        return
 
-    # if node.type == 'dbt_jinja_ref':
-    #     package_name = node.child_by_field_name('dbt_package_name')
-    #     model_name = node.child_by_field_name('dbt_model_name') 
-    #     fmodel_name = strip_quotes(text_at(string, model_name))
-    #     if not package_name:
-    #         ref = fmodel_name
-    #     else:
-    #         ref = (
-    #             strip_quotes(text_at(string, package_name)),
-    #             fmodel_name
-    #         )
-    #     data['refs'].add(ref)
+    if node[0] == 'ref':
+        print("GOT HERE")
+        # no package name
+        if len(node) == 2:
+            ref = node[1]
+        else:
+            ref = node[1], node[2]
+        data['refs'].add(ref)
+
+    # generator statement evaluated as tuple for effects
+    print(node)
+    tuple(extract_refs(source_bytes, child, data) for child in node[1:])
+        
 
     # elif node.type == 'dbt_jinja_source':
     #     source_name = node.child_by_field_name('dbt_source_name')
