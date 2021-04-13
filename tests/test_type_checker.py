@@ -81,3 +81,11 @@ def test_ref_bad_inputs_fail():
         "{{ ref(kwarg='is_wrong') }}"
         "{{ ref(['list is wrong']) }}"
     ])
+
+def test_nested_fn_calls_fail():
+    assert none_type_check([
+        "{{ [ref('my_table')] }}",
+        "{{ [config(x='y')] }}"
+        "{{ config(x=ref('my_table')) }}"
+        "{{ source(ref('my_table')) }}"
+    ])
