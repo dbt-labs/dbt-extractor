@@ -34,3 +34,10 @@ def test_extracts_config():
         ,
         exctracted(configs={'key': 'value'})
     )
+
+def test_extracts_source():
+    assert extraction(
+        "{{ source('package', 'table') }} {{ source('x', 'y') }}"
+        ,
+        exctracted(sources=[('package', 'table'), ('x', 'y')])
+    )

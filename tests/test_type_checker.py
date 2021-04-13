@@ -40,6 +40,13 @@ def test_recognizes_ref_source_config():
         "{{ source('a', 'b') }}"
     ])
 
+def test_recognizes_multiple_blocks():
+    assert all_type_check([
+        "{{ ref('x') }} {{ ref('y') }}",
+        "{{ config(key='value') }} {{ config(k='v') }}",
+        "{{ source('a', 'b') }} {{ source('c', 'd') }}"
+    ])
+
 def test_fails_on_other_fn_names():
     assert none_type_check([
         "select * from {{ reff('my_table') }}",
@@ -49,44 +56,53 @@ def test_fails_on_other_fn_names():
 
 def test_config_all_inputs():
     assert all_type_check([
-        "{{ config(key='value') }}"
-        "{{ config(key=['v1,','v2']) }}"
+        "{{ config(key='value') }}",
+        "{{ config(key=['v1,','v2']) }}",
         "{{ config(key={'k': 'v'}) }}"
     ])
 
 def test_config_fails_non_kwarg_inputs():
     assert none_type_check([
-        "{{ config('value') }}"
-        "{{ config(['v1,','v2']) }}"
+        "{{ config('value') }}",
+        "{{ config(['v1,','v2']) }}",
         "{{ config({'k': 'v'}) }}"
     ])
 
 def test_source_keyword_args():
     assert type_checks_all([
-        "{{ source(source_name='src', table_name='table') }}"
-        "{{ source('src', table_name='table') }}"
-        "{{ source(source_name='src', 'table') }}"
+        "{{ source(source_name='src', table_name='table') }}",
+        "{{ source('src', table_name='table') }}",
+        "{{ source(source_name='src', 'table') }}",
+        "{{ source('src', 'table') }}"
     ])
 
 def test_source_keyword_args():
     assert none_type_check([
-        "{{ source(source_name='src', BAD_NAME='table') }}"
-        "{{ source(BAD_NAME='src', table_name='table') }}"
+        "{{ source(source_name='src', BAD_NAME='table') }}",
+        "{{ source(BAD_NAME='src', table_name='table') }}",
         "{{ source(BAD_NAME='src', BAD_NAME='table') }}"
+    ])
+
+def test_source_must_have_2_args():
+    assert none_type_check([
+        "{{ source('one isnt enough') }}",
+        "{{ source('three', 'is', 'too many') }}",
+        "{{ source('one', 'two', 'three', 'four') }}",
+        "{{ source(source_name='src', table_name='table', 'extra') }}",
     ])
 
 def test_ref_bad_inputs_fail():
     assert none_type_check([
         "{{ ref('too', 'many', 'strings') }}",
-        "{{ ref() }}"
-        "{{ ref(kwarg='is_wrong') }}"
+        "{{ ref() }}",
+        "{{ ref(kwarg='is_wrong') }}",
         "{{ ref(['list is wrong']) }}"
     ])
 
 def test_nested_fn_calls_fail():
     assert none_type_check([
         "{{ [ref('my_table')] }}",
-        "{{ [config(x='y')] }}"
-        "{{ config(x=ref('my_table')) }}"
+        "{{ [config(x='y')] }}",
+        "{{ config(x=ref('my_table')) }}",
         "{{ source(ref('my_table')) }}"
     ])

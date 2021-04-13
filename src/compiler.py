@@ -27,8 +27,6 @@ def named_children(node):
 
 # expects node to have NO ERRORS in any of its subtrees
 def extract_refs(source_bytes, node, data):
-    print(node)
-
     # reached a leaf
     if not isinstance(node, tuple):
         return
@@ -45,6 +43,10 @@ def extract_refs(source_bytes, node, data):
         for kwarg in node[1:]:
             data['configs'][kwarg[1]] = kwarg[2]
 
+    if node[0] == 'source':
+        for arg in node[1:]:
+            data['sources'].add((node[1], node[2]))
+
     # generator statement evaluated as tuple for effects
     tuple(extract_refs(source_bytes, child, data) for child in node[1:])
         
@@ -57,18 +59,6 @@ def extract_refs(source_bytes, node, data):
     #         strip_quotes(text_at(string, table_name))
     #     )
     #     data['sources'].add(source)
-
-    # elif node.type == 'dbt_jinja_config':
-    #     config_nodes = [child for child in node.children if child.type == 'kwarg_expression']
-    #     for config in config_nodes:
-    #         try:
-    #             arg, _, value = config.children
-    #         except Exception as e:
-    #             raise e
-
-    #         arg_val = text_at(string, arg)
-    #         val_val = strip_quotes(text_at(string, value))
-    #         data['configs'][arg_val] = val_val
 
     # for child in node.children:
     #     extract_refs(string, child, data)
