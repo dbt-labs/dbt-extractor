@@ -44,6 +44,7 @@ def get_project_results(grouped_results):
             'project_models': 0,
             'models_parsed': 0,
             'models_unparsed': 0,
+            'models_skipped': 0,
             'parsing_false_positives': 0,
             'parsing_misses': 0,
             'percent_parsable': 0,
@@ -59,6 +60,8 @@ def get_project_results(grouped_results):
 
                 stats['parsing_false_positives'] += res['parsing_false_positives']
                 stats['parsing_misses'] += res['parsing_misses']
+            else:
+                stats['models_skipped'] += 1
 
         if stats['project_models'] <= 0:
             stats['percent_parsable'] = 100.0
@@ -95,26 +98,26 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
     misparsed_total = len(misparsed_configs) + len(misparsed_refs) + len(misparsed_sources)
 
     # TODO remove debug lines
-    if misparsed_total > 0:
-        print()
-        if(len(misparsed_refs) > 0):
-            print("::: EXPECTED REFS :::")
-            pprint(refs)
-            print("::: GOT REFS :::")
-            pprint(res['refs'])
-        if(len(misparsed_sources) > 0):
-            print("::: EXPECTED SOURCES:::")
-            pprint(sources)
-            print("::: GOT SOURCES :::")
-            pprint(res['sources'])
-        if(len(misparsed_configs) > 0):
-            print("::: EXPECTED CONFIGS :::")
-            pprint(configs)
-            print("::: GOT CONFIGS :::")
-            pprint(res['configs'])
-        print(":: RAW ::")
-        pprint(raw_sql)
-        print()
+    # if misparsed_total > 0:
+    #     print()
+    #     if(len(misparsed_refs) > 0):
+    #         print("::: EXPECTED REFS :::")
+    #         pprint(refs)
+    #         print("::: GOT REFS :::")
+    #         pprint(res['refs'])
+    #     if(len(misparsed_sources) > 0):
+    #         print("::: EXPECTED SOURCES:::")
+    #         pprint(sources)
+    #         print("::: GOT SOURCES :::")
+    #         pprint(res['sources'])
+    #     if(len(misparsed_configs) > 0):
+    #         print("::: EXPECTED CONFIGS :::")
+    #         pprint(configs)
+    #         print("::: GOT CONFIGS :::")
+    #         pprint(res['configs'])
+    #     print(":: RAW ::")
+    #     pprint(raw_sql)
+    #     print()
 
     # if there are no instances where we need python_jinja, and we didn't 
     # make any mistakes and we didn't miss any we successfully parsed the model.
@@ -158,7 +161,6 @@ def run_on(data_path):
             'database': None,
             'enabled': True,
             'full_refresh': None,
-            # 'materialized': 'table',
             'persist_docs': {},
             'post-hook': [],
             'pre-hook': [],
@@ -205,7 +207,7 @@ def run_on(data_path):
     for project_id, stats in all_project_results.items():
         all_project_stats['model_count'] += stats['project_models']
         all_project_stats['models_parsed'] += stats['models_parsed']
-        if stats['models_parsed'] == 0:
+        if stats['models_parsed'] == 0 and stats['models_skipped'] <= 0:
             all_project_stats['projects_completely_unparsed'] += 1
         all_project_stats['models_with_false_positives'] += stats['parsing_false_positives']
         all_project_stats['models_with_misses'] += 1

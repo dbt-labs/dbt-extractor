@@ -31,7 +31,6 @@ def transformations(node):
     elif node[0] == 'config':
         kwargs = node[1:]
         new_kwargs = []
-        print(node)
         for kwarg in kwargs:
             if (kwarg[1] == 'post_hook' or kwarg[1] == 'post-hook') and kwarg[2][0] == 'list':
                 new_kwargs.append(transformations((
