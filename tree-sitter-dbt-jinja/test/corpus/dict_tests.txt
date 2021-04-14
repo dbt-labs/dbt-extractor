@@ -69,3 +69,27 @@ proper config call
     )
   )
 )
+
+==================
+dict spread over lines
+==================
+
+{{ {
+  'k':'v',
+  'x':[]
+  } }}
+
+---
+
+(source_file
+  (dict
+    (pair
+      (lit_string)
+      (lit_string)
+    )
+    (pair
+      (lit_string)
+      (list)
+    )
+  )
+)
