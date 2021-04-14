@@ -91,8 +91,23 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
     # TODO unparsed_total = len(unparsed_configs) + len(unparsed_refs) + len(unparsed_sources)
     all_configs_refs_sources_count = len(configs) + len(refs) + len(sources)
     
+    # tag equality is special because they are additive in a file
+    # e.g. {{ config(tag='x') }} could result in ('tags', ['a', 'b', 'x']) where a and b came from a project yaml.
+    parsed_tags = []
+    for kwarg in res['configs']:
+        if kwarg[0] == 'tags':
+            parsed_tags = kwarg[1]
+
+    real_tags = []
+    for kwarg in configs:
+        if kwarg[0] == 'tags':
+            real_tags = kwarg[1]
+
+    filtered_real_tags = list(filter(lambda tag: tag in parsed_tags, real_tags))
+    tag_adjusted_configs = [('tags', filtered_real_tags)] + list(filter(lambda kwarg: kwarg[0] != 'tags', configs))
+
     # the set of tree-sitter parsed values minus the set of real parsed values should be empty if we made no mistakes
-    misparsed_configs = difference(res['configs'], configs)
+    misparsed_configs = difference(res['configs'], tag_adjusted_configs)
     misparsed_refs    = difference(res['refs'], refs)
     misparsed_sources = difference(res['sources'], sources)
     misparsed_total = len(misparsed_configs) + len(misparsed_refs) + len(misparsed_sources)
