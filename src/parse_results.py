@@ -81,6 +81,16 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
     misparsed_sources = difference(res['sources'], sources)
     misparsed_total = len(misparsed_configs) + len(misparsed_refs) + len(misparsed_sources)
 
+    if len(unparsed_configs) > 0:
+        print()
+        print("::: EXPECTED :::")
+        pprint(configs)
+        print("::: GOT :::")
+        pprint(res['configs'])
+        print(":: RAW ::")
+        pprint(raw_sql)
+        print()
+
     # if there are no instances where we need python_jinja, and we didn't 
     # make any mistakes and we didn't miss any we successfully parsed the model.
     parsed = res['python_jinja'] <= 0 and misparsed_total <= 0 and unparsed_total <= 0
@@ -123,7 +133,7 @@ def run_on(data_path):
             'database': None,
             'enabled': True,
             'full_refresh': None,
-            'materialized': 'table',
+            # 'materialized': 'table',
             'persist_docs': {},
             'post-hook': [],
             'pre-hook': [],

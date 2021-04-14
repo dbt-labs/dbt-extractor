@@ -98,5 +98,5 @@ def parse_typecheck_extract(parser, string):
     # if this limited tree-sitter implementaion can't parse it, python jinja will have to
     else:
         data2 = dict(data)
-        data2['python_jinja'] = False
+        data2['python_jinja'] = True
         return data2
