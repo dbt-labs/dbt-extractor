@@ -70,7 +70,7 @@ def test_config_fails_non_kwarg_inputs():
     ])
 
 def test_source_keyword_args():
-    assert type_checks_all([
+    assert all_type_check([
         "{{ source(source_name='src', table_name='table') }}",
         "{{ source('src', table_name='table') }}",
         "{{ source(source_name='src', 'table') }}",
@@ -90,6 +90,12 @@ def test_source_must_have_2_args():
         "{{ source('three', 'is', 'too many') }}",
         "{{ source('one', 'two', 'three', 'four') }}",
         "{{ source(source_name='src', table_name='table', 'extra') }}",
+    ])
+
+def test_ref_accepts_one_and_two_strings():
+    assert all_type_check([
+        "{{ ref('two', 'args') }}",
+        "{{ ref('one arg') }}"
     ])
 
 def test_ref_bad_inputs_fail():
