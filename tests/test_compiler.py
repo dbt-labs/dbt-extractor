@@ -26,7 +26,7 @@ def test_ref():
         "{{ ref('my_table') }} {{ ref('other_table')}}"
         ,
         exctracted(
-            refs=['my_table', 'other_table']
+            refs=[['my_table'], ['other_table']]
         )
     )
 
@@ -54,7 +54,7 @@ def test_all():
         ,
         exctracted(
             sources=[('package', 'table')],
-            refs=['x'],
+            refs=[['x']],
             configs={'key': 'v'}
         )
     )
