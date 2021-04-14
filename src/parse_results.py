@@ -50,16 +50,20 @@ def get_project_results(grouped_results):
         }
 
         for res in model_results:
-            stats['project_models'] += 1
-            if res['parsed']: 
-                stats['models_parsed'] += 1
-            else:
-                stats['models_unparsed'] += 1
+            if('skipped' not in res.keys()):
+                stats['project_models'] += 1
+                if res['parsed']: 
+                    stats['models_parsed'] += 1
+                else:
+                    stats['models_unparsed'] += 1
 
-            stats['parsing_false_positives'] += res['parsing_false_positives']
-            stats['parsing_misses'] += res['parsing_misses']
+                stats['parsing_false_positives'] += res['parsing_false_positives']
+                stats['parsing_misses'] += res['parsing_misses']
 
-        stats['percent_parsable'] = 100 * (stats['models_parsed'] / stats['project_models'])
+        if stats['project_models'] <= 0:
+            stats['percent_parsable'] = 100.0
+        else:
+            stats['percent_parsable'] = 100 * (stats['models_parsed'] / stats['project_models'])
         project_stats[project_id] = stats
 
     return project_stats
@@ -68,11 +72,20 @@ def get_project_results(grouped_results):
 def process_row(parser, project_id, raw_sql, configs, refs, sources):
     res = compiler.parse_typecheck_extract(parser, raw_sql)
 
+    # if the model file doesn't have a call to config() it defaults to the project.yaml
+    # this shouldn't be counted for comparisons, but won't be a problem in the product.
+    if not res['configs']:
+        return { 
+            'project_id': project_id,
+            'skipped': True
+        }
+
     # the set of real parsed values minus the set we found is the set of unparsed values
-    unparsed_configs = difference(configs, res['configs'])
+    # TODO unparsed_configs = difference(configs, res['configs'])
     unparsed_refs    = difference(refs, res['refs'])
     unparsed_sources = difference(sources, res['sources'])
-    unparsed_total = len(unparsed_configs) + len(unparsed_refs) + len(unparsed_sources)
+    unparsed_total = len(unparsed_refs) + len(unparsed_sources)
+    # TODO unparsed_total = len(unparsed_configs) + len(unparsed_refs) + len(unparsed_sources)
     all_configs_refs_sources_count = len(configs) + len(refs) + len(sources)
     
     # the set of tree-sitter parsed values minus the set of real parsed values should be empty if we made no mistakes
@@ -81,15 +94,27 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
     misparsed_sources = difference(res['sources'], sources)
     misparsed_total = len(misparsed_configs) + len(misparsed_refs) + len(misparsed_sources)
 
-    if len(unparsed_configs) > 0:
-        print()
-        print("::: EXPECTED :::")
-        pprint(configs)
-        print("::: GOT :::")
-        pprint(res['configs'])
-        print(":: RAW ::")
-        pprint(raw_sql)
-        print()
+    # TODO remove debug lines
+    # if misparsed_total > 0:
+    #     print()
+    #     if(len(misparsed_refs) > 0):
+    #         print("::: EXPECTED REFS :::")
+    #         pprint(refs)
+    #         print("::: GOT REFS :::")
+    #         pprint(res['refs'])
+    #     if(len(misparsed_sources) > 0):
+    #         print("::: EXPECTED SOURCES:::")
+    #         pprint(sources)
+    #         print("::: GOT SOURCES :::")
+    #         pprint(res['sources'])
+    #     if(len(misparsed_configs) > 0):
+    #         print("::: EXPECTED CONFIGS :::")
+    #         pprint(configs)
+    #         print("::: GOT CONFIGS :::")
+    #         pprint(res['configs'])
+    #     print(":: RAW ::")
+    #     pprint(raw_sql)
+    #     print()
 
     # if there are no instances where we need python_jinja, and we didn't 
     # make any mistakes and we didn't miss any we successfully parsed the model.
@@ -109,7 +134,7 @@ def run_on(data_path):
         # defaults for runs that don't include these fields
         row_config  = {}
         row_refs    = []
-        row_sources = []
+        row_sources = set()
 
         try:
             row_config = row['config']
@@ -147,7 +172,7 @@ def run_on(data_path):
         row_config = list(filter(lambda kv: kv not in base_config.items(), row_config.items()))
 
         # reshape sources from lists of length 2 to tuples.
-        row_sources = list(map(lambda list: (list[0], list[1]), row_sources))
+        row_sources = set(map(lambda list: (list[0], list[1]), row_sources))
 
         return process_row(parser, row['manifest_file_name'], row['raw_sql'], row_config, row_refs, row_sources)
 

@@ -21,6 +21,27 @@ def text_from_node(source_bytes, node):
 def named_children(node):
     return list(filter(lambda x: x.is_named, node.children))
 
+# applies transformations to the typed_ast
+# for now it's just post_hook -> post-hook config keword.
+def transformations(node):
+    # reached a leaf
+    if not isinstance(node, tuple):
+        return node
+
+    elif node[0] == 'config':
+        kwargs = node[1:]
+        new_kwargs = []
+        for kwarg in kwargs:
+            if kwarg[1] == 'post_hook':
+                new_kwargs.append(('kwarg', 'post-hook', transformations(kwarg[2])))
+            else:
+                new_kwargs.append(transformations(kwarg))
+        return ('config', *new_kwargs)
+
+    else:
+        return (node[0], *tuple(transformations(child) for child in node[1:]))
+
+
 # expects node to have NO ERRORS in any of its subtrees
 def extract(node, data):
     # reached a leaf
@@ -70,6 +91,7 @@ def get_parser():
     return parser
 
 # entry point function
+# TODO rename this "extract from source"
 def parse_typecheck_extract(parser, string):
     source_bytes = bytes(string, "utf8")
     tree = parser.parse(source_bytes)
@@ -93,7 +115,8 @@ def parse_typecheck_extract(parser, string):
         # if there are no parsing errors and no type errors, extract stuff!
         else:
             typed_root = checked_ast_or_error
-            extract(typed_root, data2)
+            transformed_root = transformations(typed_root)
+            extract(transformed_root, data2)
             return data2
     # if this limited tree-sitter implementaion can't parse it, python jinja will have to
     else:
