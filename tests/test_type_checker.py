@@ -139,3 +139,27 @@ def test_ref_ast():
         ,
         ('root', ('ref', 'my_table'))
     )
+
+def test_config_ast():
+    assert produces_tree(
+        "{{ config(k1={'dict': ['value']}, k2='str') }}"
+        ,
+        ('root',
+            ('config',
+                ('kwarg', 
+                    'k1', 
+                    ('dict', 
+                        ('dict', 
+                            ('list', 
+                                'value'
+                            )
+                        )
+                    )
+                ), 
+                ('kwarg', 
+                    'k2', 
+                    'str'
+                )
+            )
+        )
+    )
