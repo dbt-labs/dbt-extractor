@@ -44,3 +44,28 @@ dict as arg
     )
   )
 )
+
+==================
+proper config call
+==================
+
+{{ config(x={'k':'v'}) }}
+
+---
+
+(source_file
+  (fn_call
+    (identifier)
+    (argument_list
+      (kwarg
+        (identifier)
+        (dict
+          (pair
+            (lit_string)
+            (lit_string)
+          )
+        )
+      )
+    )
+  )
+)

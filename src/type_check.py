@@ -90,9 +90,13 @@ def _to_typed(source_bytes, node):
         elif name == 'config':
             if arg_count < 1:
                 raise TypeCheckFailure(f"expected config to have at least one argument. found {arg_count}")
+            excluded_config_args = ['post-hook', 'post_hook', 'pre-hook', 'pre_hook']
             for arg in args:
                 if arg.type != 'kwarg':
                     raise TypeCheckFailure(f"unexpected non keyword argument in config. found {arg.type}")
+                key_name = text_from_node(source_bytes, arg.child_by_field_name('arg'))
+                if key_name in excluded_config_args:
+                    raise TypeCheckFailure(f"excluded config kwarg found: {key_name}")
             return ('config', *tuple(_to_typed(source_bytes, arg) for arg in args))
 
         else:

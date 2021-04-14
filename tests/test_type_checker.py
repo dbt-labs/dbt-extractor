@@ -133,6 +133,14 @@ def test_nested_fn_calls_fail():
         "{{ source(ref('my_table')) }}"
     ])
 
+def test_config_excluded_kwargs():
+    assert none_type_check([
+        "{{ config(pre_hook='x') }}",
+        "{{ config(pre-hook='x') }}",
+        "{{ config(post_hook='x') }}",
+        "{{ config(post-hook='x') }}"
+    ])
+
 def test_ref_ast():
     assert produces_tree(
         "{{ ref('my_table') }}"
