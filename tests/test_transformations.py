@@ -13,13 +13,37 @@ def transforms_into(input, expected):
         return False
     return True
 
-def test_post_hook():
+def test_fake_post_hook():
     assert transforms_into(
         ('root',
             ('config',
                 ('kwarg', 
                     'post_hook', 
-                    'hook'
+                    'fake'
+                )
+            )
+        )
+        ,
+        ('root',
+            ('config',
+                ('kwarg', 
+                    'post_hook', 
+                    'fake'
+                )
+            )
+        )
+    )
+
+def test_post_hook_list_tranformation():
+    assert transforms_into(
+        ('root',
+            ('config',
+                ('kwarg', 
+                    'post_hook', 
+                    ('list',
+                        'x',
+                        'y'
+                    )
                 )
             )
         )
@@ -28,7 +52,17 @@ def test_post_hook():
             ('config',
                 ('kwarg', 
                     'post-hook', 
-                    'hook'
+                    ('dict',
+                        ('index',
+                            None
+                        ),
+                        ('sql',
+                            ('list',
+                                'x',
+                                'y'
+                            )
+                        )
+                    )
                 )
             )
         )
