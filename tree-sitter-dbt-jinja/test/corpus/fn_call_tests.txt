@@ -130,6 +130,34 @@ parses other fn names
 )
 
 ==================
+buried fn names
+==================
+
+select
+  field1,
+  field2,
+  field3
+from {{ ref('x') }}
+join {{ ref('y') }}
+
+---
+
+(source_file
+  (fn_call
+    (identifier)
+    (argument_list
+      (lit_string)
+    )
+  ) 
+  (fn_call 
+    (identifier)
+    (argument_list
+      (lit_string)
+    )
+  )
+)
+
+==================
 errors on booleans
 ==================
 

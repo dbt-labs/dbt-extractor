@@ -148,6 +148,23 @@ def test_ref_ast():
         ('root', ('ref', 'my_table'))
     )
 
+def test_buried_refs_ast():
+    assert produces_tree(
+        """
+        select
+            field1,
+            field2,
+            field3
+        from {{ ref('x') }}
+        join {{ ref('y') }}
+        """
+        ,
+        ('root',
+            ('ref', 'x'),
+            ('ref', 'y')
+        )
+    )
+
 def test_config_ast():
     assert produces_tree(
         "{{ config(k1={'dict': ['value']}, k2='str') }}"
