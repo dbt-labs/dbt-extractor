@@ -15,7 +15,7 @@ def extraction(input, expected):
 
 def exctracted(refs=[], sources=[], configs={}, python_jinja=False):
     return {
-        'refs': set(refs),
+        'refs': refs,
         'sources': set(sources),
         'configs': configs,
         'python_jinja': python_jinja

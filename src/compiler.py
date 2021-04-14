@@ -15,10 +15,6 @@ Language.build_library(
 
 JINJA2_LANGUAGE = Language('./build/sql.so', 'dbt_jinja')
 
-refs = set()
-sources = set()
-configs = dict()
-
 def text_from_node(source_bytes, node):
     return source_bytes[node.start_byte:node.end_byte].decode('utf8')
 
@@ -40,10 +36,10 @@ def extract(node, data):
     if node[0] == 'ref':
         # no package name
         if len(node) == 2:
-            ref = node[1]
+            ref = [node[1]]
         else:
-            ref = node[1], node[2]
-        data['refs'].add(ref)
+            ref = [node[1], node[2]]
+        data['refs'].append(ref)
 
     # configs are the only ones that can recurse like this
     # e.g. {{ config(key=[{'nested':'values'}]) }}
@@ -79,7 +75,7 @@ def parse_typecheck_extract(parser, string):
     tree = parser.parse(source_bytes)
     count = error_count(tree.root_node, 0)
     data = {
-        'refs': set(),
+        'refs': [],
         'sources': set(),
         'configs': dict(),
         'python_jinja': False

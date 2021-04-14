@@ -1,6 +1,7 @@
 import itertools
 import json
 import compiler
+from pprint import pprint
 
 
 # like set difference `-` but using eq not hash so it can be used on mutable types
@@ -44,6 +45,7 @@ def get_project_results(grouped_results):
             'models_parsed': 0,
             'models_unparsed': 0,
             'parsing_false_positives': 0,
+            'parsing_misses': 0,
             'percent_parsable': 0,
         }
 
@@ -55,6 +57,7 @@ def get_project_results(grouped_results):
                 stats['models_unparsed'] += 1
 
             stats['parsing_false_positives'] += res['parsing_false_positives']
+            stats['parsing_misses'] += res['parsing_misses']
 
         stats['percent_parsable'] = 100 * (stats['models_parsed'] / stats['project_models'])
         project_stats[project_id] = stats
@@ -79,14 +82,15 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
     misparsed_total = len(misparsed_configs) + len(misparsed_refs) + len(misparsed_sources)
 
     # if there are no instances where we need python_jinja, and we didn't 
-    # make any mistakes we successfully parsed the model.
-    parsed = res['python_jinja'] <= 0 and misparsed_total <= 0
+    # make any mistakes and we didn't miss any we successfully parsed the model.
+    parsed = res['python_jinja'] <= 0 and misparsed_total <= 0 and unparsed_total <= 0
     return {
         'project_id': project_id,
         'parsed': parsed,
         'python_jinja': res['python_jinja'],
         'all_configs_refs_sources_count': all_configs_refs_sources_count,
-        'parsing_false_positives': misparsed_total
+        'parsing_false_positives': misparsed_total,
+        'parsing_misses': unparsed_total
     }
 
 # change data_path to your own path TODO use args
@@ -112,6 +116,8 @@ def run_on(data_path):
         except:
             pass
 
+        row_sources = list(map(lambda list: (list[0], list[1]), row_sources))
+
         return process_row(parser, row['manifest_file_name'], row['raw_sql'], row_config, row_refs, row_sources)
 
     # read whole file in
@@ -127,6 +133,7 @@ def run_on(data_path):
         'model_count': 0,
         'models_parsed': 0,
         'percentage_models_parseable': 0,
+        'models_with_misses': 0,
         'models_with_false_positives': 0,
         'percentage_models_false_positives': 0,
         'project_count': 0,
@@ -134,6 +141,7 @@ def run_on(data_path):
         'percentage_projects_parseable': 0,
         'projects_completely_unparsed': 0,
         'percentage_projects_completely_unparsed': 0,
+        'projects_with_misses': 0,
         'projects_with_false_positives': 0,
         'percentage_projects_false_positives': 0
     }
@@ -144,11 +152,14 @@ def run_on(data_path):
         if stats['models_parsed'] == 0:
             all_project_stats['projects_completely_unparsed'] += 1
         all_project_stats['models_with_false_positives'] += stats['parsing_false_positives']
+        all_project_stats['models_with_misses'] += 1
         all_project_stats['model_count'] += 1
         if stats['models_parsed'] == stats['project_models']:
             all_project_stats['projects_parsed'] += 1
         if stats['parsing_false_positives'] > 0:
             all_project_stats['projects_with_false_positives'] += 1
+        if stats['parsing_misses'] > 0:
+            all_project_stats['projects_with_misses'] += 1
 
     all_project_stats['project_count'] = len(all_project_results.keys())
     if all_project_stats['model_count'] == 0:
@@ -172,6 +183,7 @@ def run_on(data_path):
         'model_count',
         'models_parsed',
         'percentage_models_parseable',
+        'models_with_misses',
         'models_with_false_positives',
         'percentage_models_false_positives',
         'project_count',
@@ -179,6 +191,7 @@ def run_on(data_path):
         'percentage_projects_parseable',
         'projects_completely_unparsed',
         'percentage_projects_completely_unparsed',
+        'projects_with_misses',
         'projects_with_false_positives',
         'percentage_projects_false_positives'
     ]
