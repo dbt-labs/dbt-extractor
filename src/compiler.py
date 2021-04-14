@@ -33,7 +33,7 @@ def transformations(node):
         new_kwargs = []
         for kwarg in kwargs:
             if kwarg[1] == 'post_hook':
-                new_kwargs.append(('kwarg', 'post-hook', transformations(kwarg[2])))
+                new_kwargs.append(transformations((kwarg[0], 'post-hook', kwarg[2])))
             else:
                 new_kwargs.append(transformations(kwarg))
         return ('config', *new_kwargs)
