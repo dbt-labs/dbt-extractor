@@ -89,16 +89,22 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
         if kwarg[0] == 'tags':
             parsed_tags = kwarg[1]
 
-    real_tags = []
-    for kwarg in configs:
-        if kwarg[0] == 'tags':
-            real_tags = kwarg[1]
+    if parsed_tags:
+        real_tags = []
+        for kwarg in configs:
+            if kwarg[0] == 'tags':
+                real_tags = kwarg[1]
 
-    filtered_real_tags = list(filter(lambda tag: tag in parsed_tags, real_tags))
-    tag_adjusted_configs = [('tags', filtered_real_tags)] + list(filter(lambda kwarg: kwarg[0] != 'tags', configs))
+        filtered_real_tags = list(filter(lambda tag: tag in parsed_tags, real_tags))
+        # these misses are presumed to be from the project.yaml config.
+        misses_removed = list(filter(lambda x: x in res['configs'], configs))
+        # add back the tags so we can accurately compare the tags. 
+        old_configs = configs
+        configs = [('tags', filtered_real_tags)] + list(filter(lambda kwarg: kwarg[0] != 'tags', misses_removed))
+        
 
     # the set of tree-sitter parsed values minus the set of real parsed values should be empty if we made no mistakes
-    misparsed_configs = difference(res['configs'], tag_adjusted_configs)
+    misparsed_configs = difference(res['configs'], configs)
     misparsed_refs    = difference(res['refs'], refs)
     misparsed_sources = difference(res['sources'], sources)
     misparsed_total = len(misparsed_configs) + len(misparsed_refs) + len(misparsed_sources)
@@ -117,6 +123,12 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
     #         print("::: GOT SOURCES :::")
     #         pprint(res['sources'])
     #     if(len(misparsed_configs) > 0):
+    #         print("::: RES['configs'] :::")
+    #         pprint(res['configs'])
+    #         print("::: OLD_CONFIGS :::")
+    #         pprint(old_configs)
+    #         print("::: CONFIGS MISSES REMOVED (no tags) :::")
+    #         pprint(misses_removed)
     #         print("::: EXPECTED CONFIGS :::")
     #         pprint(configs)
     #         print("::: GOT CONFIGS :::")
