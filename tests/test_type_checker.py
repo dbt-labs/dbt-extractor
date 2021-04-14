@@ -31,7 +31,26 @@ def all_type_check(l):
 def none_type_check(l):
     return reduce(lambda x, y: x and y, map(type_check_fails, l))
     
-# TODO rework these tests to be like the tree-sitter tests with expected ast outputs too.
+def produces_tree(source_text, ast):
+    source_bytes = bytes(source_text, "utf8")
+    tree = parser.parse(source_bytes)
+    # If we couldn't parse the source we can't typecheck it.
+    if src.compiler.error_count(tree.root_node, 0) > 0:
+        print("parser failed")
+        return False
+    res = src.type_check.type_check(source_bytes, tree.root_node)
+    # if it returned a list of errors, it didn't typecheck
+    if isinstance(res, src.type_check.TypeCheckFailure):
+        print(res)
+        return False
+    elif res != ast:
+        print(":: EXPECTED ::")
+        print(ast)
+        print(":: GOT ::")
+        print(res)
+        return False
+    else:
+        return True
 
 def test_recognizes_ref_source_config():
     assert all_type_check([
@@ -113,3 +132,10 @@ def test_nested_fn_calls_fail():
         "{{ config(x=ref('my_table')) }}",
         "{{ source(ref('my_table')) }}"
     ])
+
+def test_ref_ast():
+    assert produces_tree(
+        "{{ ref('my_table') }}"
+        ,
+        ('root', ('ref', 'my_table'))
+    )
