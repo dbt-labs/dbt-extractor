@@ -45,7 +45,7 @@ def extract(node, data):
     # e.g. {{ config(key=[{'nested':'values'}]) }}
     if node[0] == 'config':
         for kwarg in node[1:]:
-            data['configs'][kwarg[1]] = extract(kwarg[2], data)
+            data['configs'].append((kwarg[1], extract(kwarg[2], data)))
 
     if node[0] == 'source':
         for arg in node[1:]:
@@ -77,7 +77,7 @@ def parse_typecheck_extract(parser, string):
     data = {
         'refs': [],
         'sources': set(),
-        'configs': dict(),
+        'configs': [],
         'python_jinja': False
     }
     # if there are no _parsing errors_ check for _type errors_

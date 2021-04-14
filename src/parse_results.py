@@ -116,6 +116,27 @@ def run_on(data_path):
         except:
             pass
 
+        base_config = {
+            'alias': None,
+            'column_types': {},
+            'copy_grants': True,
+            'database': None,
+            'enabled': True,
+            'full_refresh': None,
+            'materialized': 'table',
+            'persist_docs': {},
+            'post-hook': [],
+            'pre-hook': [],
+            'quoting': {},
+            'schema': None,
+            'tags': [],
+            'vars': {}
+        }
+
+        # remove default values for configs
+        row_config = list(filter(lambda kv: kv not in base_config.items(), row_config.items()))
+
+        # reshape sources from lists of length 2 to tuples.
         row_sources = list(map(lambda list: (list[0], list[1]), row_sources))
 
         return process_row(parser, row['manifest_file_name'], row['raw_sql'], row_config, row_refs, row_sources)

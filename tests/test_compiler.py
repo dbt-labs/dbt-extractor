@@ -13,7 +13,7 @@ def extraction(input, expected):
         pprint(got)
     return passed
 
-def exctracted(refs=[], sources=[], configs={}, python_jinja=False):
+def exctracted(refs=[], sources=[], configs=[], python_jinja=False):
     return {
         'refs': refs,
         'sources': set(sources),
@@ -35,7 +35,7 @@ def test_config():
         "{{ config(key='value') }}"
         ,
         exctracted(
-            configs={'key': 'value'}
+            configs=[('key', 'value')]
         )
     )
 
@@ -55,7 +55,7 @@ def test_all():
         exctracted(
             sources=[('package', 'table')],
             refs=[['x']],
-            configs={'key': 'v'}
+            configs=[('key', 'v')]
         )
     )
 
@@ -64,6 +64,6 @@ def test_deeply_nested_config():
         "{{ config(key=[{'k':['v', {'x': 'y'}]}, ['a', 'b', 'c']]) }}"
         ,
         exctracted(
-            configs={'key': [{'k':['v', {'x': 'y'}]}, ['a', 'b', 'c']]}
+            configs=[('key', [{'k':['v', {'x': 'y'}]}, ['a', 'b', 'c']])]
         )
     )
