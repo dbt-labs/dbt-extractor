@@ -128,3 +128,19 @@ parses other fn names
     (argument_list)
   )
 )
+
+==================
+errors on booleans
+==================
+
+{{ config(bind=False) }
+
+---
+
+(source_file
+  (ERROR
+    (identifier)
+    (identifier)
+    (identifier)
+  )
+)
