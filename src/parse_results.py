@@ -44,24 +44,20 @@ def get_project_results(grouped_results):
             'project_models': 0,
             'models_parsed': 0,
             'models_unparsed': 0,
-            'models_skipped': 0,
             'parsing_false_positives': 0,
             'parsing_misses': 0,
             'percent_parsable': 0,
         }
 
         for res in model_results:
-            if('skipped' not in res.keys()):
-                stats['project_models'] += 1
-                if res['parsed']: 
-                    stats['models_parsed'] += 1
-                else:
-                    stats['models_unparsed'] += 1
-
-                stats['parsing_false_positives'] += res['parsing_false_positives']
-                stats['parsing_misses'] += res['parsing_misses']
+            stats['project_models'] += 1
+            if res['parsed']: 
+                stats['models_parsed'] += 1
             else:
-                stats['models_skipped'] += 1
+                stats['models_unparsed'] += 1
+
+            stats['parsing_false_positives'] += res['parsing_false_positives']
+            stats['parsing_misses'] += res['parsing_misses']
 
         if stats['project_models'] <= 0:
             stats['percent_parsable'] = 100.0
@@ -74,21 +70,16 @@ def get_project_results(grouped_results):
 # parser -> row_fields -> dict
 def process_row(parser, project_id, raw_sql, configs, refs, sources):
     res = compiler.parse_typecheck_extract(parser, raw_sql)
-    skipped = { 
-        'project_id': project_id,
-        'skipped': True
-    }
     # if the model file doesn't have a call to config() it defaults to the project.yaml
-    # this shouldn't be counted for comparisons, but won't be a problem in the product.
+    # We set them equal to bypass correcteness checks here. 
     if not res['configs']:
-        return skipped
+        res['configs'] = configs
 
     # the set of real parsed values minus the set we found is the set of unparsed values
-    # TODO unparsed_configs = difference(configs, res['configs'])
+    unparsed_configs = difference(configs, res['configs'])
     unparsed_refs    = difference(refs, res['refs'])
     unparsed_sources = difference(sources, res['sources'])
-    unparsed_total = len(unparsed_refs) + len(unparsed_sources)
-    # TODO unparsed_total = len(unparsed_configs) + len(unparsed_refs) + len(unparsed_sources)
+    unparsed_total = len(unparsed_configs) + len(unparsed_refs) + len(unparsed_sources)
     all_configs_refs_sources_count = len(configs) + len(refs) + len(sources)
     
     # tag equality is special because they are additive in a file
@@ -222,7 +213,7 @@ def run_on(data_path):
     for project_id, stats in all_project_results.items():
         all_project_stats['model_count'] += stats['project_models']
         all_project_stats['models_parsed'] += stats['models_parsed']
-        if stats['models_parsed'] == 0 and stats['models_skipped'] <= 0:
+        if stats['models_parsed'] == 0:
             all_project_stats['projects_completely_unparsed'] += 1
         all_project_stats['models_with_false_positives'] += stats['parsing_false_positives']
         all_project_stats['models_with_misses'] += 1
