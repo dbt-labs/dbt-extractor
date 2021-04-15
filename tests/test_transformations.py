@@ -13,12 +13,20 @@ def transforms_into(input, expected):
         return False
     return True
 
-def test_partition_by_gets_removed():
+def test_removes_three_special_config_kwargs():
     assert transforms_into(
         ('root',
             ('config',
                 ('kwarg', 
                     'partition_by', 
+                    'some value'
+                ),
+                ('kwarg', 
+                    'dataset', 
+                    'some value'
+                ),
+                ('kwarg', 
+                    'project', 
                     'some value'
                 ),
                 ('kwarg', 

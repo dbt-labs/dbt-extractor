@@ -21,10 +21,10 @@ def text_from_node(source_bytes, node):
 def named_children(node):
     return list(filter(lambda x: x.is_named, node.children))
 
-def has_kwarg_child_named(name, node):
+def has_kwarg_child_named(name_list, node):
     kwargs = node[1:]
     for kwarg in kwargs:
-        if kwarg[1] == name:
+        if kwarg[1] in name_list:
             return True
     return False
 
@@ -35,13 +35,13 @@ def transformations(node):
     if not isinstance(node, tuple):
         return node
 
-    # transforms the partition_by config argument so that it doesn't make it into the final form
-    elif node[0] == 'config' and has_kwarg_child_named('partition_by', node):
+    # transforms the following config arguments so that they don't make it into the final form
+    elif node[0] == 'config' and has_kwarg_child_named(['partition_by', 'dataset', 'project'], node):
         kwargs = node[1:]
         # local mutation
         new_kwargs = []
         for kwarg in kwargs:
-            if kwarg[1] == 'partition_by':
+            if kwarg[1] in ['partition_by', 'dataset', 'project']:
                 pass
             else:
                 new_kwargs.append(kwarg)
