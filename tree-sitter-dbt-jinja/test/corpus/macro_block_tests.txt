@@ -1,0 +1,21 @@
+==================
+parses a macro block
+==================
+
+select * from table
+{% if(True) call_function() %}
+select * from other_table
+
+---
+
+(source_file)
+
+==================
+ignores valid syntax in a macro block
+==================
+
+{% ref('my_table') %}
+
+---
+
+(source_file)
