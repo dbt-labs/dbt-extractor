@@ -27,7 +27,9 @@ select * from {{ ref(not_a_string) }}
   (fn_call
     (identifier)
     (argument_list
-      (ERROR)
+      (ERROR
+        (identifier)
+      )
     )
   )
 )
@@ -45,6 +47,7 @@ Config with one kwarg
     (identifier)
     (argument_list
       (kwarg
+        (identifier)
         (lit_string)
       )
     )
@@ -64,9 +67,11 @@ Config with two kwargs
     (identifier)
     (argument_list
       (kwarg
+        (identifier)
         (lit_string)
       )
       (kwarg
+        (identifier)
         (lit_string)
       )
     )
@@ -91,6 +96,7 @@ Fn with a kwarg, string lit, list, and dict
     (identifier)
     (argument_list
       (kwarg
+        (identifier)
         (lit_string)
       )
       (lit_string)
@@ -105,5 +111,64 @@ Fn with a kwarg, string lit, list, and dict
         (lit_string)
       )
     )
+  )
+)
+
+==================
+parses other fn names
+==================
+
+{{ fn() }}
+
+---
+
+(source_file 
+  (fn_call
+    (identifier) 
+    (argument_list)
+  )
+)
+
+==================
+buried fn names
+==================
+
+select
+  field1,
+  field2,
+  field3
+from {{ ref('x') }}
+join {{ ref('y') }}
+
+---
+
+(source_file
+  (fn_call
+    (identifier)
+    (argument_list
+      (lit_string)
+    )
+  ) 
+  (fn_call 
+    (identifier)
+    (argument_list
+      (lit_string)
+    )
+  )
+)
+
+==================
+errors on booleans
+==================
+
+{{ config(bind=False) }
+
+---
+
+(source_file
+  (ERROR
+    (identifier)
+    (identifier)
+    (identifier)
   )
 )

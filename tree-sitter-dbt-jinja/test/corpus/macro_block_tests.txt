@@ -1,0 +1,57 @@
+==================
+parses a macro block
+==================
+
+select * from table
+{% if(True) call_function() %}
+select * from other_table
+
+---
+
+(source_file (jinja_macro_block))
+
+==================
+ignores valid syntax in a macro block
+==================
+
+{% ref('my_table') %}
+
+---
+
+(source_file (jinja_macro_block))
+
+
+==================
+finds nested macro block
+==================
+
+{{ config(key='value') }}
+with
+something as (
+  select whatever from {{ ref('my_table') }}
+  where {% is_incremental() %} and my_bool
+),
+other as (
+  more sql
+)
+
+---
+
+(source_file
+  (fn_call
+    (identifier)
+    (argument_list
+      (kwarg
+        (identifier)
+        (lit_string)
+      )
+    )
+  )
+  (fn_call
+    (identifier)
+    (argument_list
+      (lit_string)
+    )
+  )
+  (jinja_macro_block)
+)

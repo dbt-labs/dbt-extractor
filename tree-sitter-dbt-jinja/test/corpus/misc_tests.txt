@@ -28,7 +28,7 @@ bare words fail
 multiple jinja blocks
 ==================
 
-some text {{ 'floating lit' }} more text {{ fn() }} text.
+some text {{ 'floating lit' }} more text {{ config() }} text.
 
 ---
 
@@ -39,3 +39,25 @@ some text {{ 'floating lit' }} more text {{ fn() }} text.
     (argument_list)
   )
 )
+
+==================
+kwargs retain both key and value
+==================
+
+{{ config(key='value') }}
+
+---
+
+(source_file
+  (fn_call
+    (identifier)
+    (argument_list
+      (kwarg
+        (identifier)
+        (lit_string)
+      )
+    )
+  )
+)
+
+

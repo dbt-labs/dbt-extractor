@@ -26,7 +26,7 @@ floating dict
 dict as arg
 ==================
 
-{{ fn('', {'k':'v'}) }}
+{{ config('x', {'k':'v'}) }}
 
 ---
 
@@ -41,6 +41,55 @@ dict as arg
           (lit_string)
         )
       )
+    )
+  )
+)
+
+==================
+proper config call
+==================
+
+{{ config(x={'k':'v'}) }}
+
+---
+
+(source_file
+  (fn_call
+    (identifier)
+    (argument_list
+      (kwarg
+        (identifier)
+        (dict
+          (pair
+            (lit_string)
+            (lit_string)
+          )
+        )
+      )
+    )
+  )
+)
+
+==================
+dict spread over lines
+==================
+
+{{ {
+  'k':'v',
+  'x':[]
+  } }}
+
+---
+
+(source_file
+  (dict
+    (pair
+      (lit_string)
+      (lit_string)
+    )
+    (pair
+      (lit_string)
+      (list)
     )
   )
 )
