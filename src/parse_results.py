@@ -145,10 +145,6 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
     misparsed_total = len(misparsed_configs) + len(misparsed_refs) + len(misparsed_sources)
 
     # # TODO remove debug lines
-    if misparsed_total > 0:
-        print()
-        print(model_id)
-
     # if misparsed_total > 0:
     #     print()
     #     if(len(misparsed_refs) > 0):
