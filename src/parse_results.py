@@ -84,10 +84,10 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
     res['configs'] = unique_kwargs
 
     # the set of real parsed values minus the set we found is the set of unparsed values
-    unparsed_configs = difference(configs, res['configs'])
+    # we don't check unparsed configs because they can come from other sources.
     unparsed_refs    = difference(refs, res['refs'])
     unparsed_sources = difference(sources, res['sources'])
-    unparsed_total = len(unparsed_configs) + len(unparsed_refs) + len(unparsed_sources)
+    unparsed_total = len(unparsed_refs) + len(unparsed_sources)
     all_configs_refs_sources_count = len(configs) + len(refs) + len(sources)
     
     # tag equality is special because they are additive in a file
@@ -145,26 +145,26 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
     misparsed_total = len(misparsed_configs) + len(misparsed_refs) + len(misparsed_sources)
 
     # # TODO remove debug lines
-    if misparsed_total > 0:
-        print()
-        if(len(misparsed_refs) > 0):
-            print("::: EXPECTED REFS :::")
-            pprint(refs)
-            print("::: GOT REFS :::")
-            pprint(res['refs'])
-        if(len(misparsed_sources) > 0):
-            print("::: EXPECTED SOURCES:::")
-            pprint(sources)
-            print("::: GOT SOURCES :::")
-            pprint(res['sources'])
-        if(len(misparsed_configs) > 0):
-            print("::: EXPECTED CONFIGS :::")
-            pprint(configs)
-            print("::: GOT CONFIGS :::")
-            pprint(res['configs'])
-        # print(":: RAW ::")
-        # pprint(raw_sql)
-        print()
+    # if misparsed_total > 0:
+    #     print()
+    #     if(len(misparsed_refs) > 0):
+    #         print("::: EXPECTED REFS :::")
+    #         pprint(refs)
+    #         print("::: GOT REFS :::")
+    #         pprint(res['refs'])
+    #     if(len(misparsed_sources) > 0):
+    #         print("::: EXPECTED SOURCES:::")
+    #         pprint(sources)
+    #         print("::: GOT SOURCES :::")
+    #         pprint(res['sources'])
+    #     if(len(misparsed_configs) > 0):
+    #         print("::: EXPECTED CONFIGS :::")
+    #         pprint(configs)
+    #         print("::: GOT CONFIGS :::")
+    #         pprint(res['configs'])
+    #     print(":: RAW ::")
+    #     pprint(raw_sql)
+    #     print()
 
     # if there are no instances where we need python_jinja, and we didn't 
     # make any mistakes and we didn't miss any we successfully parsed the model.
@@ -178,7 +178,6 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
         'parsing_misses': unparsed_total
     }
 
-# change data_path to your own path TODO use args
 def run_on(data_path):
     def apply_row(parser, row):
         # defaults for runs that don't include these fields
@@ -228,6 +227,8 @@ def run_on(data_path):
     # read whole file in
     with open(data_path, 'r') as f:
         all_rows = json.loads(f.read())
+
+    # TODO hacka and slash the three segment model ids.
 
     parser = compiler.get_parser()
     all_results = list(map(lambda row: apply_row(parser, row), all_rows))
