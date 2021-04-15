@@ -101,17 +101,17 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
         if not isinstance(parsed_tags, list):
             parsed_tags = [parsed_tags]
         # replace configs with a deduplicated and sorted set of tags since it won't matter in dbt.
-        deduped_parsed_tags = list(set(parsed_tags))
-        sorted_parsed_tags = deduped_parsed_tags.sort()
-        res['configs'] = [('tags', sorted_parsed_tags)] + list(filter(lambda kwarg: kwarg[0] != 'tags', res['configs']))
+        processed_parsed_tags = list(set(parsed_tags))
+        processed_parsed_tags.sort()
+        res['configs'] = [('tags', processed_parsed_tags)] + list(filter(lambda kwarg: kwarg[0] != 'tags', res['configs']))
         # conversion to set removes duplicates (tags defined in project.yaml AND model config) sorting makes comparison easier
-        deduped_filtered_real_tags = list(set(filter(lambda tag: tag in parsed_tags, real_tags)))
-        sorted_filtered_real_tags = deduped_filtered_real_tags.sort()
+        processed_real_tags = list(set(filter(lambda tag: tag in parsed_tags, real_tags)))
+        processed_real_tags.sort()
         # these misses are presumed to be from the project.yaml config.
         misses_removed = list(filter(lambda x: x in res['configs'], configs))
         # add back the tags so we can accurately compare the tags. 
         old_configs = configs
-        configs = [('tags', sorted_filtered_real_tags)] + list(filter(lambda kwarg: kwarg[0] != 'tags', misses_removed))
+        configs = [('tags', processed_real_tags)] + list(filter(lambda kwarg: kwarg[0] != 'tags', misses_removed))
         
 
     # the set of tree-sitter parsed values minus the set of real parsed values should be empty if we made no mistakes
