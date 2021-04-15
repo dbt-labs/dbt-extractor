@@ -75,6 +75,14 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
     if not res['configs']:
         res['configs'] = configs
 
+    # if you define a config value twice, it doesn't matter.
+    # not using the set() trick here because there's unhashable types involved (like lists)
+    unique_kwargs = []
+    for kwarg in res['configs']:
+        if kwarg not in unique_kwargs:
+            unique_kwargs.append(kwarg)
+    res['configs'] = unique_kwargs
+
     # the set of real parsed values minus the set we found is the set of unparsed values
     unparsed_configs = difference(configs, res['configs'])
     unparsed_refs    = difference(refs, res['refs'])
