@@ -141,6 +141,14 @@ def test_config_excluded_kwargs():
         "{{ config(post-hook='x') }}"
     ])
 
+def test_macro_blocks_fail_everywhere():
+    assert none_type_check([
+        "{% config(x='y') %}",
+        "{% if(whatever) do_something() %}",
+        "doing stuff {{ ref('str') }} stuff {% macro %}",
+        "{{ {% psych! nested macro %} }}"
+    ])
+
 def test_ref_ast():
     assert produces_tree(
         "{{ ref('my_table') }}"

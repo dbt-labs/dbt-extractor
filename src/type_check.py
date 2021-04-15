@@ -27,6 +27,9 @@ def _to_typed(source_bytes, node):
     if node.type == 'lit_string':
         return strip_quotes(text_from_node(source_bytes, node))
 
+    if node.type == 'jinja_macro_block':
+        raise TypeCheckFailure("macro blocks are unsupported: {% syntax like this %}")
+
     elif node.type == 'list':
         elems = named_children(node)
         for elem in elems:
