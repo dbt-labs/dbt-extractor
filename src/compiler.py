@@ -48,27 +48,6 @@ def transformations(node):
         # sending the top-level config through again to catch any other config tranformations 
         return transformations(('config', *new_kwargs))
 
-    elif node[0] == 'config':
-        kwargs = node[1:]
-        new_kwargs = []
-        for kwarg in kwargs:
-            if (kwarg[1] == 'post_hook' or kwarg[1] == 'post-hook') and kwarg[2][0] == 'list':
-                new_kwargs.append(transformations((
-                    kwarg[0], 
-                    'post-hook', 
-                    ('dict',
-                        ('index',
-                            None
-                        ),
-                        ('sql',
-                            kwarg[2]
-                        )
-                    )
-                )))
-            else:
-                new_kwargs.append(transformations(kwarg))
-        return ('config', *new_kwargs)
-
     else:
         return (node[0], *tuple(transformations(child) for child in node[1:]))
 
