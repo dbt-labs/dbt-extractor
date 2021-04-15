@@ -149,6 +149,24 @@ def test_macro_blocks_fail_everywhere():
         "{{ {% psych! nested macro %} }}"
     ])
 
+def test_top_level_kwargs_are_rejected():
+    assert none_type_check([
+        "{{ kwarg='value' }}"
+    ])
+
+def test_top_level_kwargs_are_rejected():
+    assert none_type_check([
+        """{{ config(key='value') }}
+with
+something as (
+    select whatever from {{ ref('my_table') }}
+where {% is_incremental() %} and my_bool
+),
+other as (
+    there's like ten more of these as blocks.
+)"""
+    ])
+
 def test_ref_ast():
     assert produces_tree(
         "{{ ref('my_table') }}"
