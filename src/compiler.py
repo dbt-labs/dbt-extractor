@@ -21,12 +21,32 @@ def text_from_node(source_bytes, node):
 def named_children(node):
     return list(filter(lambda x: x.is_named, node.children))
 
+def has_kwarg_child_named(name, node):
+    kwargs = node[1:]
+    for kwarg in kwargs:
+        if kwarg[1] == name:
+            return True
+    return False
+
 # applies transformations to the typed_ast
 # for now it's just post_hook -> post-hook config keword.
 def transformations(node):
     # reached a leaf
     if not isinstance(node, tuple):
         return node
+
+    # transforms the partition_by config argument so that it doesn't make it into the final form
+    elif node[0] == 'config' and has_kwarg_child_named('partition_by', node):
+        kwargs = node[1:]
+        # local mutation
+        new_kwargs = []
+        for kwarg in kwargs:
+            if kwarg[1] == 'partition_by':
+                pass
+            else:
+                new_kwargs.append(kwarg)
+        # sending the top-level config through again to catch any other config tranformations 
+        return transformations(('config', *new_kwargs))
 
     elif node[0] == 'config':
         kwargs = node[1:]

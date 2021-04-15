@@ -13,6 +13,31 @@ def transforms_into(input, expected):
         return False
     return True
 
+def test_partition_by_gets_removed():
+    assert transforms_into(
+        ('root',
+            ('config',
+                ('kwarg', 
+                    'partition_by', 
+                    'some value'
+                ),
+                ('kwarg', 
+                    'key', 
+                    'value'
+                )
+            )
+        )
+        ,
+        ('root',
+            ('config',
+                ('kwarg', 
+                    'key', 
+                    'value'
+                )
+            )
+        )
+    )
+
 def test_fake_post_hook():
     assert transforms_into(
         ('root',
