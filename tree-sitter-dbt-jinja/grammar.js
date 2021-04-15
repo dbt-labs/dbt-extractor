@@ -14,7 +14,7 @@ module.exports = grammar ({
   rules: {
     source_file: $ => repeat(
         choice(
-            prec(10, $._jinja_macro_block),
+            prec(10, $.jinja_macro_block),
             prec(10, $._jinja_block),
             prec(1, $._text)
         )
@@ -28,7 +28,7 @@ module.exports = grammar ({
 
     // This is awkward regex because we aren't parsing anything
     // inside the block like a regular parser would want to.
-    _jinja_macro_block: $ => seq(
+    jinja_macro_block: $ => seq(
         '{%',
         /(.*)([%].{1}|.{1}[}])/
         ),

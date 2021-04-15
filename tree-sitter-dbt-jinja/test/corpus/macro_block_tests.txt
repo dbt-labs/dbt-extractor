@@ -8,7 +8,7 @@ select * from other_table
 
 ---
 
-(source_file)
+(source_file (jinja_macro_block))
 
 ==================
 ignores valid syntax in a macro block
@@ -18,4 +18,4 @@ ignores valid syntax in a macro block
 
 ---
 
-(source_file)
+(source_file (jinja_macro_block))
