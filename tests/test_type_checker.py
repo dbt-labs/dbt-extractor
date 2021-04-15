@@ -9,7 +9,7 @@ def type_checks(source_text):
     source_bytes = bytes(source_text, "utf8")
     tree = parser.parse(source_bytes)
     # If we couldn't parse the source we can't typecheck it.
-    if src.compiler.error_count(tree.root_node, 0) > 0:
+    if src.compiler.error_count(tree.root_node) > 0:
         print("parser failed")
         return False
     res = src.type_check.type_check(source_bytes, tree.root_node)
@@ -35,7 +35,7 @@ def produces_tree(source_text, ast):
     source_bytes = bytes(source_text, "utf8")
     tree = parser.parse(source_bytes)
     # If we couldn't parse the source we can't typecheck it.
-    if src.compiler.error_count(tree.root_node, 0) > 0:
+    if src.compiler.error_count(tree.root_node) > 0:
         print("parser failed")
         return False
     res = src.type_check.type_check(source_bytes, tree.root_node)

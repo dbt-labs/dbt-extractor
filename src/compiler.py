@@ -1,4 +1,5 @@
 
+from functools import reduce
 from tree_sitter import Language, Parser
 import type_check
 
@@ -85,15 +86,14 @@ def extract(node, data):
     # generator statement evaluated as tuple for effects
     tuple(extract(child, data) for child in node[1:])
 
-def error_count(node, count):
-    total = count
+def error_count(node):
     if node.type == 'ERROR':
-        total += 1
+        return 1
 
-    for child in node.children:
-        total += error_count(child, total)
-
-    return total
+    if node.children:
+        return reduce(lambda a,b: a+b, map(lambda x: error_count(x), node.children))
+    else:
+        return 0
 
 def get_parser():
     parser = Parser()
@@ -105,7 +105,7 @@ def get_parser():
 def parse_typecheck_extract(parser, string):
     source_bytes = bytes(string, "utf8")
     tree = parser.parse(source_bytes)
-    count = error_count(tree.root_node, 0)
+    count = error_count(tree.root_node)
     data = {
         'refs': [],
         'sources': set(),
