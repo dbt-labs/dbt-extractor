@@ -70,6 +70,18 @@ def get_project_results(grouped_results):
 # parser -> row_fields -> dict
 def process_row(parser, project_id, raw_sql, configs, refs, sources):
     res = compiler.parse_typecheck_extract(parser, raw_sql)
+
+    # if it can't be parsed or type checked, we can't extract anything.
+    if res['python_jinja']:
+        return {
+            'project_id': project_id,
+            'parsed': False,
+            'python_jinja': res['python_jinja'],
+            'all_configs_refs_sources_count': 0,
+            'parsing_false_positives': 0,
+            'parsing_misses': 0
+        }
+
     # if the model file doesn't have a call to config() it defaults to the project.yaml
     # We set them equal to bypass correcteness checks here. 
     if not res['configs']:
@@ -145,30 +157,25 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
     misparsed_total = len(misparsed_configs) + len(misparsed_refs) + len(misparsed_sources)
 
     # # TODO remove debug lines
-    # if misparsed_total > 0:
+    # if unparsed_total > 0:
     #     print()
-    #     if(len(misparsed_refs) > 0):
+    #     if(len(unparsed_refs) > 0):
     #         print("::: EXPECTED REFS :::")
     #         pprint(refs)
     #         print("::: GOT REFS :::")
     #         pprint(res['refs'])
-    #     if(len(misparsed_sources) > 0):
+    #     if(len(unparsed_sources) > 0):
     #         print("::: EXPECTED SOURCES:::")
     #         pprint(sources)
     #         print("::: GOT SOURCES :::")
     #         pprint(res['sources'])
-    #     if(len(misparsed_configs) > 0):
-    #         print("::: EXPECTED CONFIGS :::")
-    #         pprint(configs)
-    #         print("::: GOT CONFIGS :::")
-    #         pprint(res['configs'])
     #     print(":: RAW ::")
     #     pprint(raw_sql)
     #     print()
 
     # if there are no instances where we need python_jinja, and we didn't 
     # make any mistakes and we didn't miss any we successfully parsed the model.
-    parsed = (not res['python_jinja']) and misparsed_total <= 0 and unparsed_total <= 0
+    parsed = misparsed_total <= 0 and unparsed_total <= 0
     return {
         'project_id': project_id,
         'parsed': parsed,
