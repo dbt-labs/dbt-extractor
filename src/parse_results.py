@@ -112,7 +112,23 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
         # add back the tags so we can accurately compare the tags. 
         old_configs = configs
         configs = [('tags', processed_real_tags)] + list(filter(lambda kwarg: kwarg[0] != 'tags', misses_removed))
+
+    # sometimes people define {{ config(tags=[]) }}
+    # somtimes dbt has tags=[] (likely when defined in the project yaml)
+    # and sometimes it has no tags config. (likely when not defined in the project yaml) 
+    empty_tag = False
+    for kwarg in res['configs']:
+        if kwarg[0] == 'tags':
+            if kwarg[1] == []:
+                empty_tag = True
+    
+    no_tags_in_manifest = True
+    for kwarg in configs:
+        if kwarg[0] == 'tags':
+            no_tags_in_manifest = False
         
+    if empty_tag and no_tags_in_manifest:
+        res['configs'] = list(filter(lambda kwarg: kwarg[0] != 'tags', res['configs']))
 
     # the set of tree-sitter parsed values minus the set of real parsed values should be empty if we made no mistakes
     misparsed_configs = difference(res['configs'], configs)
@@ -121,26 +137,26 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
     misparsed_total = len(misparsed_configs) + len(misparsed_refs) + len(misparsed_sources)
 
     # # TODO remove debug lines
-    # if unparsed_total > 0:
-    #     print()
-    #     if(len(unparsed_refs) > 0):
-    #         print("::: EXPECTED REFS :::")
-    #         pprint(refs)
-    #         print("::: GOT REFS :::")
-    #         pprint(res['refs'])
-    #     if(len(unparsed_sources) > 0):
-    #         print("::: EXPECTED SOURCES:::")
-    #         pprint(sources)
-    #         print("::: GOT SOURCES :::")
-    #         pprint(res['sources'])
-    #     if(len(unparsed_configs) > 0):
-    #         print("::: EXPECTED CONFIGS :::")
-    #         pprint(configs)
-    #         print("::: GOT CONFIGS :::")
-    #         pprint(res['configs'])
-    #     print(":: RAW ::")
-    #     pprint(raw_sql)
-    #     print()
+    if misparsed_total > 0:
+        print()
+        if(len(misparsed_refs) > 0):
+            print("::: EXPECTED REFS :::")
+            pprint(refs)
+            print("::: GOT REFS :::")
+            pprint(res['refs'])
+        if(len(misparsed_sources) > 0):
+            print("::: EXPECTED SOURCES:::")
+            pprint(sources)
+            print("::: GOT SOURCES :::")
+            pprint(res['sources'])
+        if(len(misparsed_configs) > 0):
+            print("::: EXPECTED CONFIGS :::")
+            pprint(configs)
+            print("::: GOT CONFIGS :::")
+            pprint(res['configs'])
+        # print(":: RAW ::")
+        # pprint(raw_sql)
+        print()
 
     # if there are no instances where we need python_jinja, and we didn't 
     # make any mistakes and we didn't miss any we successfully parsed the model.
