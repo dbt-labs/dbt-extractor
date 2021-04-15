@@ -1,3 +1,4 @@
+from functools import reduce
 import itertools
 import json
 import compiler
@@ -57,7 +58,8 @@ def get_project_results(grouped_results):
                 stats['models_unparsed'] += 1
 
             stats['parsing_false_positives'] += res['parsing_false_positives']
-            stats['parsing_misses'] += res['parsing_misses']
+            if res['parsing_misses'] > 0:
+                stats['parsing_misses'] += 1
 
         if stats['project_models'] <= 0:
             stats['percent_parsable'] = 100.0
@@ -68,7 +70,7 @@ def get_project_results(grouped_results):
     return project_stats
 
 # parser -> row_fields -> dict
-def process_row(parser, project_id, raw_sql, configs, refs, sources):
+def process_row(parser, project_id, raw_sql, configs, refs, sources, model_id):
     res = compiler.parse_typecheck_extract(parser, raw_sql)
 
     # if it can't be parsed or type checked, we can't extract anything.
@@ -156,23 +158,6 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
     misparsed_sources = difference(res['sources'], sources)
     misparsed_total = len(misparsed_configs) + len(misparsed_refs) + len(misparsed_sources)
 
-    # # TODO remove debug lines
-    # if unparsed_total > 0:
-    #     print()
-    #     if(len(unparsed_refs) > 0):
-    #         print("::: EXPECTED REFS :::")
-    #         pprint(refs)
-    #         print("::: GOT REFS :::")
-    #         pprint(res['refs'])
-    #     if(len(unparsed_sources) > 0):
-    #         print("::: EXPECTED SOURCES:::")
-    #         pprint(sources)
-    #         print("::: GOT SOURCES :::")
-    #         pprint(res['sources'])
-    #     print(":: RAW ::")
-    #     pprint(raw_sql)
-    #     print()
-
     # if there are no instances where we need python_jinja, and we didn't 
     # make any mistakes and we didn't miss any we successfully parsed the model.
     parsed = misparsed_total <= 0 and unparsed_total <= 0
@@ -229,14 +214,19 @@ def run_on(data_path):
         # reshape sources from lists of length 2 to tuples.
         row_sources = set(map(lambda list: (list[0], list[1]), row_sources))
 
-        return process_row(parser, row['manifest_file_name'], row['raw_sql'], row_config, row_refs, row_sources)
+        return process_row(parser, row['manifest_file_name'], row['raw_sql'], row_config, row_refs, row_sources, row['unique_id'])
+
+    def is_bad_example(manifest_file_name):
+        # segment is a package and its configs can be overridden in a way that look like a false positive but aren't
+        # juni has a macro that overrides ref behavior to double everything
+        prefixes_to_reject = ['model.segment', 'model.juni_dbt']
+        return reduce(lambda a,b: a or b, map(lambda prefix: manifest_file_name.startswith(prefix), prefixes_to_reject))
 
     # read whole file in
     with open(data_path, 'r') as f:
         all_rows = json.loads(f.read())
 
-    # segment is a package that can have its configs overridden in a way non-package files can't so just skip these.
-    all_rows = list(filter(lambda row: row['unique_id'] != 'model.segment.segment_web_user_stitching', all_rows))
+    all_rows = list(filter(lambda row: not is_bad_example(row['unique_id']) , all_rows))
 
     parser = compiler.get_parser()
     all_results = list(map(lambda row: apply_row(parser, row), all_rows))
@@ -266,7 +256,7 @@ def run_on(data_path):
         if stats['models_parsed'] == 0:
             all_project_stats['projects_completely_unparsed'] += 1
         all_project_stats['models_with_false_positives'] += stats['parsing_false_positives']
-        all_project_stats['models_with_misses'] += 1
+        all_project_stats['models_with_misses'] += stats['parsing_misses']
         all_project_stats['model_count'] += 1
         if stats['models_parsed'] == stats['project_models']:
             all_project_stats['projects_parsed'] += 1
