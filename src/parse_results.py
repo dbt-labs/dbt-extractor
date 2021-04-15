@@ -145,6 +145,10 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
     misparsed_total = len(misparsed_configs) + len(misparsed_refs) + len(misparsed_sources)
 
     # # TODO remove debug lines
+    if misparsed_total > 0:
+        print()
+        print(model_id)
+
     # if misparsed_total > 0:
     #     print()
     #     if(len(misparsed_refs) > 0):
@@ -228,7 +232,8 @@ def run_on(data_path):
     with open(data_path, 'r') as f:
         all_rows = json.loads(f.read())
 
-    # TODO hacka and slash the three segment model ids.
+    # segment is a package that can have its configs overridden in a way non-package files can't so just skip these.
+    all_rows = list(filter(lambda row: row['unique_id'] != 'model.segment.segment_web_user_stitching', all_rows))
 
     parser = compiler.get_parser()
     all_results = list(map(lambda row: apply_row(parser, row), all_rows))
