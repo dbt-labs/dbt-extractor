@@ -100,15 +100,18 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
         # it dbt will handle this down the line so we'll make them all lists for the checks.
         if not isinstance(parsed_tags, list):
             parsed_tags = [parsed_tags]
-        # replace configs with a deduplicated set of tags since it won't matter in dbt.
-        res['configs'] = [('tags', list(set(parsed_tags)))] + list(filter(lambda kwarg: kwarg[0] != 'tags', res['configs']))
-        # conversion to set removes duplicates (tags defined in project.yaml AND model config)
-        filtered_real_tags = list(set(filter(lambda tag: tag in parsed_tags, real_tags)))
+        # replace configs with a deduplicated and sorted set of tags since it won't matter in dbt.
+        deduped_parsed_tags = list(set(parsed_tags))
+        sorted_parsed_tags = deduped_parsed_tags.sort()
+        res['configs'] = [('tags', sorted_parsed_tags)] + list(filter(lambda kwarg: kwarg[0] != 'tags', res['configs']))
+        # conversion to set removes duplicates (tags defined in project.yaml AND model config) sorting makes comparison easier
+        deduped_filtered_real_tags = list(set(filter(lambda tag: tag in parsed_tags, real_tags)))
+        sorted_filtered_real_tags = deduped_filtered_real_tags.sort()
         # these misses are presumed to be from the project.yaml config.
         misses_removed = list(filter(lambda x: x in res['configs'], configs))
         # add back the tags so we can accurately compare the tags. 
         old_configs = configs
-        configs = [('tags', filtered_real_tags)] + list(filter(lambda kwarg: kwarg[0] != 'tags', misses_removed))
+        configs = [('tags', sorted_filtered_real_tags)] + list(filter(lambda kwarg: kwarg[0] != 'tags', misses_removed))
         
 
     # the set of tree-sitter parsed values minus the set of real parsed values should be empty if we made no mistakes
@@ -117,7 +120,7 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources):
     misparsed_sources = difference(res['sources'], sources)
     misparsed_total = len(misparsed_configs) + len(misparsed_refs) + len(misparsed_sources)
 
-    # TODO remove debug lines
+    # # TODO remove debug lines
     # if unparsed_total > 0:
     #     print()
     #     if(len(unparsed_refs) > 0):
