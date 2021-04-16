@@ -17,7 +17,7 @@ base_result = {
     'percentage_projects_completely_unparsed': 0 
 }
 
-def test_something():
+def test_field_calculation():
     data = [{
         'manifest_file_name': 'test_1',
         'raw_sql': " {{ ref('my_table') }} ",
@@ -25,20 +25,45 @@ def test_something():
         'refs': [['my_table']],
         'sources': [],
         'unique_id': 'test'
-    }]
+    },
+    {
+        'manifest_file_name': 'test_2',
+        'raw_sql': " {{ ref('my_table') }} ",
+        'config': {},
+        'refs': [['my_table']],
+        'sources': [],
+        'unique_id': 'test'
+    },
+    {
+        'manifest_file_name': 'test_2',
+        'raw_sql': " {% macro() %} ",
+        'config': {},
+        'refs': [['my_table']],
+        'sources': [],
+        'unique_id': 'test'
+    },
+    {
+        'manifest_file_name': 'test_3',
+        'raw_sql': " {% macro() %} ",
+        'config': {},
+        'refs': [],
+        'sources': [],
+        'unique_id': 'test'
+    }
+    ]
 
     res = parse_results._run_on(data)
-    assert res['model_count'] == 1
-    assert res['models_parsed'] == 1
+    assert res['model_count'] == 4
+    assert res['models_parsed'] == 2
     assert res['models_with_misses'] == 0
     assert res['models_with_false_positives'] == 0
     assert res['percentage_models_false_positives'] == 0
-    assert res['percentage_models_parseable'] == 100
-    assert res['project_count'] == 1
+    assert res['percentage_models_parseable'] == 50
+    assert res['project_count'] == 3
     assert res['projects_parsed'] == 1
     assert res['projects_with_misses'] == 0
     assert res['projects_with_false_positives'] == 0
     assert res['percentage_projects_false_positives'] == 0
-    assert res['percentage_projects_parseable'] == 100
-    assert res['projects_completely_unparsed'] == 0
-    assert res['percentage_projects_completely_unparsed'] == 0
+    assert res['percentage_projects_parseable'] == 100 * 1/3
+    assert res['projects_completely_unparsed'] == 1
+    assert res['percentage_projects_completely_unparsed'] == 100 * 1/3
