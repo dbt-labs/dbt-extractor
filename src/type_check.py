@@ -27,6 +27,13 @@ def _to_typed(source_bytes, node):
     if node.type == 'lit_string':
         return strip_quotes(text_from_node(source_bytes, node))
 
+    if node.type == 'bool':
+        text = text_from_node(source_bytes, node)
+        if text == 'True':
+            return True
+        if text == 'False':
+            return False
+
     if node.type == 'jinja_macro_block':
         raise TypeCheckFailure("macro blocks are unsupported: {% syntax like this %}")
 
