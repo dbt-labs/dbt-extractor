@@ -34,13 +34,10 @@ def group_by_project(all_processed_rows):
     
     return grouped
 
-# [dict] -> dict
 def get_project_results(grouped_results):
-    # local mutation for all projects
-    project_stats = {}
-
-    for project_id, model_results in grouped_results.items():
-        # scoped local mutation for a single project
+    def go(project_model_results):
+        (project_id, model_result_list) = project_model_results
+        
         stats = {
             'project_models': 0,
             'models_parsed': 0,
@@ -50,7 +47,7 @@ def get_project_results(grouped_results):
             'percent_parsable': 0,
         }
 
-        for res in model_results:
+        for res in model_result_list:
             stats['project_models'] += 1
             if res['parsed']: 
                 stats['models_parsed'] += 1
@@ -65,9 +62,11 @@ def get_project_results(grouped_results):
             stats['percent_parsable'] = 100.0
         else:
             stats['percent_parsable'] = 100 * (stats['models_parsed'] / stats['project_models'])
-        project_stats[project_id] = stats
+        
+        return project_id, stats
 
-    return project_stats
+    print(grouped_results)
+    return dict(map(go, grouped_results.items()))
 
 # parser -> row_fields -> dict
 def process_row(parser, project_id, raw_sql, configs, refs, sources, model_id):
