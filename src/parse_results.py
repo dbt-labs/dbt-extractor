@@ -281,6 +281,16 @@ def _run_on(json_list):
         all_project_stats['percentage_projects_false_positives'] = 100 * all_project_stats['projects_with_false_positives'] / all_project_stats['project_count']
         all_project_stats['percentage_projects_completely_unparsed'] = 100 * all_project_stats['projects_completely_unparsed'] / all_project_stats['project_count']
 
+    return all_project_stats
+
+# runner entry point 
+def run_on(data_path):
+    # read whole file in
+    with open(data_path, 'r') as f:
+        json_list = json.loads(f.read())
+
+    stats = _run_on(json_list)
+
     # manually printing so they come out in the right order
     field_order = [
         'model_count',
@@ -300,12 +310,4 @@ def _run_on(json_list):
     ]
 
     for field in field_order:
-        print(f"{field} : {all_project_stats[field]}")
-
-# runner entry point 
-def run_on(data_path):
-    # read whole file in
-    with open(data_path, 'r') as f:
-        json_list = json.loads(f.read())
-
-    _run_on(json_list)
+        print(f"{field} : {stats[field]}")
