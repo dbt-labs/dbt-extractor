@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import NamedTuple, Union
 
 @dataclass
 class TypeCheckFailure(Exception):
@@ -7,6 +8,21 @@ class TypeCheckFailure(Exception):
 @dataclass
 class TypeCheckPass():
     pass
+
+class DbtBool(NamedTuple):
+    value: bool
+
+class DbtString(NamedTuple):
+    value: str
+
+class DbtList(NamedTuple):
+    value: ExprT
+
+ExprT = Union[
+    DbtBool,
+    DbtString,
+    DbtList
+]
 
 def named_children(node):
     return list(filter(lambda x: x.is_named, node.children))
