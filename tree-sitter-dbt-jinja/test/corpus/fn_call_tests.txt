@@ -158,17 +158,52 @@ join {{ ref('y') }}
 )
 
 ==================
-errors on booleans
+bool args
 ==================
 
-{{ config(bind=False) }
+{{ fn(True) }}
+
+---
+
+(source_file
+  (fn_call 
+    (identifier)
+    (argument_list 
+      (bool)
+    )
+  )
+)
+
+==================
+bool kwargs
+==================
+
+{{ config(bind=False) }}
+
+---
+
+(source_file
+  (fn_call 
+    (identifier)
+    (argument_list 
+      (kwarg
+        (identifier)
+        (bool)
+      )
+    )
+  )
+)
+
+==================
+True is an invalid fn name
+==================
+
+{{ True() }
 
 ---
 
 (source_file
   (ERROR
-    (identifier)
-    (identifier)
-    (identifier)
+    (bool)
   )
 )

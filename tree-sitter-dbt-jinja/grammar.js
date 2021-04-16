@@ -28,6 +28,7 @@ module.exports = grammar ({
 
     // This is awkward regex because we aren't parsing anything
     // inside the block like a regular parser would want to.
+    // TODO what about multiple linebreaks inside a jinja macro?
     jinja_macro_block: $ => seq(
         '{%',
         /(.*)([%].{1}|.{1}[}])/
@@ -36,9 +37,10 @@ module.exports = grammar ({
     // This defines all the meat of the parser
     _expr: $ => choice(
         $.fn_call,
-        $.lit_string,
         $.list,
-        $.dict
+        $.dict,
+        $.lit_string,
+        $.bool,
     ),
 
     fn_call: $ => seq(
@@ -54,6 +56,7 @@ module.exports = grammar ({
                 $.kwarg
             )
         )),
+        // TODO to match python add optional(','),
         ')'
     ),
 
@@ -70,6 +73,11 @@ module.exports = grammar ({
                 '"',
             )
         )
+    ),
+
+    bool: $ => choice(
+        'True',
+        'False'
     ),
 
     list: $ => seq(
@@ -95,6 +103,7 @@ module.exports = grammar ({
     identifier: $ => $._identifier,
 
     _identifier: $ => token(/[a-zA-Z_][a-zA-Z0-9_]*/),
+    // Unicode identifiers like python does: /[_\p{XID_Start}][_\p{XID_Continue}]*/
 
     kwarg: $ => seq(
         // TODO make this key not arg
