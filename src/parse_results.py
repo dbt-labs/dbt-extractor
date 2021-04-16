@@ -39,30 +39,21 @@ def flatten_project_results(project_model_results):
     (project_id, model_result_list) = project_model_results
     
     stats = {
-        'project_models': 0,
+        'model_count': 0,
         'models_parsed': 0,
-        'models_unparsed': 0,
-        'parsing_false_positives': 0,
-        'parsing_misses': 0,
-        'percent_parsable': 0,
+        'models_with_misses': 0,
+        'models_with_false_positives': 0,
     }
 
     for res in model_result_list:
-        stats['project_models'] += 1
+        stats['model_count'] += 1
         if res['parsed']: 
             stats['models_parsed'] += 1
-        else:
-            stats['models_unparsed'] += 1
-
-        stats['parsing_false_positives'] += res['parsing_false_positives']
         if res['parsing_misses'] > 0:
-            stats['parsing_misses'] += 1
+            stats['models_with_misses'] += 1
 
-    if stats['project_models'] <= 0:
-        stats['percent_parsable'] = 100.0
-    else:
-        stats['percent_parsable'] = 100 * (stats['models_parsed'] / stats['project_models'])
-    
+        stats['models_with_false_positives'] += res['models_with_false_positives']
+
     return project_id, stats
 
 # parser -> row_fields -> dict
@@ -76,7 +67,7 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources, model_id):
             'parsed': False,
             'python_jinja': res['python_jinja'],
             'all_configs_refs_sources_count': 0,
-            'parsing_false_positives': 0,
+            'models_with_false_positives': 0,
             'parsing_misses': 0
         }
 
@@ -162,7 +153,7 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources, model_id):
         'parsed': parsed,
         'python_jinja': res['python_jinja'],
         'all_configs_refs_sources_count': all_configs_refs_sources_count,
-        'parsing_false_positives': misparsed_total,
+        'models_with_false_positives': misparsed_total,
         'parsing_misses': unparsed_total
     }
 
@@ -264,17 +255,17 @@ def _run_on(json_list):
     }
 
     for project_id, stats in project_stats.items():
-        data_set_stats['model_count'] += stats['project_models']
+        data_set_stats['model_count'] += stats['model_count']
         data_set_stats['models_parsed'] += stats['models_parsed']
         if stats['models_parsed'] == 0:
             data_set_stats['projects_completely_unparsed'] += 1
-        data_set_stats['models_with_false_positives'] += stats['parsing_false_positives']
-        data_set_stats['models_with_misses'] += stats['parsing_misses']
-        if stats['models_parsed'] == stats['project_models']:
+        data_set_stats['models_with_false_positives'] += stats['models_with_false_positives']
+        data_set_stats['models_with_misses'] += stats['models_with_misses']
+        if stats['models_parsed'] == stats['model_count']:
             data_set_stats['projects_parsed'] += 1
-        if stats['parsing_false_positives'] > 0:
+        if stats['models_with_false_positives'] > 0:
             data_set_stats['projects_with_false_positives'] += 1
-        if stats['parsing_misses'] > 0:
+        if stats['models_with_misses'] > 0:
             data_set_stats['projects_with_misses'] += 1
 
     data_set_stats['project_count'] = len(project_stats.keys())
