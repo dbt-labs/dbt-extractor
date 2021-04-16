@@ -34,6 +34,7 @@ def group_by_project(all_processed_rows):
     
     return grouped
 
+# takes a (project_id, model_result_list) pair and aggregates the model results
 def flatten_project_results(project_model_results):
     (project_id, model_result_list) = project_model_results
     
@@ -167,11 +168,29 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources, model_id):
 
 def _run_on(json_list):
     def apply_row(parser, row):
+        return process_row(
+            parser,
+            row['manifest_file_name'],
+            row['raw_sql'],
+            row['config'],
+            row['refs'],
+            row['sources'],
+            row['unique_id']
+        )
+
+    def is_bad_example(manifest_file_name):
+        # segment is a package and its configs can be overridden in a way that look like a false positive but aren't
+        # juni has a macro that overrides ref behavior to double everything
+        prefixes_to_reject = ['model.segment', 'model.juni_dbt']
+        return reduce(lambda a,b: a or b, map(lambda prefix: manifest_file_name.startswith(prefix), prefixes_to_reject))
+
+    def preprocess_row(row):
         # defaults for runs that don't include these fields
         row_config  = {}
         row_refs    = []
         row_sources = set()
 
+        # attempt to pull out the results. catches when those keys don't exist.
         try:
             row_config = row['config']
         except:
@@ -187,6 +206,7 @@ def _run_on(json_list):
         except:
             pass
 
+        # these config values are often set in the manifest as defaults
         base_config = {
             'alias': None,
             'column_types': {},
@@ -206,21 +226,20 @@ def _run_on(json_list):
         # remove default values for configs
         row_config = list(filter(lambda kv: kv not in base_config.items(), row_config.items()))
 
-        # reshape sources from lists of length 2 to tuples.
+        # reshape sources from lists of length 2 to tuples
         row_sources = set(map(lambda list: (list[0], list[1]), row_sources))
 
-        return process_row(parser, row['manifest_file_name'], row['raw_sql'], row_config, row_refs, row_sources, row['unique_id'])
+        # set the preprocessed values
+        new_row = dict(row)
+        new_row['config']  = row_config
+        new_row['refs']    = row_refs
+        new_row['sources'] = row_sources
 
-    def is_bad_example(manifest_file_name):
-        # segment is a package and its configs can be overridden in a way that look like a false positive but aren't
-        # juni has a macro that overrides ref behavior to double everything
-        prefixes_to_reject = ['model.segment', 'model.juni_dbt']
-        return reduce(lambda a,b: a or b, map(lambda prefix: manifest_file_name.startswith(prefix), prefixes_to_reject))
+        return new_row
 
-    # rename
-    all_rows = json_list
-    # filter out all the data we know isn't a good fit
-    all_rows = list(filter(lambda row: not is_bad_example(row['unique_id']) , all_rows))
+    # filter out all the data we know isn't a good fit and do some preprocessing
+    all_rows = filter(lambda row: not is_bad_example(row['unique_id']) , json_list)
+    all_rows = map(preprocess_row, all_rows)
 
     parser = compiler.get_parser()
     all_results = list(map(lambda row: apply_row(parser, row), all_rows))
