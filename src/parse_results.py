@@ -20,6 +20,18 @@ def difference(list_a, list_b):
             diff.append(a)
     return diff
 
+# returns a new dictionary with the union of the fields of both dictionaries
+# fields that are the same in both are merged with the + operator
+def merge(dict1, dict2):
+    copy = dict(dict1)
+    for key in copy.keys():
+        if key in dict2.keys():
+            copy[key] += dict2[key]
+    for key in dict2.keys():
+        if key not in copy.keys():
+            copy[key] = dict2[key]
+    return copy
+
 # requires the entire processed dataset to be in memory
 def group_by_project(all_processed_rows):
     # local mutation only
@@ -34,42 +46,29 @@ def group_by_project(all_processed_rows):
     
     return grouped
 
-# [dict] -> dict
-def get_project_results(grouped_results):
-    # local mutation for all projects
-    project_stats = {}
+# takes a (project_id, model_result_list) pair and aggregates the model results
+def flatten_project_results(project_model_results):
+    (project_id, model_result_list) = project_model_results
+    
+    stats = {
+        'model_count': 0,
+        'models_parsed': 0,
+        'models_with_misses': 0,
+        'models_with_false_positives': 0,
+    }
 
-    for project_id, model_results in grouped_results.items():
-        # scoped local mutation for a single project
-        stats = {
-            'project_models': 0,
-            'models_parsed': 0,
-            'models_unparsed': 0,
-            'parsing_false_positives': 0,
-            'parsing_misses': 0,
-            'percent_parsable': 0,
-        }
+    for res in model_result_list:
+        stats['model_count'] += 1
+        if res['parsed']: 
+            stats['models_parsed'] += 1
+        if res['parsing_misses'] > 0:
+            stats['models_with_misses'] += 1
 
-        for res in model_results:
-            stats['project_models'] += 1
-            if res['parsed']: 
-                stats['models_parsed'] += 1
-            else:
-                stats['models_unparsed'] += 1
+        stats['models_with_false_positives'] += res['models_with_false_positives']
 
-            stats['parsing_false_positives'] += res['parsing_false_positives']
-            if res['parsing_misses'] > 0:
-                stats['parsing_misses'] += 1
+    return project_id, stats
 
-        if stats['project_models'] <= 0:
-            stats['percent_parsable'] = 100.0
-        else:
-            stats['percent_parsable'] = 100 * (stats['models_parsed'] / stats['project_models'])
-        project_stats[project_id] = stats
-
-    return project_stats
-
-# parser -> row_fields -> dict
+# this function is where all the equality checking rules live
 def process_row(parser, project_id, raw_sql, configs, refs, sources, model_id):
     res = compiler.parse_typecheck_extract(parser, raw_sql)
 
@@ -80,7 +79,7 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources, model_id):
             'parsed': False,
             'python_jinja': res['python_jinja'],
             'all_configs_refs_sources_count': 0,
-            'parsing_false_positives': 0,
+            'models_with_false_positives': 0,
             'parsing_misses': 0
         }
 
@@ -166,17 +165,35 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources, model_id):
         'parsed': parsed,
         'python_jinja': res['python_jinja'],
         'all_configs_refs_sources_count': all_configs_refs_sources_count,
-        'parsing_false_positives': misparsed_total,
+        'models_with_false_positives': misparsed_total,
         'parsing_misses': unparsed_total
     }
 
-def run_on(data_path):
+def _run_on(json_list):
     def apply_row(parser, row):
+        return process_row(
+            parser,
+            row['manifest_file_name'],
+            row['raw_sql'],
+            row['config'],
+            row['refs'],
+            row['sources'],
+            row['unique_id']
+        )
+
+    def is_bad_example(manifest_file_name):
+        # segment is a package and its configs can be overridden in a way that look like a false positive but aren't
+        # juni has a macro that overrides ref behavior to double everything
+        prefixes_to_reject = ['model.segment', 'model.juni_dbt']
+        return reduce(lambda a,b: a or b, map(lambda prefix: manifest_file_name.startswith(prefix), prefixes_to_reject))
+
+    def preprocess_row(row):
         # defaults for runs that don't include these fields
         row_config  = {}
         row_refs    = []
         row_sources = set()
 
+        # attempt to pull out the results. catches when those keys don't exist.
         try:
             row_config = row['config']
         except:
@@ -192,6 +209,7 @@ def run_on(data_path):
         except:
             pass
 
+        # these config values are often set in the manifest as defaults
         base_config = {
             'alias': None,
             'column_types': {},
@@ -210,94 +228,106 @@ def run_on(data_path):
         # remove default values for configs
         row_config = list(filter(lambda kv: kv not in base_config.items(), row_config.items()))
 
-        # reshape sources from lists of length 2 to tuples.
+        # reshape sources from lists of length 2 to tuples
         row_sources = set(map(lambda list: (list[0], list[1]), row_sources))
 
-        return process_row(parser, row['manifest_file_name'], row['raw_sql'], row_config, row_refs, row_sources, row['unique_id'])
+        # set the preprocessed values
+        new_row = dict(row)
+        new_row['config']  = row_config
+        new_row['refs']    = row_refs
+        new_row['sources'] = row_sources
 
-    def is_bad_example(manifest_file_name):
-        # segment is a package and its configs can be overridden in a way that look like a false positive but aren't
-        # juni has a macro that overrides ref behavior to double everything
-        prefixes_to_reject = ['model.segment', 'model.juni_dbt']
-        return reduce(lambda a,b: a or b, map(lambda prefix: manifest_file_name.startswith(prefix), prefixes_to_reject))
+        return new_row
 
-    # read whole file in
-    with open(data_path, 'r') as f:
-        all_rows = json.loads(f.read())
-
-    all_rows = list(filter(lambda row: not is_bad_example(row['unique_id']) , all_rows))
+    # filter out all the data we know isn't a good fit and do some preprocessing
+    all_rows = filter(lambda row: not is_bad_example(row['unique_id']) , json_list)
+    all_rows = map(preprocess_row, all_rows)
 
     parser = compiler.get_parser()
+    # tree-sitter results
     all_results = list(map(lambda row: apply_row(parser, row), all_rows))
+    # model results from the same projects together
     grouped_results = group_by_project(all_results)
-    all_project_results = get_project_results(grouped_results)
+    # aggregate each set of project results
+    project_stats = dict(map(flatten_project_results, grouped_results.items()))
+    # sum all the model stats
+    all_model_stats = reduce(merge, list(project_stats.values()))
 
-    all_project_stats = {
-        'model_count': 0,
-        'models_parsed': 0,
-        'percentage_models_parseable': 0,
-        'models_with_misses': 0,
-        'models_with_false_positives': 0,
-        'percentage_models_false_positives': 0,
-        'project_count': 0,
-        'projects_parsed': 0,
-        'percentage_projects_parseable': 0,
-        'projects_completely_unparsed': 0,
-        'percentage_projects_completely_unparsed': 0,
-        'projects_with_misses': 0,
-        'projects_with_false_positives': 0,
-        'percentage_projects_false_positives': 0
-    }
+    def extract_project_level_stats(project_stat):
+        p_stats = {
+            'projects_completely_unparsed': 0,
+            'projects_parsed': 0,
+            'projects_with_false_positives': 0,
+            'projects_with_misses': 0
+        }
 
-    for project_id, stats in all_project_results.items():
-        all_project_stats['model_count'] += stats['project_models']
-        all_project_stats['models_parsed'] += stats['models_parsed']
-        if stats['models_parsed'] == 0:
-            all_project_stats['projects_completely_unparsed'] += 1
-        all_project_stats['models_with_false_positives'] += stats['parsing_false_positives']
-        all_project_stats['models_with_misses'] += stats['parsing_misses']
-        all_project_stats['model_count'] += 1
-        if stats['models_parsed'] == stats['project_models']:
-            all_project_stats['projects_parsed'] += 1
-        if stats['parsing_false_positives'] > 0:
-            all_project_stats['projects_with_false_positives'] += 1
-        if stats['parsing_misses'] > 0:
-            all_project_stats['projects_with_misses'] += 1
+        p_stats['project_count'] = 1
+        if project_stat['models_parsed'] == 0:
+            p_stats['projects_completely_unparsed'] = 1
+        if project_stat['models_parsed'] == project_stat['model_count']:
+            p_stats['projects_parsed'] = 1
+        if project_stat['models_with_false_positives'] > 0:
+            p_stats['projects_with_false_positives'] = 1
+        if project_stat['models_with_misses'] > 0:
+            p_stats['projects_with_misses'] = 1
+        return p_stats
 
-    all_project_stats['project_count'] = len(all_project_results.keys())
-    if all_project_stats['model_count'] == 0:
-        all_project_stats['percentage_models_parseable'] = 100.0
-        all_project_stats['percentage_models_false_positives'] = 0.0
+    # sum all the project stats
+    all_project_stats = reduce(merge, map(extract_project_level_stats, list(project_stats.values())))
+
+    # the final set of stats (without percentages yet)
+    data_set_stats = merge(all_model_stats, all_project_stats)
+
+    # calculate percentages guarding for division by zero
+    if data_set_stats['model_count'] == 0:
+        data_set_stats['percentage_models_parseable'] = 100.0
+        data_set_stats['percentage_models_false_positives'] = 0.0
     else:
-        all_project_stats['percentage_models_parseable'] = 100 * all_project_stats['models_parsed'] / all_project_stats['model_count']
-        all_project_stats['percentage_models_false_positives'] = 100 * all_project_stats['models_with_false_positives'] / all_project_stats['model_count']
+        data_set_stats['percentage_models_parseable'] = 100 * data_set_stats['models_parsed'] / data_set_stats['model_count']
+        data_set_stats['percentage_models_false_positives'] = 100 * data_set_stats['models_with_false_positives'] / data_set_stats['model_count']
 
-    if all_project_stats['project_count'] == 0:
-        all_project_stats['percentage_projects_parseable'] = 100.0
-        all_project_stats['percentage_projects_false_positives'] = 0.0
-        all_project_stats['percentage_projects_completely_unparsed'] = 0.0
+    if data_set_stats['project_count'] == 0:
+        data_set_stats['percentage_projects_parseable'] = 100.0
+        data_set_stats['percentage_projects_false_positives'] = 0.0
+        data_set_stats['percentage_projects_completely_unparsed'] = 0.0
     else:
-        all_project_stats['percentage_projects_parseable'] = 100 * all_project_stats['projects_parsed'] / all_project_stats['project_count']
-        all_project_stats['percentage_projects_false_positives'] = 100 * all_project_stats['projects_with_false_positives'] / all_project_stats['project_count']
-        all_project_stats['percentage_projects_completely_unparsed'] = 100 * all_project_stats['projects_completely_unparsed'] / all_project_stats['project_count']
+        data_set_stats['percentage_projects_parseable'] = 100 * data_set_stats['projects_parsed'] / data_set_stats['project_count']
+        data_set_stats['percentage_projects_false_positives'] = 100 * data_set_stats['projects_with_false_positives'] / data_set_stats['project_count']
+        data_set_stats['percentage_projects_completely_unparsed'] = 100 * data_set_stats['projects_completely_unparsed'] / data_set_stats['project_count']
 
-    # manually printing so they come out in the right order
-    field_order = [
-        'model_count',
-        'models_parsed',
-        'percentage_models_parseable',
-        'models_with_misses',
-        'models_with_false_positives',
-        'percentage_models_false_positives',
-        'project_count',
-        'projects_parsed',
-        'percentage_projects_parseable',
-        'projects_completely_unparsed',
-        'percentage_projects_completely_unparsed',
-        'projects_with_misses',
-        'projects_with_false_positives',
-        'percentage_projects_false_positives'
+    return data_set_stats
+
+# runner entry point 
+def run_on(data_path):
+    # read whole file in
+    with open(data_path, 'r') as f:
+        json_list = json.loads(f.read())
+
+    stats = _run_on(json_list)
+
+    # determines print formatting
+    formatting = [
+        ('model_count','...............................', '{:.0f}', '',  False),
+        ('models_parsed','.............................', '{:.0f}', '',  False),
+        ('models_with_misses','........................', '{:.0f}', '',  False),
+        ('models_with_false_positives','...............', '{:.0f}', '',  False),
+        ('percentage_models_false_positives','.........', '{:.2f}', '%', False),
+        ('percentage_models_parseable','...............', '{:.2f}', '%', True),
+
+        ('project_count','.............................', '{:.0f}', '',  False),
+        ('projects_parsed','...........................', '{:.0f}', '',  False),
+        ('projects_with_misses','......................', '{:.0f}', '',  False),
+        ('projects_with_false_positives','.............', '{:.0f}', '',  False),
+        ('percentage_projects_false_positives','.......', '{:.2f}', '%', False),
+        ('percentage_projects_parseable','.............', '{:.2f}', '%', True),
+
+        ('projects_completely_unparsed','..............', '{:.0f}', '',  False),
+        ('percentage_projects_completely_unparsed','...', '{:.2f}', '%', False)
     ]
 
-    for field in field_order:
-        print(f"{field} : {all_project_stats[field]}")
+    for field, spacer, formatt, unit, linebreak in formatting:
+        value = formatt.format(stats[field])
+        print(f"{field}{spacer}{value} {unit}")
+        if linebreak:
+            print()
+    print()
