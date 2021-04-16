@@ -170,7 +170,7 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources, model_id):
         'parsing_misses': unparsed_total
     }
 
-def run_on(data_path):
+def _run_on(json_list):
     def apply_row(parser, row):
         # defaults for runs that don't include these fields
         row_config  = {}
@@ -222,10 +222,9 @@ def run_on(data_path):
         prefixes_to_reject = ['model.segment', 'model.juni_dbt']
         return reduce(lambda a,b: a or b, map(lambda prefix: manifest_file_name.startswith(prefix), prefixes_to_reject))
 
-    # read whole file in
-    with open(data_path, 'r') as f:
-        all_rows = json.loads(f.read())
-
+    # rename
+    all_rows = json_list
+    # filter out all the data we know isn't a good fit
     all_rows = list(filter(lambda row: not is_bad_example(row['unique_id']) , all_rows))
 
     parser = compiler.get_parser()
@@ -302,3 +301,11 @@ def run_on(data_path):
 
     for field in field_order:
         print(f"{field} : {all_project_stats[field]}")
+
+# runner entry point 
+def run_on(data_path):
+    # read whole file in
+    with open(data_path, 'r') as f:
+        json_list = json.loads(f.read())
+
+    _run_on(json_list)
