@@ -291,23 +291,29 @@ def run_on(data_path):
 
     stats = _run_on(json_list)
 
-    # manually printing so they come out in the right order
-    field_order = [
-        'model_count',
-        'models_parsed',
-        'percentage_models_parseable',
-        'models_with_misses',
-        'models_with_false_positives',
-        'percentage_models_false_positives',
-        'project_count',
-        'projects_parsed',
-        'percentage_projects_parseable',
-        'projects_completely_unparsed',
-        'percentage_projects_completely_unparsed',
-        'projects_with_misses',
-        'projects_with_false_positives',
-        'percentage_projects_false_positives'
+    # determines print formatting
+    formatting = [
+        ('model_count','...............................', '{:.0f}', '',  False),
+        ('models_parsed','.............................', '{:.0f}', '',  False),
+        ('models_with_misses','........................', '{:.0f}', '',  False),
+        ('models_with_false_positives','...............', '{:.0f}', '',  False),
+        ('percentage_models_false_positives','.........', '{:.2f}', '%', False),
+        ('percentage_models_parseable','...............', '{:.2f}', '%', True),
+
+        ('project_count','.............................', '{:.0f}', '',  False),
+        ('projects_parsed','...........................', '{:.0f}', '',  False),
+        ('projects_with_misses','......................', '{:.0f}', '',  False),
+        ('projects_with_false_positives','.............', '{:.0f}', '',  False),
+        ('percentage_projects_false_positives','.......', '{:.2f}', '%', False),
+        ('percentage_projects_parseable','.............', '{:.2f}', '%', True),
+
+        ('projects_completely_unparsed','..............', '{:.0f}', '',  False),
+        ('percentage_projects_completely_unparsed','...', '{:.2f}', '%', False)
     ]
 
-    for field in field_order:
-        print(f"{field} : {stats[field]}")
+    for field, spacer, formatt, unit, linebreak in formatting:
+        value = formatt.format(stats[field])
+        print(f"{field}{spacer}{value} {unit}")
+        if linebreak:
+            print()
+    print()
