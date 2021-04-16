@@ -197,7 +197,6 @@ def run_on(data_path):
             'column_types': {},
             'copy_grants': True,
             'database': None,
-            'enabled': True,
             'full_refresh': None,
             'persist_docs': {},
             'post-hook': [],

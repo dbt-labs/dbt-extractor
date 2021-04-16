@@ -76,6 +76,8 @@ def test_fails_on_other_fn_names():
 def test_config_all_inputs():
     assert all_type_check([
         "{{ config(key='value') }}",
+        "{{ config(key=True) }}",
+        "{{ config(key=False) }}",
         "{{ config(key=['v1,','v2']) }}",
         "{{ config(key={'k': 'v'}) }}",
         "{{ config(key=[{'k':['v', {'x': 'y'}]}, ['a', 'b', 'c']]) }}"
@@ -84,6 +86,7 @@ def test_config_all_inputs():
 def test_config_fails_non_kwarg_inputs():
     assert none_type_check([
         "{{ config('value') }}",
+        "{{ config(True) }}",
         "{{ config(['v1,','v2']) }}",
         "{{ config({'k': 'v'}) }}"
     ])
@@ -109,6 +112,14 @@ def test_source_must_have_2_args():
         "{{ source('three', 'is', 'too many') }}",
         "{{ source('one', 'two', 'three', 'four') }}",
         "{{ source(source_name='src', table_name='table', 'extra') }}",
+    ])
+
+def test_source_args_must_be_strings():
+    assert none_type_check([
+        "{{ source(True, False) }}",
+        "{{ source(key='str', key2='str2') }}",
+        "{{ source([], []) }}",
+        "{{ source({}, {}) }}",
     ])
 
 def test_ref_accepts_one_and_two_strings():
@@ -230,3 +241,4 @@ def test_source_ast():
             )
         )
     )
+

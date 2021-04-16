@@ -111,3 +111,19 @@ deeply nested lists and dicts
     )
   )
 )
+
+==================
+list with booleans
+==================
+
+{{ [True, False, 'string'] }}
+
+---
+
+(source_file
+  (list
+    (bool)
+    (bool)
+    (lit_string)
+  )
+)

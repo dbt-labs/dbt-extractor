@@ -10,7 +10,7 @@ def extraction(input, expected):
     if not passed:
         source_bytes = bytes(input, "utf8")
         tree = parser.parse(source_bytes)
-        count = src.compiler.error_count(tree.root_node, 0)
+        count = src.compiler.error_count(tree.root_node)
         print(f"parser error count: {count}")
         print("TYPE CHECKER OUTPUT")
         pprint(src.type_check.type_check(source_bytes, tree.root_node))
@@ -57,12 +57,12 @@ def test_source():
 
 def test_all():
     assert extraction(
-        "{{ source('package', 'table') }} {{ ref('x') }} {{ config(key='v') }}"
+        "{{ source('package', 'table') }} {{ ref('x') }} {{ config(k='v', x=True) }}"
         ,
         exctracted(
             sources=[('package', 'table')],
             refs=[['x']],
-            configs=[('key', 'v')]
+            configs=[('k', 'v'), ('x', True)]
         )
     )
 
@@ -75,11 +75,3 @@ def test_deeply_nested_config():
         )
     )
 
-def test_fails_on_booleans():
-    assert extraction(
-        "{{ config(bind=False) }}"
-        ,
-        exctracted(
-            python_jinja=True
-        )
-    )

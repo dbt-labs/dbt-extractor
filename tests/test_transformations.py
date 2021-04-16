@@ -30,6 +30,10 @@ def test_removes_three_special_config_kwargs():
                     'some value'
                 ),
                 ('kwarg', 
+                    'enabled', 
+                    'some value'
+                ),
+                ('kwarg', 
                     'key', 
                     'value'
                 )

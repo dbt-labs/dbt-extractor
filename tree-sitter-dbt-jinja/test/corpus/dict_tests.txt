@@ -93,3 +93,24 @@ dict spread over lines
     )
   )
 )
+
+==================
+dict with bools
+==================
+
+{{ {'x':True, 'y': False} }}
+
+---
+
+(source_file
+  (dict
+    (pair 
+      (lit_string)
+      (bool)
+    )
+    (pair 
+      (lit_string)
+      (bool)
+    )
+  )
+)
