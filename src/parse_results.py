@@ -235,18 +235,18 @@ def _run_on(json_list):
     all_project_stats = {
         'model_count': 0,
         'models_parsed': 0,
-        'percentage_models_parseable': 0,
         'models_with_misses': 0,
         'models_with_false_positives': 0,
         'percentage_models_false_positives': 0,
+        'percentage_models_parseable': 0,
         'project_count': 0,
         'projects_parsed': 0,
-        'percentage_projects_parseable': 0,
-        'projects_completely_unparsed': 0,
-        'percentage_projects_completely_unparsed': 0,
         'projects_with_misses': 0,
         'projects_with_false_positives': 0,
-        'percentage_projects_false_positives': 0
+        'percentage_projects_false_positives': 0,
+        'percentage_projects_parseable': 0,
+        'projects_completely_unparsed': 0,
+        'percentage_projects_completely_unparsed': 0 
     }
 
     for project_id, stats in all_project_results.items():
@@ -256,7 +256,6 @@ def _run_on(json_list):
             all_project_stats['projects_completely_unparsed'] += 1
         all_project_stats['models_with_false_positives'] += stats['parsing_false_positives']
         all_project_stats['models_with_misses'] += stats['parsing_misses']
-        all_project_stats['model_count'] += 1
         if stats['models_parsed'] == stats['project_models']:
             all_project_stats['projects_parsed'] += 1
         if stats['parsing_false_positives'] > 0:
