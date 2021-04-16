@@ -244,9 +244,9 @@ def _run_on(json_list):
     parser = compiler.get_parser()
     all_results = list(map(lambda row: apply_row(parser, row), all_rows))
     grouped_results = group_by_project(all_results)
-    all_project_results = dict(map(flatten_project_results, grouped_results.items()))
+    project_stats = dict(map(flatten_project_results, grouped_results.items()))
 
-    all_project_stats = {
+    data_set_stats = {
         'model_count': 0,
         'models_parsed': 0,
         'models_with_misses': 0,
@@ -263,38 +263,38 @@ def _run_on(json_list):
         'percentage_projects_completely_unparsed': 0 
     }
 
-    for project_id, stats in all_project_results.items():
-        all_project_stats['model_count'] += stats['project_models']
-        all_project_stats['models_parsed'] += stats['models_parsed']
+    for project_id, stats in project_stats.items():
+        data_set_stats['model_count'] += stats['project_models']
+        data_set_stats['models_parsed'] += stats['models_parsed']
         if stats['models_parsed'] == 0:
-            all_project_stats['projects_completely_unparsed'] += 1
-        all_project_stats['models_with_false_positives'] += stats['parsing_false_positives']
-        all_project_stats['models_with_misses'] += stats['parsing_misses']
+            data_set_stats['projects_completely_unparsed'] += 1
+        data_set_stats['models_with_false_positives'] += stats['parsing_false_positives']
+        data_set_stats['models_with_misses'] += stats['parsing_misses']
         if stats['models_parsed'] == stats['project_models']:
-            all_project_stats['projects_parsed'] += 1
+            data_set_stats['projects_parsed'] += 1
         if stats['parsing_false_positives'] > 0:
-            all_project_stats['projects_with_false_positives'] += 1
+            data_set_stats['projects_with_false_positives'] += 1
         if stats['parsing_misses'] > 0:
-            all_project_stats['projects_with_misses'] += 1
+            data_set_stats['projects_with_misses'] += 1
 
-    all_project_stats['project_count'] = len(all_project_results.keys())
-    if all_project_stats['model_count'] == 0:
-        all_project_stats['percentage_models_parseable'] = 100.0
-        all_project_stats['percentage_models_false_positives'] = 0.0
+    data_set_stats['project_count'] = len(project_stats.keys())
+    if data_set_stats['model_count'] == 0:
+        data_set_stats['percentage_models_parseable'] = 100.0
+        data_set_stats['percentage_models_false_positives'] = 0.0
     else:
-        all_project_stats['percentage_models_parseable'] = 100 * all_project_stats['models_parsed'] / all_project_stats['model_count']
-        all_project_stats['percentage_models_false_positives'] = 100 * all_project_stats['models_with_false_positives'] / all_project_stats['model_count']
+        data_set_stats['percentage_models_parseable'] = 100 * data_set_stats['models_parsed'] / data_set_stats['model_count']
+        data_set_stats['percentage_models_false_positives'] = 100 * data_set_stats['models_with_false_positives'] / data_set_stats['model_count']
 
-    if all_project_stats['project_count'] == 0:
-        all_project_stats['percentage_projects_parseable'] = 100.0
-        all_project_stats['percentage_projects_false_positives'] = 0.0
-        all_project_stats['percentage_projects_completely_unparsed'] = 0.0
+    if data_set_stats['project_count'] == 0:
+        data_set_stats['percentage_projects_parseable'] = 100.0
+        data_set_stats['percentage_projects_false_positives'] = 0.0
+        data_set_stats['percentage_projects_completely_unparsed'] = 0.0
     else:
-        all_project_stats['percentage_projects_parseable'] = 100 * all_project_stats['projects_parsed'] / all_project_stats['project_count']
-        all_project_stats['percentage_projects_false_positives'] = 100 * all_project_stats['projects_with_false_positives'] / all_project_stats['project_count']
-        all_project_stats['percentage_projects_completely_unparsed'] = 100 * all_project_stats['projects_completely_unparsed'] / all_project_stats['project_count']
+        data_set_stats['percentage_projects_parseable'] = 100 * data_set_stats['projects_parsed'] / data_set_stats['project_count']
+        data_set_stats['percentage_projects_false_positives'] = 100 * data_set_stats['projects_with_false_positives'] / data_set_stats['project_count']
+        data_set_stats['percentage_projects_completely_unparsed'] = 100 * data_set_stats['projects_completely_unparsed'] / data_set_stats['project_count']
 
-    return all_project_stats
+    return data_set_stats
 
 # runner entry point 
 def run_on(data_path):
