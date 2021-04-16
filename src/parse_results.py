@@ -34,39 +34,35 @@ def group_by_project(all_processed_rows):
     
     return grouped
 
-def get_project_results(grouped_results):
-    def go(project_model_results):
-        (project_id, model_result_list) = project_model_results
-        
-        stats = {
-            'project_models': 0,
-            'models_parsed': 0,
-            'models_unparsed': 0,
-            'parsing_false_positives': 0,
-            'parsing_misses': 0,
-            'percent_parsable': 0,
-        }
+def flatten_project_results(project_model_results):
+    (project_id, model_result_list) = project_model_results
+    
+    stats = {
+        'project_models': 0,
+        'models_parsed': 0,
+        'models_unparsed': 0,
+        'parsing_false_positives': 0,
+        'parsing_misses': 0,
+        'percent_parsable': 0,
+    }
 
-        for res in model_result_list:
-            stats['project_models'] += 1
-            if res['parsed']: 
-                stats['models_parsed'] += 1
-            else:
-                stats['models_unparsed'] += 1
-
-            stats['parsing_false_positives'] += res['parsing_false_positives']
-            if res['parsing_misses'] > 0:
-                stats['parsing_misses'] += 1
-
-        if stats['project_models'] <= 0:
-            stats['percent_parsable'] = 100.0
+    for res in model_result_list:
+        stats['project_models'] += 1
+        if res['parsed']: 
+            stats['models_parsed'] += 1
         else:
-            stats['percent_parsable'] = 100 * (stats['models_parsed'] / stats['project_models'])
-        
-        return project_id, stats
+            stats['models_unparsed'] += 1
 
-    print(grouped_results)
-    return dict(map(go, grouped_results.items()))
+        stats['parsing_false_positives'] += res['parsing_false_positives']
+        if res['parsing_misses'] > 0:
+            stats['parsing_misses'] += 1
+
+    if stats['project_models'] <= 0:
+        stats['percent_parsable'] = 100.0
+    else:
+        stats['percent_parsable'] = 100 * (stats['models_parsed'] / stats['project_models'])
+    
+    return project_id, stats
 
 # parser -> row_fields -> dict
 def process_row(parser, project_id, raw_sql, configs, refs, sources, model_id):
@@ -229,7 +225,7 @@ def _run_on(json_list):
     parser = compiler.get_parser()
     all_results = list(map(lambda row: apply_row(parser, row), all_rows))
     grouped_results = group_by_project(all_results)
-    all_project_results = get_project_results(grouped_results)
+    all_project_results = dict(map(flatten_project_results, grouped_results.items()))
 
     all_project_stats = {
         'model_count': 0,
