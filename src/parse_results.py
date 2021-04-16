@@ -20,6 +20,18 @@ def difference(list_a, list_b):
             diff.append(a)
     return diff
 
+# returns a new dictionary with the union of the fields of both dictionaries
+# fields that are the same in both are merged with the + operator
+def merge(dict1, dict2):
+    copy = dict(dict1)
+    for key in copy.keys():
+        if key in dict2.keys():
+            copy[key] += dict2[key]
+    for key in dict2.keys():
+        if key not in copy.keys():
+            copy[key] = dict2[key]
+    return copy
+
 # requires the entire processed dataset to be in memory
 def group_by_project(all_processed_rows):
     # local mutation only
@@ -233,42 +245,41 @@ def _run_on(json_list):
     all_rows = map(preprocess_row, all_rows)
 
     parser = compiler.get_parser()
+    # tree-sitter results
     all_results = list(map(lambda row: apply_row(parser, row), all_rows))
+    # model results from the same projects together
     grouped_results = group_by_project(all_results)
+    # aggregate each set of project results
     project_stats = dict(map(flatten_project_results, grouped_results.items()))
+    # sum all the model stats
+    all_model_stats = reduce(merge, list(project_stats.values()))
 
-    data_set_stats = {
-        'model_count': 0,
-        'models_parsed': 0,
-        'models_with_misses': 0,
-        'models_with_false_positives': 0,
-        'percentage_models_false_positives': 0,
-        'percentage_models_parseable': 0,
-        'project_count': 0,
-        'projects_parsed': 0,
-        'projects_with_misses': 0,
-        'projects_with_false_positives': 0,
-        'percentage_projects_false_positives': 0,
-        'percentage_projects_parseable': 0,
-        'projects_completely_unparsed': 0,
-        'percentage_projects_completely_unparsed': 0 
-    }
+    def extract_project_level_stats(project_stat):
+        p_stats = {
+            'projects_completely_unparsed': 0,
+            'projects_parsed': 0,
+            'projects_with_false_positives': 0,
+            'projects_with_misses': 0
+        }
 
-    for project_id, stats in project_stats.items():
-        data_set_stats['model_count'] += stats['model_count']
-        data_set_stats['models_parsed'] += stats['models_parsed']
-        if stats['models_parsed'] == 0:
-            data_set_stats['projects_completely_unparsed'] += 1
-        data_set_stats['models_with_false_positives'] += stats['models_with_false_positives']
-        data_set_stats['models_with_misses'] += stats['models_with_misses']
-        if stats['models_parsed'] == stats['model_count']:
-            data_set_stats['projects_parsed'] += 1
-        if stats['models_with_false_positives'] > 0:
-            data_set_stats['projects_with_false_positives'] += 1
-        if stats['models_with_misses'] > 0:
-            data_set_stats['projects_with_misses'] += 1
+        p_stats['project_count'] = 1
+        if project_stat['models_parsed'] == 0:
+            p_stats['projects_completely_unparsed'] = 1
+        if project_stat['models_parsed'] == project_stat['model_count']:
+            p_stats['projects_parsed'] = 1
+        if project_stat['models_with_false_positives'] > 0:
+            p_stats['projects_with_false_positives'] = 1
+        if project_stat['models_with_misses'] > 0:
+            p_stats['projects_with_misses'] = 1
+        return p_stats
 
-    data_set_stats['project_count'] = len(project_stats.keys())
+    # sum all the project stats
+    all_project_stats = reduce(merge, map(extract_project_level_stats, list(project_stats.values())))
+
+    # the final set of stats (without percentages yet)
+    data_set_stats = merge(all_model_stats, all_project_stats)
+
+    # calculate percentages guarding for division by zero
     if data_set_stats['model_count'] == 0:
         data_set_stats['percentage_models_parseable'] = 100.0
         data_set_stats['percentage_models_false_positives'] = 0.0
