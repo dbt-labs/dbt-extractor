@@ -68,7 +68,7 @@ def flatten_project_results(project_model_results):
 
     return project_id, stats
 
-# parser -> row_fields -> dict
+# this function is where all the equality checking rules live
 def process_row(parser, project_id, raw_sql, configs, refs, sources, model_id):
     res = compiler.parse_typecheck_extract(parser, raw_sql)
 
