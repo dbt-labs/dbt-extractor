@@ -30,19 +30,18 @@ def has_kwarg_child_named(name_list, node):
     return False
 
 # applies transformations to the typed_ast
-# for now it's just post_hook -> post-hook config keword.
 def transformations(node):
     # reached a leaf
     if not isinstance(node, tuple):
         return node
 
     # transforms the following config arguments so that they don't make it into the final form
-    elif node[0] == 'config' and has_kwarg_child_named(['partition_by', 'dataset', 'project'], node):
+    elif node[0] == 'config' and has_kwarg_child_named(['partition_by', 'dataset', 'project' 'enabled'], node):
         kwargs = node[1:]
         # local mutation
         new_kwargs = []
         for kwarg in kwargs:
-            if kwarg[1] in ['partition_by', 'dataset', 'project']:
+            if kwarg[1] in ['partition_by', 'dataset', 'project', 'enabled']:
                 pass
             else:
                 new_kwargs.append(kwarg)
@@ -53,7 +52,7 @@ def transformations(node):
         return (node[0], *tuple(transformations(child) for child in node[1:]))
 
 
-# expects node to have NO ERRORS in any of its subtrees
+# operates on a typed ast
 def extract(node, data):
     # reached a leaf
     if not isinstance(node, tuple):
