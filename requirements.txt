@@ -1,4 +1,5 @@
 argparse
 jinja2
+mypy==0.812
 pytest
 tree_sitter
