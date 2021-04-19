@@ -48,9 +48,9 @@ serve: build
 
 # runs the demo http server
 demo: build
-	./$(VENV)/bin/python3 src/demo_server.py & \
-	open demo/demo.html
-
+	open demo/demo.html \
+	&& ./$(VENV)/bin/python3 src/demo_server.py
+	
 clean:
 	rm -rf $(VENV)
 	rm -rf node_modules
