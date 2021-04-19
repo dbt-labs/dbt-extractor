@@ -60,4 +60,12 @@ kwargs retain both key and value
   )
 )
 
+==================
+text with curlys works
+==================
 
+some curlys { }
+
+---
+
+(source_file)

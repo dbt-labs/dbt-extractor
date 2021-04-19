@@ -7,15 +7,14 @@ function sep1(rule, separator) {
     return seq(rule, repeat(seq(separator, rule)))
 }
 
-
 module.exports = grammar ({
   name: 'dbt_jinja',
 
   rules: {
     source_file: $ => repeat(
         choice(
-            prec(10, $.jinja_macro_block),
             prec(10, $._jinja_block),
+            prec(10, $.jinja_macro_block),
             prec(1, $._text)
         )
     ),
@@ -108,7 +107,8 @@ module.exports = grammar ({
         field("value", $._expr),
     ),
 
-    _text: $ => /[^{}]+/
+    // /((?:.|\n)*)(?:\{\{)/ 
+    _text: $ => /([^{]|[{][^{%])*/
 
   }
 });
