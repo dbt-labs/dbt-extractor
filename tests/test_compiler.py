@@ -5,7 +5,7 @@ import src.type_check
 parser = src.compiler.get_parser()
 
 def extraction(input, expected):
-    got = src.compiler.parse_typecheck_extract(parser, input)
+    got = src.compiler.extract_from_source(parser, input)
     passed = expected == got
     if not passed:
         source_bytes = bytes(input, "utf8")

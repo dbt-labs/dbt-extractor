@@ -100,8 +100,7 @@ def get_parser():
     return parser
 
 # entry point function
-# TODO rename this "extract from source"
-def parse_typecheck_extract(parser, string):
+def extract_from_source(parser, string):
     source_bytes = bytes(string, "utf8")
     tree = parser.parse(source_bytes)
     count = error_count(tree.root_node)
