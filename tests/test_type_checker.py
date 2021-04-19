@@ -226,7 +226,6 @@ def test_config_ast():
         )
     )
 
-# TODO typed ast shouldn't distinguish between kwargs and non kwargs
 def test_source_ast():
     assert produces_tree(
         "{{ source(source_name='x', 'y') }}"

@@ -95,6 +95,8 @@ def _to_typed(source_bytes, node):
                 raise TypeCheckFailure(f"second keyword argument in source must be table_name found {args[1].child_by_field_name('key')}")
             # TODO this isn't quite right. regardless of how they call it,
             # (kwarg vs string lits) I want it to come out the same
+            # leaving this TODO in for now. When we move to an actual typed ast,
+            # we can use something like Arg(name:Optional[String_Val], arg:ExprT)
             return ('source', *tuple(_to_typed(source_bytes, arg) for arg in args)) 
 
         elif name == 'config':
