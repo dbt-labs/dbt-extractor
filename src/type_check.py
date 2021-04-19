@@ -48,7 +48,7 @@ def _to_typed(source_bytes, node):
         value_node = node.child_by_field_name('value')
         if value_node.type == 'fn_call':
             raise TypeCheckFailure(f"keyword arguments can not be function calls")
-        key_node = node.child_by_field_name('arg')
+        key_node = node.child_by_field_name('key')
         key_text = text_from_node(source_bytes, key_node)
         return ('kwarg', key_text, _to_typed(source_bytes, value_node))
 
@@ -89,10 +89,10 @@ def _to_typed(source_bytes, node):
             for arg in args:
                 if arg.type != 'kwarg' and arg.type != 'lit_string':
                     raise TypeCheckFailure(f"unexpected argument type in source. Found {arg.type}")
-            if args[0].type == 'kwarg' and text_from_node(source_bytes, args[0].child_by_field_name('arg')) != 'source_name':
-                raise TypeCheckFailure(f"first keyword argument in source must be source_name found {args[0].child_by_field_name('arg')}")
-            if args[1].type == 'kwarg' and text_from_node(source_bytes, args[1].child_by_field_name('arg')) != 'table_name':
-                raise TypeCheckFailure(f"second keyword argument in source must be table_name found {args[1].child_by_field_name('arg')}")
+            if args[0].type == 'kwarg' and text_from_node(source_bytes, args[0].child_by_field_name('key')) != 'source_name':
+                raise TypeCheckFailure(f"first keyword argument in source must be source_name found {args[0].child_by_field_name('key')}")
+            if args[1].type == 'kwarg' and text_from_node(source_bytes, args[1].child_by_field_name('key')) != 'table_name':
+                raise TypeCheckFailure(f"second keyword argument in source must be table_name found {args[1].child_by_field_name('key')}")
             # TODO this isn't quite right. regardless of how they call it,
             # (kwarg vs string lits) I want it to come out the same
             return ('source', *tuple(_to_typed(source_bytes, arg) for arg in args)) 
@@ -104,7 +104,7 @@ def _to_typed(source_bytes, node):
             for arg in args:
                 if arg.type != 'kwarg':
                     raise TypeCheckFailure(f"unexpected non keyword argument in config. found {arg.type}")
-                key_name = text_from_node(source_bytes, arg.child_by_field_name('arg'))
+                key_name = text_from_node(source_bytes, arg.child_by_field_name('key'))
                 if key_name in excluded_config_args:
                     raise TypeCheckFailure(f"excluded config kwarg found: {key_name}")
             return ('config', *tuple(_to_typed(source_bytes, arg) for arg in args))

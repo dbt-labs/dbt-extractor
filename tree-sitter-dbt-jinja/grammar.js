@@ -106,8 +106,7 @@ module.exports = grammar ({
     // Unicode identifiers like python does: /[_\p{XID_Start}][_\p{XID_Continue}]*/
 
     kwarg: $ => seq(
-        // TODO make this key not arg
-        field("arg", $.identifier),
+        field("key", $.identifier),
         '=',
         field("value", $._expr),
     ),
