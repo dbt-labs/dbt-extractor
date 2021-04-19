@@ -13,6 +13,7 @@
             <label for="w3review">dbt Model File</label>
             <textarea id="model" name="model" rows="4" cols="50" autofocus=autofocus>
             </textarea>
+            <text id="time"></text>
             <text id="error"></text>
             <text id="refs"></text>
             <text id="sources"></text>
@@ -45,6 +46,8 @@
             return res.json()
         }).then(res => {
             console.log(res);
+            document.getElementById("time").innerHTML = 
+                "-- completed in " + (res.ms) + " ms --"
             document.getElementById("error").innerHTML = 
                 "Error:   " + res.error
             document.getElementById("refs").innerHTML = 

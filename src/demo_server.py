@@ -2,6 +2,7 @@ import compiler
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import logging
+import time
 
 class Handler(BaseHTTPRequestHandler):
     def _set_response(self, body):
@@ -17,24 +18,34 @@ class Handler(BaseHTTPRequestHandler):
             'refs': [],
             'sources': [],
             'configs': [],
-            'python_jinja': False
+            'python_jinja': False,
+            'seconds': 0
         }
 
         content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
         post_data = self.rfile.read(content_length) # <--- Gets the data itself
+        process_start = time.perf_counter()
         res = compiler.process_source(compiler.get_parser(), post_data.decode('utf-8'))
+        process_end = time.perf_counter()
+        timer = process_end - process_start
         if isinstance(res, compiler.ParseFailure):
             res = data['error'] = f"Parse Error: {res.msg}"
         elif isinstance(res, compiler.TypeCheckFailure):
             res = data['error'] = f"Type Error: {res.msg}"
-        else:
+        else:  
+            extract_start = time.perf_counter()
             res = compiler.extract(res)
+            extract_end = time.perf_counter()
+            extract_time = extract_end - extract_start
+            timer += extract_time
             res = json_friendly(res)
             data['refs'] = res['refs']
             data['configs'] = res['configs']
             data['sources'] = res['sources']
-
+        
+        data['ms'] = "{:.3f}".format(1000 * timer)
         logging.info(f"\nPOST:     {post_data.decode('utf-8')}\nResponse: {data}\n")
+        logging.info(f"I AM ALIVE")
 
         self._set_response(data)
 
