@@ -59,18 +59,16 @@ module.exports = grammar ({
         ')'
     ),
 
-    lit_string: $ => seq(
-        choice(
-            seq(
-                "'",
-                token(/[^']*/),
-                "'",
-            ),
-            seq(
-                '"',
-                token(/[^"]*/),
-                '"',
-            )
+    lit_string: $ => choice(
+        seq(
+            "'",
+            token(/[^']*/),
+            "'",
+        ),
+        seq(
+            '"',
+            token(/[^"]*/),
+            '"',
         )
     ),
 
