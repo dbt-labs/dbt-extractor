@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+        <meta content="utf-8" http-equiv="encoding">
+
+    </head>
+    <body>
+        <h1>dbt Tree-Sitter Demo</h1>
+
+        <label for="w3review">dbt Model File</label>
+        <textarea id="model" name="model" rows="4" cols="50" autofocus=autofocus>
+        </textarea>
+        <div id="response" name="response">
+            type above to see live dbt responses here
+        </div>
+    </body>
+</html>
+
+<script>
+    model = document.getElementById("model")
+    model.addEventListener("keyup", function() {
+        // Backspace
+        if (event.keyCode == 8) {
+            console.log(model.value)
+        }
+        // Delete.
+        else if (event.keyCode == 46) {
+            console.log(model.value)
+        }
+        else {
+            console.log(model.value)
+        }
+    })
+</script>
