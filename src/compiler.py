@@ -21,10 +21,6 @@ class ParseFailure(Exception):
 class TypeCheckFailure(Exception):
     msg: str
 
-# TODO remove this
-class TypeCheckPass():
-    pass
-
 def named_children(node):
     return list(filter(lambda x: x.is_named, node.children))
 
