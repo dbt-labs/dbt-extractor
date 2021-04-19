@@ -45,7 +45,6 @@ class Handler(BaseHTTPRequestHandler):
         
         data['ms'] = "{:.3f}".format(1000 * timer)
         logging.info(f"\nPOST:     {post_data.decode('utf-8')}\nResponse: {data}\n")
-        logging.info(f"I AM ALIVE")
 
         self._set_response(data)
 
