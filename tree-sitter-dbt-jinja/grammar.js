@@ -107,7 +107,7 @@ module.exports = grammar ({
         field("value", $._expr),
     ),
 
-    // /((?:.|\n)*)(?:\{\{)/ 
+    // matches everything but a block. will need to change if more blocks are added.
     _text: $ => /([^{]|[{][^{%])*/
 
   }
