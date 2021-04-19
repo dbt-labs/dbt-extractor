@@ -1,0 +1,8 @@
+
+.flex-container {
+    display: flex;
+    align-items: left;
+    text-align: left;
+    flex-direction: column;
+    width: 600px;
+}
