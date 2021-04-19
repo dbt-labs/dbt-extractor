@@ -23,9 +23,9 @@ class Handler(BaseHTTPRequestHandler):
         }
 
         content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
-        post_data = self.rfile.read(content_length) # <--- Gets the data itself
+        post_data = json.loads(self.rfile.read(content_length)) # <--- Gets the data itself
         process_start = time.perf_counter()
-        res = compiler.process_source(compiler.get_parser(), post_data.decode('utf-8'))
+        res = compiler.process_source(compiler.get_parser(), post_data)
         process_end = time.perf_counter()
         timer = process_end - process_start
         if isinstance(res, compiler.ParseFailure):
@@ -44,7 +44,7 @@ class Handler(BaseHTTPRequestHandler):
             data['sources'] = res['sources']
         
         data['ms'] = "{:.3f}".format(1000 * timer)
-        logging.info(f"\nPOST:     {post_data.decode('utf-8')}\nResponse: {data}\n")
+        logging.info(f"\nPOST:     {post_data}\nResponse: {data}\n")
 
         self._set_response(data)
 
