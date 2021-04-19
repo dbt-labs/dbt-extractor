@@ -11,9 +11,10 @@
         <label for="w3review">dbt Model File</label>
         <textarea id="model" name="model" rows="4" cols="50" autofocus=autofocus>
         </textarea>
-        <div id="response" name="response">
-            type above to see live dbt responses here
-        </div>
+        <text id="error"></text>
+        <text id="refs"></text>
+        <text id="sources"></text>
+        <text id="configs"></text>
     </body>
 </html>
 
@@ -34,13 +35,21 @@
     })
 
     function dbtExtract(text) {
-        let data = {element: "barium"};
-
         fetch("http://127.0.0.1:8000/", {
             method: "POST", 
-            body: JSON.stringify(data)
+            body: JSON.stringify(text)
         }).then(res => {
-            console.log("Request complete! response:", res);
+            return res.json()
+        }).then(res => {
+            console.log(res);
+            document.getElementById("error").innerHTML = 
+                "Error:   " + res.error
+            document.getElementById("refs").innerHTML = 
+                "Refs:    " + res.refs
+            document.getElementById("sources").innerHTML = 
+                "Sources: " + res.sources
+            document.getElementById("configs").innerHTML = 
+                "Configs: " + res.configs
         }).catch((error) => {
             console.error(error);
         });

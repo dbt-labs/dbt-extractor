@@ -12,20 +12,31 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(body).encode(encoding='utf_8'))
 
     def do_POST(self):
+        data = {
+            'error': 'no error',
+            'refs': [],
+            'sources': [],
+            'configs': [],
+            'python_jinja': False
+        }
+
         content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
         post_data = self.rfile.read(content_length) # <--- Gets the data itself
         res = compiler.process_source(compiler.get_parser(), post_data.decode('utf-8'))
         if isinstance(res, compiler.ParseFailure):
-            res = f"Parse Error: {res.msg}"
+            res = data['error'] = f"Parse Error: {res.msg}"
         elif isinstance(res, compiler.TypeCheckFailure):
-            res = f"Type Error: {res.msg}"
+            res = data['error'] = f"Type Error: {res.msg}"
         else:
             res = compiler.extract(res)
             res = json_friendly(res)
+            data['refs'] = res['refs']
+            data['configs'] = res['configs']
+            data['sources'] = res['sources']
 
-        logging.info(f"\nPOST:     {post_data.decode('utf-8')}\nResponse: {res}\n")
+        logging.info(f"\nPOST:     {post_data.decode('utf-8')}\nResponse: {data}\n")
 
-        self._set_response(res)
+        self._set_response(data)
 
 def run(server_class, handler_class, port):
     logging.basicConfig(level=logging.INFO)
