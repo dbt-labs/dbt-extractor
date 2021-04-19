@@ -1,6 +1,5 @@
 from pprint import pprint
 import src.compiler
-import src.type_check
 
 parser = src.compiler.get_parser()
 
@@ -13,7 +12,7 @@ def extraction(input, expected):
         count = src.compiler.error_count(tree.root_node)
         print(f"parser error count: {count}")
         print("TYPE CHECKER OUTPUT")
-        pprint(src.type_check.type_check(source_bytes, tree.root_node))
+        pprint(src.compiler.type_check(source_bytes, tree.root_node))
         print(":: EXPECTED ::")
         pprint(expected)
         print("::   GOT    ::")

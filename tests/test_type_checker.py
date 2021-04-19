@@ -1,6 +1,5 @@
 from functools import reduce
 import src.compiler
-import src.type_check
 
 parser = src.compiler.get_parser()
 
@@ -12,9 +11,9 @@ def type_checks(source_text):
     if src.compiler.error_count(tree.root_node) > 0:
         print("parser failed")
         return False
-    res = src.type_check.type_check(source_bytes, tree.root_node)
+    res = src.compiler.type_check(source_bytes, tree.root_node)
     # if it returned a list of errors, it didn't typecheck
-    if isinstance(res, src.type_check.TypeCheckFailure):
+    if isinstance(res, src.compiler.TypeCheckFailure):
         print(res)
         return False
     else:
@@ -38,9 +37,9 @@ def produces_tree(source_text, ast):
     if src.compiler.error_count(tree.root_node) > 0:
         print("parser failed")
         return False
-    res = src.type_check.type_check(source_bytes, tree.root_node)
+    res = src.compiler.type_check(source_bytes, tree.root_node)
     # if it returned a list of errors, it didn't typecheck
-    if isinstance(res, src.type_check.TypeCheckFailure):
+    if isinstance(res, src.compiler.TypeCheckFailure):
         print(res)
         return False
     elif res != ast:
