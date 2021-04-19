@@ -13,8 +13,14 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
         post_data = self.rfile.read(content_length) # <--- Gets the data itself
-        res = compiler.extract_from_source(compiler.get_parser(), post_data.decode('utf-8'))
-        res = json_friendly(res)
+        res = compiler.process_source(compiler.get_parser(), post_data.decode('utf-8'))
+        if isinstance(res, compiler.ParseFailure):
+            res = f"Parse Error: {res.msg}"
+        elif isinstance(res, compiler.TypeCheckFailure):
+            res = f"Type Error: {res.msg}"
+        else:
+            res = compiler.extract(res)
+            res = json_friendly(res)
 
         logging.info(f"\nPOST:     {post_data.decode('utf-8')}\nResponse: {res}\n")
 
@@ -33,9 +39,9 @@ def run(server_class, handler_class, port):
     logging.info('Stopping httpd...\n')
 
 def json_friendly(compiler_output):
-    json_friendly = dict(compiler_output)
-    json_friendly['sources'] = list(json_friendly['sources'])
-    return json_friendly
+    data = dict(compiler_output)
+    data['sources'] = list(data['sources'])
+    return data
 
 if __name__ == '__main__':
     run(HTTPServer, Handler, 8000)

@@ -1,4 +1,4 @@
-
+from dataclasses import dataclass
 from functools import reduce
 from tree_sitter import Language, Parser
 
@@ -15,9 +15,11 @@ Language.build_library(
 
 JINJA2_LANGUAGE = Language('./build/sql.so', 'dbt_jinja')
 
+@dataclass
 class ParseFailure(Exception):
     msg: str
 
+@dataclass
 class TypeCheckFailure(Exception):
     msg: str
 
