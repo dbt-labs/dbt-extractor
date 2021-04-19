@@ -55,3 +55,15 @@ other as (
   )
   (jinja_macro_block)
 )
+
+==================
+macro block recognized over multiple line breaks
+==================
+
+{%
+macro
+%}
+
+---
+
+(source_file (jinja_macro_block))

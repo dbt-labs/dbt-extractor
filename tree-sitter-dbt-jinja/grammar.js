@@ -28,10 +28,9 @@ module.exports = grammar ({
 
     // This is awkward regex because we aren't parsing anything
     // inside the block like a regular parser would want to.
-    // TODO what about multiple linebreaks inside a jinja macro?
     jinja_macro_block: $ => seq(
         '{%',
-        /(.*)([%].{1}|.{1}[}])/
+        /((\n|.)*)(%.{1}|.{1}})/
         ),
 
     // This defines all the meat of the parser
