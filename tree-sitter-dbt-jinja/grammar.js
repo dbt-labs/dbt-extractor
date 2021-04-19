@@ -55,7 +55,7 @@ module.exports = grammar ({
                 $.kwarg
             )
         )),
-        // TODO to match python add optional(','),
+        optional(','),
         ')'
     ),
 
