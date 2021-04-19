@@ -1,20 +1,19 @@
 from functools import reduce
-import src.compiler
-import src.type_check
+import src.compiler as compiler
 
-parser = src.compiler.get_parser()
+parser = compiler.get_parser()
 
 # runs the parser and type checker and prints debug messaging if it fails
 def type_checks(source_text):
     source_bytes = bytes(source_text, "utf8")
     tree = parser.parse(source_bytes)
     # If we couldn't parse the source we can't typecheck it.
-    if src.compiler.error_count(tree.root_node) > 0:
+    if compiler.error_count(tree.root_node) > 0:
         print("parser failed")
         return False
-    res = src.type_check.type_check(source_bytes, tree.root_node)
+    res = compiler.type_check(source_bytes, tree.root_node)
     # if it returned a list of errors, it didn't typecheck
-    if isinstance(res, src.type_check.TypeCheckFailure):
+    if isinstance(res, compiler.TypeCheckFailure):
         print(res)
         return False
     else:
@@ -35,12 +34,12 @@ def produces_tree(source_text, ast):
     source_bytes = bytes(source_text, "utf8")
     tree = parser.parse(source_bytes)
     # If we couldn't parse the source we can't typecheck it.
-    if src.compiler.error_count(tree.root_node) > 0:
+    if compiler.error_count(tree.root_node) > 0:
         print("parser failed")
         return False
-    res = src.type_check.type_check(source_bytes, tree.root_node)
+    res = compiler.type_check(source_bytes, tree.root_node)
     # if it returned a list of errors, it didn't typecheck
-    if isinstance(res, src.type_check.TypeCheckFailure):
+    if isinstance(res, compiler.TypeCheckFailure):
         print(res)
         return False
     elif res != ast:
@@ -226,7 +225,6 @@ def test_config_ast():
         )
     )
 
-# TODO typed ast shouldn't distinguish between kwargs and non kwargs
 def test_source_ast():
     assert produces_tree(
         "{{ source(source_name='x', 'y') }}"

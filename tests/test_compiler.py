@@ -1,19 +1,18 @@
 from pprint import pprint
-import src.compiler
-import src.type_check
+import src.compiler as compiler
 
-parser = src.compiler.get_parser()
+parser = compiler.get_parser()
 
 def extraction(input, expected):
-    got = src.compiler.parse_typecheck_extract(parser, input)
+    got = compiler.extract_from_source(parser, input)
     passed = expected == got
     if not passed:
         source_bytes = bytes(input, "utf8")
         tree = parser.parse(source_bytes)
-        count = src.compiler.error_count(tree.root_node)
+        count = compiler.error_count(tree.root_node)
         print(f"parser error count: {count}")
         print("TYPE CHECKER OUTPUT")
-        pprint(src.type_check.type_check(source_bytes, tree.root_node))
+        pprint(compiler.type_check(source_bytes, tree.root_node))
         print(":: EXPECTED ::")
         pprint(expected)
         print("::   GOT    ::")

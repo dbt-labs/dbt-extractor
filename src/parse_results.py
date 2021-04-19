@@ -70,7 +70,7 @@ def flatten_project_results(project_model_results):
 
 # this function is where all the equality checking rules live
 def process_row(parser, project_id, raw_sql, configs, refs, sources, model_id):
-    res = compiler.parse_typecheck_extract(parser, raw_sql)
+    res = compiler.extract_from_source(parser, raw_sql)
 
     # if it can't be parsed or type checked, we can't extract anything.
     if res['python_jinja']:
