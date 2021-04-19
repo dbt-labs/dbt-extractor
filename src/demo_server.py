@@ -7,6 +7,7 @@ class Handler(BaseHTTPRequestHandler):
     def _set_response(self, body):
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         self.wfile.write(json.dumps(body).encode(encoding='utf_8'))
 
@@ -28,7 +29,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def run(server_class, handler_class, port):
     logging.basicConfig(level=logging.INFO)
-    server_address = ('', port)
+    server_address = ('127.0.0.1', port)
     httpd = server_class(server_address, handler_class)
     logging.info('Starting httpd...\n')
     try:

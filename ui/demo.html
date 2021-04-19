@@ -22,14 +22,27 @@
     model.addEventListener("keyup", function() {
         // Backspace
         if (event.keyCode == 8) {
-            console.log(model.value)
+            dbtExtract(model.value)
         }
         // Delete.
         else if (event.keyCode == 46) {
-            console.log(model.value)
+            dbtExtract(model.value)
         }
         else {
-            console.log(model.value)
+            dbtExtract(model.value)
         }
     })
+
+    function dbtExtract(text) {
+        let data = {element: "barium"};
+
+        fetch("http://127.0.0.1:8000/", {
+            method: "POST", 
+            body: JSON.stringify(data)
+        }).then(res => {
+            console.log("Request complete! response:", res);
+        }).catch((error) => {
+            console.error(error);
+        });
+    }
 </script>
