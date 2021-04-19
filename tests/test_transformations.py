@@ -1,10 +1,10 @@
-import src.compiler
+import src.compiler as compiler
 
-parser = src.compiler.get_parser()
+parser = compiler.get_parser()
 
 # runs the parser and type checker and prints debug messaging if it fails
 def transforms_into(input, expected):
-    got = src.compiler.transformations(input)
+    got = compiler.transformations(input)
     if expected != got:
         print("::: EXPECTED :::")
         print(expected)
