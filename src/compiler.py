@@ -15,9 +15,13 @@ Language.build_library(
 
 JINJA2_LANGUAGE = Language('./build/sql.so', 'dbt_jinja')
 
+class ParseFailure(Exception):
+    msg: str
+
 class TypeCheckFailure(Exception):
     msg: str
 
+# TODO remove this
 class TypeCheckPass():
     pass
 
@@ -220,35 +224,42 @@ def extract(node, data):
     # generator statement evaluated as tuple for effects
     tuple(extract(child, data) for child in node[1:])
 
-# entry point function
-def extract_from_source(parser, string):
+# returns a fully processed, typed ast or an exception
+def process_source(parser, string):
     source_bytes = bytes(string, "utf8")
     tree = parser.parse(source_bytes)
     count = error_count(tree.root_node)
+
+    # check for parser errors
+    if count > 0:
+        return ParseFailure("tree-sitter found errors")
+
+    # if there are no parsing errors check for type errors
+    checked_ast_or_error = type_check(source_bytes, tree.root_node)
+    if isinstance(checked_ast_or_error, TypeCheckFailure):
+        err = checked_ast_or_error
+        return err
+    
+    # if there are no parsing errors and no type errors, transform and return
+    typed_root = checked_ast_or_error
+    transformed_root = transformations(typed_root)
+    return transformed_root
+
+# entry point function
+def extract_from_source(parser, string):
+    res = process_source(parser, string)
+
     data = {
         'refs': [],
         'sources': set(),
         'configs': [],
         'python_jinja': False
     }
-    # if there are no _parsing errors_ check for _type errors_
-    if count <= 0:
-        # checked should be a new typed ast, but we don't have that machinery yet.
-        # this is the same untyped ast for now.
-        checked_ast_or_error = type_check(source_bytes, tree.root_node)
-        data2 = dict(data)
-        # if there are type errors
-        if isinstance(checked_ast_or_error, TypeCheckFailure):
-            data2['python_jinja'] = True
-            return data2
-        # if there are no parsing errors and no type errors, extract stuff!
-        else:
-            typed_root = checked_ast_or_error
-            transformed_root = transformations(typed_root)
-            extract(transformed_root, data2)
-            return data2
-    # if this limited tree-sitter implementaion can't parse it, python jinja will have to
-    else:
-        data2 = dict(data)
-        data2['python_jinja'] = True
-        return data2
+
+    if isinstance(res, Exception):
+        data['python_jinja'] = True
+        return data
+
+    transformed_root = res
+    extract(transformed_root, data)
+    return data
