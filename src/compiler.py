@@ -1,4 +1,4 @@
-
+from dataclasses import dataclass
 from functools import reduce
 from tree_sitter import Language, Parser
 
@@ -15,9 +15,11 @@ Language.build_library(
 
 JINJA2_LANGUAGE = Language('./build/sql.so', 'dbt_jinja')
 
+@dataclass
 class ParseFailure(Exception):
     msg: str
 
+@dataclass
 class TypeCheckFailure(Exception):
     msg: str
 
@@ -43,7 +45,7 @@ def has_kwarg_child_named(name_list, node):
     return False
 
 def error_count(node):
-    if node.type == 'ERROR':
+    if node.has_error:
         return 1
 
     if node.children:
@@ -188,16 +190,16 @@ def transformations(node):
 
 
 # operates on a typed ast
-def extract(node, data):
+def _extract(node, data):
     # reached a leaf
     if not isinstance(node, tuple):
         return node
 
     if node[0] == 'list':
-        return list(extract(child, data) for child in node[1:])
+        return list(_extract(child, data) for child in node[1:])
 
     if node[0] == 'dict':
-        return { node[1][0]: extract(node[1][1], data) }
+        return { node[1][0]: _extract(node[1][1], data) }
 
     if node[0] == 'ref':
         # no package name
@@ -211,14 +213,24 @@ def extract(node, data):
     # e.g. {{ config(key=[{'nested':'values'}]) }}
     if node[0] == 'config':
         for kwarg in node[1:]:
-            data['configs'].append((kwarg[1], extract(kwarg[2], data)))
+            data['configs'].append((kwarg[1], _extract(kwarg[2], data)))
 
     if node[0] == 'source':
         for arg in node[1:]:
             data['sources'].add((node[1], node[2]))
 
     # generator statement evaluated as tuple for effects
-    tuple(extract(child, data) for child in node[1:])
+    tuple(_extract(child, data) for child in node[1:])
+
+def extract(node):
+    data = {
+        'refs': [],
+        'sources': set(),
+        'configs': [],
+        'python_jinja': False
+    }
+    _extract(node, data)
+    return data
 
 # returns a fully processed, typed ast or an exception
 def process_source(parser, string):
@@ -245,17 +257,13 @@ def process_source(parser, string):
 def extract_from_source(parser, string):
     res = process_source(parser, string)
 
-    data = {
-        'refs': [],
-        'sources': set(),
-        'configs': [],
-        'python_jinja': False
-    }
-
     if isinstance(res, Exception):
-        data['python_jinja'] = True
-        return data
+        return {
+            'refs': [],
+            'sources': set(),
+            'configs': [],
+            'python_jinja': True
+        }
 
     transformed_root = res
-    extract(transformed_root, data)
-    return data
+    return extract(transformed_root)

@@ -25,6 +25,7 @@ build: install
 # python unit tests have a hard-coded relative path for the generated tree-sitter
 # code, so the test runner needs to be run from the src directory
 # using && so that unit tests don't run if tree-sitter tests fail.
+# TODO run the different compiler stage tests as separate commands so it stops early
 test: build
 	cd tree-sitter-dbt-jinja \
 	&& ../node_modules/tree-sitter-cli/tree-sitter test \
@@ -33,8 +34,28 @@ test: build
 
 # runs the python application
 # arguments must be passed like `make run ARGS="arg1 arg2"`
+repl: build
+	./$(VENV)/bin/python3
+
+# runs the python application
+# arguments must be passed like `make run ARGS="arg1 arg2"`
 run: build
 	./$(VENV)/bin/python3 src/main.py $(ARGS)
+
+# runs the demo http server
+serve: build
+	./$(VENV)/bin/python3 src/demo_server.py
+
+# runs the demo http server
+demo: build
+	open demo/demo.html \
+	&& ./$(VENV)/bin/python3 src/demo_server.py
+
+# docker must be running. build-wasm stage will print that error though
+treedemo: build
+	cd tree-sitter-dbt-jinja/ \
+	&& ../node_modules/tree-sitter-cli/tree-sitter build-wasm \
+	&& ../node_modules/tree-sitter-cli/tree-sitter web-ui
 
 clean:
 	rm -rf $(VENV)
