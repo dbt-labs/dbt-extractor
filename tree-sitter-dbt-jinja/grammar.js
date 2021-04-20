@@ -15,6 +15,7 @@ module.exports = grammar ({
         choice(
             $._jinja_block,
             $.jinja_macro_block,
+            $._jinja_comment_block,
             $._text
         )
     ),
@@ -29,8 +30,15 @@ module.exports = grammar ({
     // inside the block like a regular parser would want to.
     jinja_macro_block: $ => seq(
         '{%',
-        /((\n|.)*)(%.{1}|.{1}})/
-        ),
+        /([^%]|[%][^}])*/
+    ),
+
+    // comment block regex is special because a comment can end
+    // with #} ##} #######} etc.
+    _jinja_comment_block: $ => seq(
+        '{#',
+        /((\n|[^#]|#[^}])*)#+}/
+    ),
 
     // This defines all the meat of the parser
     _expr: $ => choice(
@@ -108,7 +116,7 @@ module.exports = grammar ({
     ),
 
     // matches everything but a block. will need to change if more blocks are added.
-    _text: $ => /([^{]|[{][^{%])+/
+    _text: $ => /([^{]|[{][^{%#])+/
 
   }
 });
