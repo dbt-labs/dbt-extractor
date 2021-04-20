@@ -137,3 +137,12 @@ wild comment block
   (bool)
   (bool)
 )
+
+==================
+text ending in a bracket fails
+==================
+I'd like this to work, but it doesn't rn and this test
+makes a note of that {
+---
+
+(source_file (ERROR))
