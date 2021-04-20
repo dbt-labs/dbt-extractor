@@ -13,9 +13,9 @@ module.exports = grammar ({
   rules: {
     source_file: $ => repeat(
         choice(
-            prec(10, $._jinja_block),
-            prec(10, $.jinja_macro_block),
-            prec(1, $._text)
+            $._jinja_block,
+            $.jinja_macro_block,
+            $._text
         )
     ),
 
