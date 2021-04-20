@@ -50,7 +50,13 @@ serve: build
 demo: build
 	open demo/demo.html \
 	&& ./$(VENV)/bin/python3 src/demo_server.py
-	
+
+# docker must be running. build-wasm stage will print that error though
+treedemo: build
+	cd tree-sitter-dbt-jinja/ \
+	&& ../node_modules/tree-sitter-cli/tree-sitter build-wasm \
+	&& ../node_modules/tree-sitter-cli/tree-sitter web-ui
+
 clean:
 	rm -rf $(VENV)
 	rm -rf node_modules
