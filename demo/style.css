@@ -8,12 +8,15 @@
 }
 
 body {
-    font-family: Veranda, sans-serif;
+    font-family: 'Helvetica Neue', Veranda, sans-serif;
     font-size: 18px;
 }
 
 h1 {
+    letter-spacing: 1px;
     margin: 60px;
+    font-size: 45px;
+    color: rgb(60,60,60)
 }
 
 label {
