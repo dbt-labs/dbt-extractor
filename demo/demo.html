@@ -83,11 +83,11 @@
             error.innerHTML = 
                 "Error:   " + res.error
             refs.innerHTML = 
-                "Refs:    " + res.refs
+                "Refs:    " + JSON.stringify(res.refs)
             sources.innerHTML = 
-                "Sources: " + res.sources
+                "Sources: " + JSON.stringify(res.sources)
             configs.innerHTML = 
-                "Configs: " + res.configs
+                "Configs: " + JSON.stringify(res.configs)
         }).catch((error) => {
             console.error(error);
         });
