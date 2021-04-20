@@ -64,6 +64,7 @@ clean:
 	rm tree-sitter-dbt-jinja/src/grammar.json
 	rm tree-sitter-dbt-jinja/src/node-types.json
 	rm tree-sitter-dbt-jinja/src/parser.c
+	rm tree-sitter-dbt-jinja/*.wasm
 
 # these stages don't output files by the same name
 .PHONY: all install build test run clean
