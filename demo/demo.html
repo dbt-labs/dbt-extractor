@@ -10,13 +10,15 @@
         <div class="center-flex">
             <h1>dbt Tree-Sitter Demo</h1>
             <div class="vertical-flex">
-                <label for="w3review">dbt Model File</label>
+                <label>dbt Model File</label>
                 <textarea id="model" name="model" rows="4" cols="50" autofocus=autofocus></textarea>
-                <text id="time"></text>
-                <text id="error"></text>
-                <text id="refs"></text>
-                <text id="sources"></text>
-                <text id="configs"></text>
+                <div class="results vertical-flex">
+                    <text id="time">--</text>
+                    <text id="error">Error:</text>
+                    <text id="refs">Refs:</text>
+                    <text id="sources">Sources:</text>
+                    <text id="configs">Configs:</text>
+                </div>
             </div>
         </div>
     </body>

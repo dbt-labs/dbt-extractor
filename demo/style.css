@@ -7,10 +7,33 @@
     width: 600px;
 }
 
+body {
+    font-family: Veranda, sans-serif;
+}
+
+h1 {
+    margin: 60px;
+}
+
+label {
+    margin-bottom: 30px;
+    margin-top: 30px;
+}
+
 .center-flex {
     display: flex;
     align-items: center;
     text-align: center;
     flex-direction: column;
     width: 100%;
+}
+
+.results {
+    font-family: Monaco, monospace;
+    margin-bottom: 30px;
+    margin-top: 30px;
+}
+
+text {
+    margin-bottom: 15px;
 }
