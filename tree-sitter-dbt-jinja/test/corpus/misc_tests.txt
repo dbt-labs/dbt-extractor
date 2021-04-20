@@ -92,3 +92,57 @@ unclosed jinja block fails
   )
   (MISSING "}}")
 )
+
+==================
+comment blocks
+==================
+
+{# jinja comment #}
+{{ True }}
+{# jinja comment #}
+
+---
+
+(source_file
+  (bool)
+)
+
+==================
+empty comment block
+==================
+
+{##}
+{{ True }}
+
+
+---
+
+(source_file
+  (bool)
+)
+
+==================
+wild comment block
+==================
+
+{{ True }}
+{############
+# {comment} #
+#############}
+{{ False }}
+
+---
+
+(source_file
+  (bool)
+  (bool)
+)
+
+==================
+text ending in a bracket fails
+==================
+I'd like this to work, but it doesn't rn and this test
+makes a note of that {
+---
+
+(source_file (ERROR))
