@@ -32,8 +32,18 @@ label {
     font-family: Monaco, monospace;
     margin-bottom: 30px;
     margin-top: 30px;
+    white-space: pre-wrap;
 }
 
 text {
-    margin-bottom: 15px;
+    padding-bottom: 7px;
+    padding-top: 7px;
+}
+
+.red {
+    background: red;
+}
+
+.green {
+    background: green;
 }

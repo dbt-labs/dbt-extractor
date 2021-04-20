@@ -49,15 +49,44 @@
             return res.json()
         }).then(res => {
             console.log(res);
-            document.getElementById("time").innerHTML = 
+
+            const time = document.getElementById("time")
+            const error = document.getElementById("error")
+            const refs = document.getElementById("refs")
+            const sources = document.getElementById("sources")
+            const configs = document.getElementById("configs")
+
+            if (res.error == "no error") {
+                error.className = "green"
+                refs.className = ""
+                sources.className = ""
+                configs.className = ""
+            } else {
+                error.className = "red"
+                refs.className = ""
+                sources.className = ""
+                configs.className = ""
+            }
+
+            if (res.refs.length > 0) {
+                refs.className = "green"
+            }
+            if (res.configs.length > 0) {
+                refs.className = "green"
+            }
+            if (res.sources.length > 0) {
+                refs.className = "green"
+            }
+
+            time.innerHTML = 
                 "-- completed in " + (res.ms) + " ms --"
-            document.getElementById("error").innerHTML = 
+            error.innerHTML = 
                 "Error:   " + res.error
-            document.getElementById("refs").innerHTML = 
+            refs.innerHTML = 
                 "Refs:    " + res.refs
-            document.getElementById("sources").innerHTML = 
+            sources.innerHTML = 
                 "Sources: " + res.sources
-            document.getElementById("configs").innerHTML = 
+            configs.innerHTML = 
                 "Configs: " + res.configs
         }).catch((error) => {
             console.error(error);
