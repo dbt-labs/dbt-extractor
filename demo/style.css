@@ -9,6 +9,7 @@
 
 body {
     font-family: Veranda, sans-serif;
+    font-size: 18px;
 }
 
 h1 {
@@ -28,6 +29,11 @@ label {
     width: 100%;
 }
 
+textarea {
+    resize: vertical;
+    font-size: 16px;
+}
+
 .results {
     font-family: Monaco, monospace;
     margin-bottom: 30px;
@@ -41,9 +47,9 @@ text {
 }
 
 .red {
-    background: red;
+    background: rgb(235, 154, 153);
 }
 
 .green {
-    background: green;
+    background: rgb(159, 235, 152);
 }
