@@ -76,3 +76,19 @@ doesn't hang on the empty string
 ---
 
 (source_file)
+
+==================
+unclosed jinja block fails
+==================
+
+{{ fn() 
+
+---
+
+(source_file
+  (fn_call
+    (identifier)
+    (argument_list)
+  )
+  (MISSING "}}")
+)

@@ -177,6 +177,15 @@ other as (
 )"""
     ])
 
+# this triggers "missing" not "error" nodes from tree-sitter
+def test_fails_on_open_jinja_brackets():
+    assert none_type_check([
+        "{{ ref()",
+        "{{ True",
+        "{{",
+        "{{ 'str' "
+    ])
+
 def test_ref_ast():
     assert produces_tree(
         "{{ ref('my_table') }}"

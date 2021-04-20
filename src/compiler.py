@@ -45,7 +45,7 @@ def has_kwarg_child_named(name_list, node):
     return False
 
 def error_count(node):
-    if node.type == 'ERROR':
+    if node.has_error:
         return 1
 
     if node.children:
