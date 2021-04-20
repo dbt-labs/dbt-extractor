@@ -22,8 +22,8 @@ class Handler(BaseHTTPRequestHandler):
             'seconds': 0
         }
 
-        content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
-        post_data = json.loads(self.rfile.read(content_length)) # <--- Gets the data itself
+        content_length = int(self.headers['Content-Length'])
+        post_data = json.loads(self.rfile.read(content_length))
         process_start = time.perf_counter()
         res = compiler.process_source(compiler.get_parser(), post_data)
         process_end = time.perf_counter()
