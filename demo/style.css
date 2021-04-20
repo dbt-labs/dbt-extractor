@@ -1,8 +1,16 @@
 
-.flex-container {
+.vertical-flex {
     display: flex;
     align-items: left;
     text-align: left;
     flex-direction: column;
     width: 600px;
+}
+
+.center-flex {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    flex-direction: column;
+    width: 100%;
 }
