@@ -66,4 +66,4 @@ def json_friendly(compiler_output):
     return data
 
 if __name__ == '__main__':
-    run(HTTPServer, Handler, 8000)
+    run(HTTPServer, Handler, 9000)
