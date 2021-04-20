@@ -69,3 +69,10 @@ some curlys { }
 ---
 
 (source_file)
+
+==================
+doesn't hang on the empty string
+==================
+---
+
+(source_file)

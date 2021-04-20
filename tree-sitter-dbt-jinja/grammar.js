@@ -108,7 +108,7 @@ module.exports = grammar ({
     ),
 
     // matches everything but a block. will need to change if more blocks are added.
-    _text: $ => /([^{]|[{][^{%])*/
+    _text: $ => /([^{]|[{][^{%])+/
 
   }
 });
