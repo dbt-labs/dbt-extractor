@@ -67,3 +67,14 @@ def test_field_calculation():
     assert res['percentage_projects_parseable'] == 100 * 1/3
     assert res['projects_completely_unparsed'] == 1
     assert res['percentage_projects_completely_unparsed'] == 100 * 1/3
+
+def test_merge_on_list_keys():
+    x = {'list': [1,2,3]}
+    y = {'list': [4,5,6]}
+    z = {'list': [1,2,3,4,5,6]}
+    assert z == parse_results.merge(x, y)
+
+def test_merge_on_dict_keys():
+    x = {'dict': {'inner': 5}}
+    y = {'dict': {'inner': 10}}
+    assert y == parse_results.merge(x, x)

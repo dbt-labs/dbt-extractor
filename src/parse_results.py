@@ -26,7 +26,10 @@ def merge(dict1, dict2):
     copy = dict(dict1)
     for key in copy.keys():
         if key in dict2.keys():
-            copy[key] += dict2[key]
+            if isinstance(dict1[key], dict):
+                copy[key] = merge(dict1[key], dict2[key])
+            else:
+                copy[key] += dict2[key]
     for key in dict2.keys():
         if key not in copy.keys():
             copy[key] = dict2[key]
