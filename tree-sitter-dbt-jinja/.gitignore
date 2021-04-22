@@ -1,3 +1,4 @@
 binding.gyp
 bindings/
+Cargo.toml
 src/

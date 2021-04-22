@@ -61,10 +61,13 @@ clean:
 	rm -rf $(VENV)
 	rm -rf node_modules
 	find . -type f -name '*.pyc' -delete
-	rm tree-sitter-dbt-jinja/src/grammar.json
-	rm tree-sitter-dbt-jinja/src/node-types.json
-	rm tree-sitter-dbt-jinja/src/parser.c
-	rm tree-sitter-dbt-jinja/*.wasm
+	find . -type f -name '*.wasm' -delete
+	find . -type f -name '*.gyp' -delete
+	find . -type d -name '__pycache__' -delete
+	rm -rf .pytest_cache/
+	rm -rf build/
+	rm -rf tree-sitter-dbt-jinja/{src,bindings,build}
+	rm tree-sitter-dbt-jinja/Cargo.toml
 
 # these stages don't output files by the same name
 .PHONY: all install build test run clean
