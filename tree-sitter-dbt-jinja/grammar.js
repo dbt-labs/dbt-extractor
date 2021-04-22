@@ -13,29 +13,29 @@ module.exports = grammar ({
   rules: {
     source_file: $ => repeat(
         choice(
-            $._jinja_block,
-            $.jinja_macro_block,
-            $._jinja_comment_block,
+            $._jinja_value,
+            $.jinja_expression,
+            $._jinja_comment,
             $._text
         )
     ),
 
-    _jinja_block: $ => seq(
+    _jinja_value: $ => seq(
         '{{',
         $._expr,
         '}}'
     ),
 
     // This is awkward regex because we aren't parsing anything
-    // inside the block like a regular parser would want to.
-    jinja_macro_block: $ => seq(
+    // in between the expression markers _jinja_value does
+    jinja_expression: $ => seq(
         '{%',
         /([^%]|[%][^}])*%}/
     ),
 
-    // comment block regex is special because a comment can end
+    // comment regex is special because a comment can end
     // with #} ##} #######} etc.
-    _jinja_comment_block: $ => seq(
+    _jinja_comment: $ => seq(
         '{#',
         /((\n|[^#]|#[^}])*)#+}/
     ),
@@ -115,7 +115,7 @@ module.exports = grammar ({
         field("value", $._expr),
     ),
 
-    // matches everything but a block. will need to change if more blocks are added.
+    // matches everything but jinja
     _text: $ => /([^{]|[{][^{%#])+/
 
   }

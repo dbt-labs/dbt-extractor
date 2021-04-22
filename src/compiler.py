@@ -71,8 +71,8 @@ def _to_typed(source_bytes, node):
         if text == 'False':
             return False
 
-    if node.type == 'jinja_macro_block':
-        raise TypeCheckFailure("macro blocks are unsupported: {% syntax like this %}")
+    if node.type == 'jinja_expression':
+        raise TypeCheckFailure("jinja expressions are unsupported: {% syntax like this %}")
 
     elif node.type == 'list':
         elems = named_children(node)

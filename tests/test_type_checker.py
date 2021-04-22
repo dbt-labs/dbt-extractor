@@ -51,6 +51,24 @@ def produces_tree(source_text, ast):
     else:
         return True
 
+def fails_with(source_text, msg):
+    source_bytes = bytes(source_text, "utf8")
+    tree = parser.parse(source_bytes)
+    # If we couldn't parse the source we can't typecheck it.
+    if compiler.error_count(tree.root_node) > 0:
+        print("parser failed")
+        return False
+    res = compiler.type_check(source_bytes, tree.root_node)
+    # if it returned a list of errors, it didn't typecheck
+    if isinstance(res, compiler.TypeCheckFailure):
+        if msg == res.msg:
+            return True
+    print(":: EXPECTED ::")
+    print(compiler.TypeCheckFailure(msg))
+    print(":: GOT ::")
+    print(res)
+    return False
+
 def test_recognizes_ref_source_config():
     assert all_type_check([
         "select * from {{ ref('my_table') }}",
@@ -58,7 +76,7 @@ def test_recognizes_ref_source_config():
         "{{ source('a', 'b') }}"
     ])
 
-def test_recognizes_multiple_blocks():
+def test_recognizes_multiple_jinja_calls():
     assert all_type_check([
         "{{ ref('x') }} {{ ref('y') }}",
         "{{ config(key='value') }} {{ config(k='v') }}",
@@ -151,12 +169,12 @@ def test_config_excluded_kwargs():
         "{{ config(post-hook='x') }}"
     ])
 
-def test_macro_blocks_fail_everywhere():
+def test_jinja_expressions_fail_everywhere():
     assert none_type_check([
         "{% config(x='y') %}",
         "{% if(whatever) do_something() %}",
-        "doing stuff {{ ref('str') }} stuff {% macro %}",
-        "{{ {% psych! nested macro %} }}"
+        "doing stuff {{ ref('str') }} stuff {% expression %}",
+        "{{ {% psych! nested expression %} }}"
     ])
 
 def test_top_level_kwargs_are_rejected():
@@ -249,3 +267,9 @@ def test_source_ast():
         )
     )
 
+def test_jinja_expression_ast():
+    assert fails_with(
+        "{% expression %}"
+        ,
+        "jinja expressions are unsupported: {% syntax like this %}"
+    )

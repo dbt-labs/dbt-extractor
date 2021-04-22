@@ -1,5 +1,5 @@
 ==================
-parses a macro block
+parses a jinja expression
 ==================
 
 select * from table
@@ -8,21 +8,21 @@ select * from other_table
 
 ---
 
-(source_file (jinja_macro_block))
+(source_file (jinja_expression))
 
 ==================
-ignores valid syntax in a macro block
+ignores valid syntax in a jinja expression
 ==================
 
 {% ref('my_table') %}
 
 ---
 
-(source_file (jinja_macro_block))
+(source_file (jinja_expression))
 
 
 ==================
-finds nested macro block
+finds nested jinja expression
 ==================
 
 {{ config(key='value') }}
@@ -53,23 +53,23 @@ other as (
       (lit_string)
     )
   )
-  (jinja_macro_block)
+  (jinja_expression)
 )
 
 ==================
-macro block recognized over multiple line breaks
+jinja expression recognized over multiple line breaks
 ==================
 
 {%
-macro
+expression
 %}
 
 ---
 
-(source_file (jinja_macro_block))
+(source_file (jinja_expression))
 
 ==================
-not a macro
+not a jinja expression
 ==================
 
 {%}

@@ -3,7 +3,7 @@
 
 ![demo app](demo/demo.gif)
 
-This repository contains a tree-sitter grammar for the most common non-macro jinja calls as well as a python app that can run the parser against example model file contents and collect either the aggregated stats for how well it does, or write a file with all the segments that it failed to process.
+This repository contains a tool that parses the most common jinja value templates which uses tree-sitter, as well as a python app that can run the parser against example model file contents and collect either the aggregated stats for how well it does.
 
 # Architecture
 

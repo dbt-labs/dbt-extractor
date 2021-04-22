@@ -32,7 +32,7 @@ def parse_args():
 
     misses_parser = subparsers.add_parser(
         'misses',
-        help='[subcommand] Outputs jinja blocks that could not be parsed'
+        help='[subcommand] Outputs jinja calls that could not be parsed'
     )
     misses_parser.add_argument(
         'data_file',
