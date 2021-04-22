@@ -67,3 +67,15 @@ macro
 ---
 
 (source_file (jinja_macro_block))
+
+==================
+not a macro
+==================
+
+{%}
+
+---
+
+(source_file 
+  (ERROR)
+)

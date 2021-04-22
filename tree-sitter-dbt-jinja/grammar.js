@@ -30,7 +30,7 @@ module.exports = grammar ({
     // inside the block like a regular parser would want to.
     jinja_macro_block: $ => seq(
         '{%',
-        /([^%]|[%][^}])*/
+        /([^%]|[%][^}])*%}/
     ),
 
     // comment block regex is special because a comment can end
