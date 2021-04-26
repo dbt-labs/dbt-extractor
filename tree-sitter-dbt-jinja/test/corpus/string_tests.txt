@@ -28,7 +28,7 @@ python string escapes work
 )
 
 ==================
-the kind of quotes you use don't matter (TODO this is not a function test)
+the kind of quotes you use don't matter
 ==================
 
 {{ 'a' }}

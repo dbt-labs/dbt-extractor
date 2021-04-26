@@ -29,26 +29,6 @@ some text {{ 'floating lit' }} more text {{ config() }} text.
 )
 
 ==================
-kwargs retain both key and value TODO duplicate
-==================
-
-{{ config(key='value') }}
-
----
-
-(source_file
-  (fn_call
-    (identifier)
-    (argument_list
-      (kwarg
-        (identifier)
-        (lit_string)
-      )
-    )
-  )
-)
-
-==================
 text with curlys works
 ==================
 
@@ -110,7 +90,7 @@ empty comment
 )
 
 ==================
-wild comment formatting TODO add a new test with a comment with valid jinja in it
+wild comment formatting
 ==================
 
 {{ True }}
@@ -125,6 +105,16 @@ wild comment formatting TODO add a new test with a comment with valid jinja in i
   (bool)
   (bool)
 )
+
+==================
+wild comment formatting
+==================
+
+{# {{ ref('valid jinja') }} #}
+
+---
+
+(source_file)
 
 ==================
 text ending in a bracket fails
