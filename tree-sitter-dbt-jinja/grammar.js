@@ -1,5 +1,6 @@
 
-// TODO TEST WITH WINDOWS LINE BREAKS !!! (maybe there's a regex char)
+// Note: if you ever need to explicitly match line breaks, those are system specific. 
+// use a regex like this \r\n?|\n to match on windows too.
 
 function commaSep1(rule) {
     return sep1(rule, ',');
@@ -84,7 +85,6 @@ module.exports = grammar ({
     ),
 
     // TODO escape characters??
-    // TODO test strings like this '{{ doc("my_model") }}' <-- does dbt treat this as jinja or a literal?????? 
     // what are the rules???? maybe not at this stage?
     lit_string: $ => choice(
         seq(

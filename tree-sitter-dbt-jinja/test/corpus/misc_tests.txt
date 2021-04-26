@@ -146,3 +146,19 @@ makes a note of that {
 ---
 
 (source_file (ERROR))
+
+==================
+jinja syntax in quotes TODO is this ok???
+==================
+
+'{{ "should this be jinja rendered?" }}'
+
+{{ '{{ this is a string }}' }}
+
+
+---
+
+(source_file
+  (lit_string)
+  (lit_string)
+)
