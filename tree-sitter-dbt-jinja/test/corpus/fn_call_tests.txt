@@ -207,14 +207,3 @@ True is an invalid fn name
     (bool)
   )
 )
-
-==================
-the kind of quotes you use don't matter (TODO this is not a function test)
-==================
-
-{{ 'a' }}
-{{ "b" }}
-
----
-
-(source_file (lit_string) (lit_string))

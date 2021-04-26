@@ -1,16 +1,4 @@
 ==================
-floating string literal TODO duplicate test?
-==================
-
-{{ 'floating lit' }}
-
----
-
-(source_file 
-  (lit_string)
-)
-
-==================
 bare words fail
 ==================
 
@@ -146,32 +134,3 @@ makes a note of that {
 ---
 
 (source_file (ERROR))
-
-==================
-jinja syntax in quotes TODO is this ok???
-==================
-
-'{{ "should this be jinja rendered?" }}'
-
-{{ '{{ this is a string }}' }}
-
----
-
-(source_file
-  (lit_string)
-  (lit_string)
-)
-
-==================
-python string escapes work
-==================
-
-{{ "this \"quoted\" string parses" }}
-{{ 'this \'quoted\' string also parses' }}
-
----
-
-(source_file
-  (lit_string)
-  (lit_string)
-)
