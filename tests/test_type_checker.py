@@ -1,7 +1,7 @@
 from functools import reduce
 import src.compiler as compiler
 
-parser = compiler.get_parser()
+parser = compiler.parser
 
 # runs the parser and type checker and prints debug messaging if it fails
 def type_checks(source_text):

@@ -13,7 +13,10 @@ Language.build_library(
   ]
 )
 
+# global values
 JINJA2_LANGUAGE = Language('./build/sql.so', 'dbt_jinja')
+parser = Parser()
+parser.set_language(JINJA2_LANGUAGE)
 
 @dataclass
 class ParseFailure(Exception):
@@ -52,11 +55,6 @@ def error_count(node):
         return reduce(lambda a,b: a+b, map(lambda x: error_count(x), node.children))
     else:
         return 0
-
-def get_parser():
-    parser = Parser()
-    parser.set_language(JINJA2_LANGUAGE)
-    return parser
 
 # meat of the type checker
 # throws a TypeCheckError or returns a typed ast in the form of a nested tuple
@@ -264,8 +262,7 @@ def process_source(parser, string):
     return transformed_root
 
 # entry point function
-# TODO refactor so you don't pass parser
-def extract_from_source(parser, string):
+def extract_from_source(string):
     res = process_source(parser, string)
 
     if isinstance(res, Exception):

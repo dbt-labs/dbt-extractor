@@ -1,6 +1,6 @@
 import src.compiler as compiler
 
-parser = compiler.get_parser()
+parser = compiler.parser
 
 # runs the parser and type checker and prints debug messaging if it fails
 def transforms_into(input, expected):

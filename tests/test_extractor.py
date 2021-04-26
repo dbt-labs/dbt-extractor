@@ -1,10 +1,10 @@
 from pprint import pprint
 import src.compiler as compiler
 
-parser = compiler.get_parser()
+parser = compiler.parser
 
 def extraction(input, expected):
-    got = compiler.extract_from_source(parser, input)
+    got = compiler.extract_from_source(input)
     passed = expected == got
     if not passed:
         source_bytes = bytes(input, "utf8")
