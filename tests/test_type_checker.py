@@ -254,15 +254,15 @@ def test_config_ast():
 
 def test_source_ast():
     assert produces_tree(
-        "{{ source(source_name='x', 'y') }}"
+        "{{ source('x', table_name='y') }}"
         ,
         ('root',
             ('source',
+                'x',
                 ('kwarg',
-                    'source_name',
-                    'x'
-                ),
-                'y'
+                    'table_name',
+                    'y'
+                )
             )
         )
     )
@@ -272,4 +272,11 @@ def test_jinja_expression_ast():
         "{% expression %}"
         ,
         "jinja expressions are unsupported: {% syntax like this %}"
+    )
+
+def test_kwarg_order():
+    assert fails_with(
+        "{{ source(source_name='kwarg', 'positional') }}"
+        ,
+        "keyword arguments must all be at the end"
     )

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from functools import reduce
+from itertools import dropwhile
 from tree_sitter import Language, Parser
 
 
@@ -46,6 +47,16 @@ def has_kwarg_child_named(name_list, node):
         if kwarg[1] in name_list:
             return True
     return False
+
+# if all positional args come before kwargs return True.
+# otherwise return false.
+def kwargs_last(args):
+    def not_kwarg(node):
+        return node.type != 'kwarg'
+
+    no_leading_positional_args = dropwhile(not_kwarg, args)
+    dangling_positional_args = filter(not_kwarg, no_leading_positional_args)
+    return len(list(dangling_positional_args)) == 0
 
 def error_count(node):
     if node.has_error:
@@ -109,6 +120,8 @@ def _to_typed(source_bytes, node):
         arg_list = node.child_by_field_name('argument_list')
         arg_count = arg_list.named_child_count
         args = named_children(arg_list)
+        if not kwargs_last(args):
+            raise TypeCheckFailure(f"keyword arguments must all be at the end")
 
         if name == 'ref':
             if arg_count != 1 and arg_count != 2:
