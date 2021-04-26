@@ -84,18 +84,16 @@ module.exports = grammar ({
         ')'
     ),
 
-    // TODO escape characters??
-    // what are the rules???? maybe not at this stage?
     lit_string: $ => choice(
         seq(
-            "'",
-            token(/[^']*/),
-            "'",
+            "'",            // single quote string start
+            /([^']|\\')*/,  // either not a `'` or a `\` followed by a `'` zero or more times
+            "'",            // single quote string start
         ),
         seq(
-            '"',
-            token(/[^"]*/),
-            '"',
+            '"',            // double quote string start
+            /([^"]|\\")*/,  // either not a `"` or a `\` followed by a `"` zero or more times
+            '"',            // double quote string start
         )
     ),
 

@@ -155,6 +155,19 @@ jinja syntax in quotes TODO is this ok???
 
 {{ '{{ this is a string }}' }}
 
+---
+
+(source_file
+  (lit_string)
+  (lit_string)
+)
+
+==================
+python string escapes work
+==================
+
+{{ "this \"quoted\" string parses" }}
+{{ 'this \'quoted\' string also parses' }}
 
 ---
 
