@@ -79,6 +79,7 @@ def _to_typed(source_bytes, node):
         for elem in elems:
             if elem.type == 'fn_call':
                 raise TypeCheckFailure(f"list elements cannot be function calls")
+        # TODO better way to not splat a tuple comp??? (functools zip? (Ian))
         return ('list', *tuple(_to_typed(source_bytes, elem) for elem in elems))
 
     elif node.type == 'kwarg':
@@ -126,6 +127,11 @@ def _to_typed(source_bytes, node):
             for arg in args:
                 if arg.type != 'kwarg' and arg.type != 'lit_string':
                     raise TypeCheckFailure(f"unexpected argument type in source. Found {arg.type}")
+            # TODO keyword arguments aren't ordered, 
+            # TODO in python, kwargs HAVE TO come after. do they in dbt???? probably. still check.
+            # this should error --> source('', source_name='hello')
+            # this should not --> source("hello", table_name="world")
+            # TODO add tests for ^^
             if args[0].type == 'kwarg' and text_from_node(source_bytes, args[0].child_by_field_name('key')) != 'source_name':
                 raise TypeCheckFailure(f"first keyword argument in source must be source_name found {args[0].child_by_field_name('key')}")
             if args[1].type == 'kwarg' and text_from_node(source_bytes, args[1].child_by_field_name('key')) != 'table_name':
@@ -134,7 +140,9 @@ def _to_typed(source_bytes, node):
             # (kwarg vs string lits) I want it to come out the same
             # leaving this TODO in for now. When we move to an actual typed ast,
             # we can use something like Arg(name:Optional[String_Val], arg:ExprT)
-            return ('source', *tuple(_to_typed(source_bytes, arg) for arg in args)) 
+            # ('source', ('kwarg', 'source_name', 'hello'), ('kwarg', 'table_name', 'world'))
+            # ('source', 'hello', 'world') <-- TODO I don't think this would be that bad
+            return ('source', *tuple(_to_typed(source_bytes, arg) for arg in args))
 
         elif name == 'config':
             if arg_count < 1:
@@ -172,12 +180,14 @@ def transformations(node):
     if not isinstance(node, tuple):
         return node
 
+    # TODO dbt should merge these in properly even though it screws with our equality checking. Jeremy question too?
     # transforms the following config arguments so that they don't make it into the final form
     elif node[0] == 'config' and has_kwarg_child_named(['partition_by', 'dataset', 'project' 'enabled'], node):
         kwargs = node[1:]
         # local mutation
         new_kwargs = []
         for kwarg in kwargs:
+            # TODO if not in.
             if kwarg[1] in ['partition_by', 'dataset', 'project', 'enabled']:
                 pass
             else:
@@ -199,6 +209,8 @@ def _extract(node, data):
         return list(_extract(child, data) for child in node[1:])
 
     if node[0] == 'dict':
+        # TODO only getting the first pair of the dict. I think. do for pair in node[1:].
+        # TODO tests?????
         return { node[1][0]: _extract(node[1][1], data) }
 
     if node[0] == 'ref':
@@ -254,6 +266,7 @@ def process_source(parser, string):
     return transformed_root
 
 # entry point function
+# TODO refactor so you don't pass parser
 def extract_from_source(parser, string):
     res = process_source(parser, string)
 

@@ -198,7 +198,7 @@ bool kwargs
 True is an invalid fn name
 ==================
 
-{{ True() }
+{{ True() }}
 
 ---
 
@@ -209,7 +209,7 @@ True is an invalid fn name
 )
 
 ==================
-the kind of quotes you use don't matter
+the kind of quotes you use don't matter (TODO this is not a function test)
 ==================
 
 {{ 'a' }}

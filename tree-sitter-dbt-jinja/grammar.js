@@ -1,4 +1,6 @@
 
+// TODO TEST WITH WINDOWS LINE BREAKS !!! (maybe there's a regex char)
+
 function commaSep1(rule) {
     return sep1(rule, ',');
 }
@@ -28,6 +30,7 @@ module.exports = grammar ({
 
     // This is awkward regex because we aren't parsing anything
     // in between the expression markers _jinja_value does
+    // TODO commente every part of this
     jinja_expression: $ => seq(
         '{%',
         /([^%]|[%][^}])*%}/
@@ -66,6 +69,9 @@ module.exports = grammar ({
         ')'
     ),
 
+    // TODO escape characters??
+    // TODO test strings like this '{{ doc("my_model") }}' <-- does dbt treat this as jinja or a literal?????? 
+    // what are the rules???? maybe not at this stage?
     lit_string: $ => choice(
         seq(
             "'",
@@ -108,6 +114,7 @@ module.exports = grammar ({
 
     _identifier: $ => token(/[a-zA-Z_][a-zA-Z0-9_]*/),
     // Unicode identifiers like python does: /[_\p{XID_Start}][_\p{XID_Continue}]*/
+    // ^^ that doesn't matter till we allow user-named variables and functions (we don't right now) TODO <- comment
 
     kwarg: $ => seq(
         field("key", $.identifier),
@@ -116,6 +123,7 @@ module.exports = grammar ({
     ),
 
     // matches everything but jinja
+    // TODO comment every part of this nonsense vv in code? in comment? look at perl style.
     _text: $ => /([^{]|[{][^{%#])+/
 
   }

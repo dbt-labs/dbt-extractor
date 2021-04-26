@@ -1,5 +1,5 @@
 ==================
-floating string literal
+floating string literal TODO duplicate test?
 ==================
 
 {{ 'floating lit' }}
@@ -41,7 +41,7 @@ some text {{ 'floating lit' }} more text {{ config() }} text.
 )
 
 ==================
-kwargs retain both key and value
+kwargs retain both key and value TODO duplicate
 ==================
 
 {{ config(key='value') }}
@@ -94,7 +94,7 @@ unclosed jinja calls fail
 )
 
 ==================
-comments
+comments TODO comments test file?
 ==================
 
 {# jinja comment #}
@@ -122,7 +122,7 @@ empty comment
 )
 
 ==================
-wild comment formatting
+wild comment formatting TODO add a new test with a comment with valid jinja in it
 ==================
 
 {{ True }}
