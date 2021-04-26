@@ -185,10 +185,7 @@ def transformations(node):
         # local mutation
         new_kwargs = []
         for kwarg in kwargs:
-            # TODO if not in.
-            if kwarg[1] in ['partition_by', 'dataset', 'project', 'enabled']:
-                pass
-            else:
+            if not kwarg[1] in ['partition_by', 'dataset', 'project', 'enabled']:
                 new_kwargs.append(kwarg)
         # sending the top-level config through again to catch any other config tranformations 
         return transformations(('config', *new_kwargs))
