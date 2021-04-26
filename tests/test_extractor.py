@@ -74,4 +74,11 @@ def test_deeply_nested_config():
         )
     )
 
-# TODO test with dictionary that has multiple keys
+def test_extracts_dict_with_multiple_keys():
+    assert extraction(
+        "{{ config(dict={'a':'x', 'b': 'y', 'c':'z'}) }}"
+        ,
+        exctracted(
+            configs=[('dict', {'a': 'x', 'b': 'y', 'c':'z'})]
+        )
+    )

@@ -209,9 +209,7 @@ def _extract(node, data):
         return list(_extract(child, data) for child in node[1:])
 
     if node[0] == 'dict':
-        # TODO only getting the first pair of the dict. I think. do for pair in node[1:].
-        # TODO tests?????
-        return { node[1][0]: _extract(node[1][1], data) }
+        return { pair[0]: _extract(pair[1], data) for pair in node[1:] }
 
     if node[0] == 'ref':
         # no package name
