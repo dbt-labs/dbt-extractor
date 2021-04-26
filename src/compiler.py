@@ -137,22 +137,21 @@ def _to_typed(source_bytes, node):
             for arg in args:
                 if arg.type != 'kwarg' and arg.type != 'lit_string':
                     raise TypeCheckFailure(f"unexpected argument type in source. Found {arg.type}")
-            # TODO keyword arguments aren't ordered, 
-            # TODO in python, kwargs HAVE TO come after. do they in dbt???? probably. still check.
-            # this should error --> source('', source_name='hello')
-            # this should not --> source("hello", table_name="world")
-            # TODO add tests for ^^
+            # note: keword vs positional argument order is checked above in fn_call checks
             if args[0].type == 'kwarg' and text_from_node(source_bytes, args[0].child_by_field_name('key')) != 'source_name':
                 raise TypeCheckFailure(f"first keyword argument in source must be source_name found {args[0].child_by_field_name('key')}")
             if args[1].type == 'kwarg' and text_from_node(source_bytes, args[1].child_by_field_name('key')) != 'table_name':
                 raise TypeCheckFailure(f"second keyword argument in source must be table_name found {args[1].child_by_field_name('key')}")
-            # TODO this isn't quite right. regardless of how they call it,
-            # (kwarg vs string lits) I want it to come out the same
-            # leaving this TODO in for now. When we move to an actual typed ast,
-            # we can use something like Arg(name:Optional[String_Val], arg:ExprT)
-            # ('source', ('kwarg', 'source_name', 'hello'), ('kwarg', 'table_name', 'world'))
-            # ('source', 'hello', 'world') <-- TODO I don't think this would be that bad
-            return ('source', *(_to_typed(source_bytes, arg) for arg in args))
+
+            # restructure source calls to look like they were all called positionally for uniformity
+            source_name = args[0]
+            table_name = args[1]
+            if args[0].type == 'kwarg':
+                source_name = args[0].child_by_field_name('value')
+            if args[1].type == 'kwarg':
+                table_name = args[1].child_by_field_name('value')
+
+            return ('source', _to_typed(source_bytes, source_name), _to_typed(source_bytes, table_name))
 
         elif name == 'config':
             if arg_count < 1:

@@ -259,10 +259,7 @@ def test_source_ast():
         ('root',
             ('source',
                 'x',
-                ('kwarg',
-                    'table_name',
-                    'y'
-                )
+                'y'
             )
         )
     )
