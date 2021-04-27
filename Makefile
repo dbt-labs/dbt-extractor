@@ -11,15 +11,15 @@ $(VENV)/bin/activate: requirements.txt
 	./$(VENV)/bin/pip install -r requirements.txt
 
 # installs npm dependencies
-node_modules/tree-sitter-cli/tree-sitter:
-	npm install
+dbt-parser/node_modules/tree-sitter-cli/tree-sitter:
+	cd dbt-parser && npm install
 
 # install just needs the venv and tree-sitter binary
-install: $(VENV)/bin/activate node_modules/tree-sitter-cli/tree-sitter
+install: $(VENV)/bin/activate dbt-parser/node_modules/tree-sitter-cli/tree-sitter
 
 build: install
-	cd tree-sitter-dbt-jinja \
-	&& ../node_modules/tree-sitter-cli/tree-sitter generate
+	cd dbt-parser \
+	&& npx tree-sitter generate
 
 # runs the tree-sitter tests and python unit tests
 # python unit tests have a hard-coded relative path for the generated tree-sitter
@@ -27,8 +27,8 @@ build: install
 # using && so that unit tests don't run if tree-sitter tests fail.
 # TODO run the different compiler stage tests as separate commands so it stops early
 test: build
-	cd tree-sitter-dbt-jinja \
-	&& ../node_modules/tree-sitter-cli/tree-sitter test \
+	cd dbt-parser \
+	&& npx tree-sitter test \
 	&& cd .. \
 	&& PYTHONPATH=src ./$(VENV)/bin/pytest
 
@@ -53,9 +53,9 @@ demo: build
 
 # docker must be running. build-wasm stage will print that error though
 treedemo: build
-	cd tree-sitter-dbt-jinja/ \
-	&& ../node_modules/tree-sitter-cli/tree-sitter build-wasm \
-	&& ../node_modules/tree-sitter-cli/tree-sitter web-ui
+	cd dbt-parser/ \
+	&& npx tree-sitter build-wasm \
+	&& npx tree-sitter web-ui
 
 clean:
 	rm -rf $(VENV)
@@ -66,8 +66,8 @@ clean:
 	find . -type d -name '__pycache__' -delete
 	rm -rf .pytest_cache/
 	rm -rf build/
-	rm -rf tree-sitter-dbt-jinja/{src,bindings,build}
-	rm tree-sitter-dbt-jinja/Cargo.toml
+	rm -rf dbt-parser/{src,bindings,build}
+	rm dbt-parser/Cargo.toml
 
 # these stages don't output files by the same name
 .PHONY: all install build test run clean

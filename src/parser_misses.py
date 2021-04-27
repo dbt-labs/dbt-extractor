@@ -1,6 +1,7 @@
 import itertools
 import json
 import compiler
+from dbt_parser import get_parser
 
 # TODO make this not hard coded
 data_path = '/Users/nate/data/customer-manifest-raw-sql/data.json'
@@ -84,7 +85,7 @@ def run_on(data_path, out_file):
     with open(data_path, 'r') as f:
         all_rows = json.loads(f.read())
 
-    parser = compiler.get_parser()
+    parser = get_parser()
     all_results = flatten(list(map(lambda row: apply_row(parser, row), all_rows)))
 
     f = open(out_file, 'w')

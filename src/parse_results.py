@@ -2,8 +2,7 @@ from functools import reduce
 import itertools
 import json
 import compiler
-from pprint import pprint
-
+from dbt_parser import get_parser
 
 # like set difference `-` but using eq not hash so it can be used on mutable types
 # a = [1,2,2,3]
@@ -246,7 +245,7 @@ def _run_on(json_list):
     all_rows = filter(lambda row: not is_bad_example(row['unique_id']) , json_list)
     all_rows = map(preprocess_row, all_rows)
 
-    parser = compiler.get_parser()
+    parser = get_parser()
     # tree-sitter results
     all_results = list(map(lambda row: apply_row(parser, row), all_rows))
     # model results from the same projects together

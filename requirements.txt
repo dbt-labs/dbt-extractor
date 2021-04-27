@@ -1,4 +1,4 @@
 argparse
 jinja2
 pytest
-tree_sitter
+./dbt-parser

@@ -1,7 +1,8 @@
 from functools import reduce
+from dbt_parser import get_parser
 import src.compiler as compiler
 
-parser = compiler.get_parser()
+parser = get_parser()
 
 # runs the parser and type checker and prints debug messaging if it fails
 def type_checks(source_text):

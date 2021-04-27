@@ -1,6 +1,7 @@
-import src.compiler as compiler
+from src import compiler
+from dbt_parser import get_parser
 
-parser = compiler.get_parser()
+parser = get_parser()
 
 # runs the parser and type checker and prints debug messaging if it fails
 def transforms_into(input, expected):

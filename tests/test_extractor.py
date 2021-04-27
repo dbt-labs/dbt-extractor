@@ -1,7 +1,8 @@
 from pprint import pprint
+from dbt_parser import get_parser
 import src.compiler as compiler
 
-parser = compiler.get_parser()
+parser = get_parser()
 
 def extraction(input, expected):
     got = compiler.extract_from_source(parser, input)

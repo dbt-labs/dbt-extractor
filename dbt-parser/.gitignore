@@ -2,3 +2,6 @@ binding.gyp
 bindings/
 Cargo.toml
 src/
+build/
+dist/
+

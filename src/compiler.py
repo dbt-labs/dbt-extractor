@@ -1,19 +1,5 @@
 from dataclasses import dataclass
 from functools import reduce
-from tree_sitter import Language, Parser
-
-
-Language.build_library(
-  # Store the library in the `build` directory
-  './build/sql.so',
-
-  # Include one or more languages
-  [
-    './tree-sitter-dbt-jinja',
-  ]
-)
-
-JINJA2_LANGUAGE = Language('./build/sql.so', 'dbt_jinja')
 
 @dataclass
 class ParseFailure(Exception):
@@ -53,10 +39,6 @@ def error_count(node):
     else:
         return 0
 
-def get_parser():
-    parser = Parser()
-    parser.set_language(JINJA2_LANGUAGE)
-    return parser
 
 # meat of the type checker
 # throws a TypeCheckError or returns a typed ast in the form of a nested tuple
