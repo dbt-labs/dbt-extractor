@@ -1,10 +1,10 @@
 ==================
-jinja syntax in quotes TODO is this ok???
+only jinja syntax in top-level quotes is parsed
 ==================
 
-'{{ "should this be jinja rendered?" }}'
+'{{ "this will be parsed as jinja" }}'
 
-{{ '{{ this is a string }}' }}
+{{ '{{ this inner jinja is just parsed as a string }}' }}
 
 ---
 
@@ -36,4 +36,7 @@ the kind of quotes you use don't matter
 
 ---
 
-(source_file (lit_string) (lit_string))
+(source_file
+  (lit_string)
+  (lit_string)
+)
