@@ -182,29 +182,6 @@ def type_check(source_bytes, node):
     except TypeCheckFailure as e:
         return e
 
-
-# applies transformations to the typed_ast
-def transformations(node):
-    # reached a leaf
-    if not isinstance(node, tuple):
-        return node
-
-    # TODO dbt should merge these in properly even though it screws with our equality checking. Jeremy question too?
-    # transforms the following config arguments so that they don't make it into the final form
-    elif node[0] == 'config' and has_kwarg_child_named(['partition_by', 'dataset', 'project' 'enabled'], node):
-        kwargs = node[1:]
-        # local mutation
-        new_kwargs = []
-        for kwarg in kwargs:
-            if not kwarg[1] in ['partition_by', 'dataset', 'project', 'enabled']:
-                new_kwargs.append(kwarg)
-        # sending the top-level config through again to catch any other config tranformations 
-        return transformations(('config', *new_kwargs))
-
-    else:
-        return (node[0], *(transformations(child) for child in node[1:]))
-
-
 # operates on a typed ast
 def _extract(node, data):
     # reached a leaf
@@ -264,10 +241,9 @@ def process_source(parser, string):
         err = checked_ast_or_error
         return err
     
-    # if there are no parsing errors and no type errors, transform and return
+    # if there are no parsing errors and no type errors, return the typed ast
     typed_root = checked_ast_or_error
-    transformed_root = transformations(typed_root)
-    return transformed_root
+    return typed_root
 
 # entry point function
 def extract_from_source(string):
@@ -281,5 +257,5 @@ def extract_from_source(string):
             'python_jinja': True
         }
 
-    transformed_root = res
-    return extract(transformed_root)
+    typed_root = res
+    return extract(typed_root)

@@ -24,8 +24,7 @@ This architecture is optimized for value extraction and for future flexibility. 
 This processor is composed of several stages:
 1. parser
 2. type checker
-3. transformer
-4. extractor
+3. extractor
 
 Additionally, the following tools utilize the above processor:
 1. python runner for aggregating results against test data
@@ -36,7 +35,7 @@ The parser is generated into C code by tree-sitter via the grammar in `tree-sitt
 
 The parser is solely responsible for turning text into recognized values, while the type checker does arity checking, and enforces argument list types (e.g. nested function calls like `{{ config(my_ref=ref('table')) }}` will parse but not type check even though it is valid dbt syntax. The tool at this time doesn't have an agreed serialization to communicate refs as config values at this time, but could in the future.)
 
-The transformation stage takes a typed ast and modifies values to change names, remove unnecessary values, and generally reshape the tree into the form we would like to use. The extractor uses this tree to easily identify all the refs, sources, and configs present and extract them to a dictionary. 
+The extractor uses the typed abstract syntax tree to easily identify all the refs, sources, and configs present and extract them to a dictionary.
 
 ## Running The Demo Apps
 To see the full implementation extract dbt values run live as you type in a browser, run:
@@ -59,7 +58,6 @@ Make will handle dependencies and building prior to running tests.
 - Tests for the grammar are in `tree-sitter-dbt-jinja/test/corpus`
 - Tests for the type checker in `tests/test_type_checker.py`
 - Tests for the extractor in `tests/test_extractor.py`
-- Tests for the transformer in `tests/test_transformations.py`
 - Tests for the python runner are in `tests/test_parse_results.py`
 
 ## Running On Real Data With The Python Script

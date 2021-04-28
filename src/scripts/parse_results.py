@@ -91,6 +91,13 @@ def process_row(project_id, raw_sql, configs, refs, sources, model_id):
     if not res['configs']:
         res['configs'] = configs
 
+    # remove these specific configs for equality checking only
+    filtered_kwargs = []
+    for kwarg in res['configs']:
+        if kwarg[0] not in ['partition_by', 'dataset', 'project' 'enabled']:
+            filtered_kwargs.append(kwarg)
+    res['configs'] = filtered_kwargs
+
     # if you define a config value twice, it doesn't matter.
     # not using the set() trick here because there's unhashable types involved (like lists)
     unique_kwargs = []

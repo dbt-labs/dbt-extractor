@@ -30,7 +30,6 @@ test: build
 	&& ../node_modules/tree-sitter-cli/tree-sitter test \
 	&& cd .. \
 	&& PYTHONPATH=src ./$(VENV)/bin/pytest tests/dbt_jinja/test_type_checker.py \
-	&& PYTHONPATH=src ./$(VENV)/bin/pytest tests/dbt_jinja/test_transformations.py \
 	&& PYTHONPATH=src ./$(VENV)/bin/pytest tests/dbt_jinja/test_extractor.py \
 	&& PYTHONPATH=src ./$(VENV)/bin/pytest tests/scripts/test_parse_results.py \
 
