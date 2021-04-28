@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from functools import reduce
+from itertools import dropwhile
 from tree_sitter import Language, Parser
 
 
@@ -13,7 +14,10 @@ Language.build_library(
   ]
 )
 
+# global values
 JINJA2_LANGUAGE = Language('./build/sql.so', 'dbt_jinja')
+parser = Parser()
+parser.set_language(JINJA2_LANGUAGE)
 
 @dataclass
 class ParseFailure(Exception):
@@ -44,6 +48,16 @@ def has_kwarg_child_named(name_list, node):
             return True
     return False
 
+# if all positional args come before kwargs return True.
+# otherwise return false.
+def kwargs_last(args):
+    def not_kwarg(node):
+        return node.type != 'kwarg'
+
+    no_leading_positional_args = dropwhile(not_kwarg, args)
+    dangling_positional_args = filter(not_kwarg, no_leading_positional_args)
+    return len(list(dangling_positional_args)) == 0
+
 def error_count(node):
     if node.has_error:
         return 1
@@ -52,11 +66,6 @@ def error_count(node):
         return reduce(lambda a,b: a+b, map(lambda x: error_count(x), node.children))
     else:
         return 0
-
-def get_parser():
-    parser = Parser()
-    parser.set_language(JINJA2_LANGUAGE)
-    return parser
 
 # meat of the type checker
 # throws a TypeCheckError or returns a typed ast in the form of a nested tuple
@@ -79,7 +88,7 @@ def _to_typed(source_bytes, node):
         for elem in elems:
             if elem.type == 'fn_call':
                 raise TypeCheckFailure(f"list elements cannot be function calls")
-        return ('list', *tuple(_to_typed(source_bytes, elem) for elem in elems))
+        return ('list', *(_to_typed(source_bytes, elem) for elem in elems))
 
     elif node.type == 'kwarg':
         value_node = node.child_by_field_name('value')
@@ -100,17 +109,19 @@ def _to_typed(source_bytes, node):
             if value.type == 'fn_call':
                 raise TypeCheckFailure(f"dict values cannot be function calls")
             pairs.append((key, value))
-        return ('dict', *tuple((strip_quotes(text_from_node(source_bytes, pair[0])), _to_typed(source_bytes, pair[1])) for pair in pairs))
+        return ('dict', *((strip_quotes(text_from_node(source_bytes, pair[0])), _to_typed(source_bytes, pair[1])) for pair in pairs))
 
     elif node.type == 'source_file':
         children = named_children(node)
-        return ('root', *tuple(_to_typed(source_bytes, child) for child in children))
+        return ('root', *(_to_typed(source_bytes, child) for child in children))
 
     elif node.type == 'fn_call':
         name = text_from_node(source_bytes, node.child_by_field_name('fn_name'))
         arg_list = node.child_by_field_name('argument_list')
         arg_count = arg_list.named_child_count
         args = named_children(arg_list)
+        if not kwargs_last(args):
+            raise TypeCheckFailure(f"keyword arguments must all be at the end")
 
         if name == 'ref':
             if arg_count != 1 and arg_count != 2:
@@ -118,7 +129,7 @@ def _to_typed(source_bytes, node):
             for arg in args:
                 if arg.type != 'lit_string':
                     raise TypeCheckFailure(f"all ref arguments must be strings. found {arg.type}")
-            return ('ref', *tuple(_to_typed(source_bytes, arg) for arg in args))
+            return ('ref', *(_to_typed(source_bytes, arg) for arg in args))
         
         elif name == 'source':
             if arg_count != 2:
@@ -126,15 +137,21 @@ def _to_typed(source_bytes, node):
             for arg in args:
                 if arg.type != 'kwarg' and arg.type != 'lit_string':
                     raise TypeCheckFailure(f"unexpected argument type in source. Found {arg.type}")
+            # note: keword vs positional argument order is checked above in fn_call checks
             if args[0].type == 'kwarg' and text_from_node(source_bytes, args[0].child_by_field_name('key')) != 'source_name':
                 raise TypeCheckFailure(f"first keyword argument in source must be source_name found {args[0].child_by_field_name('key')}")
             if args[1].type == 'kwarg' and text_from_node(source_bytes, args[1].child_by_field_name('key')) != 'table_name':
                 raise TypeCheckFailure(f"second keyword argument in source must be table_name found {args[1].child_by_field_name('key')}")
-            # TODO this isn't quite right. regardless of how they call it,
-            # (kwarg vs string lits) I want it to come out the same
-            # leaving this TODO in for now. When we move to an actual typed ast,
-            # we can use something like Arg(name:Optional[String_Val], arg:ExprT)
-            return ('source', *tuple(_to_typed(source_bytes, arg) for arg in args)) 
+
+            # restructure source calls to look like they were all called positionally for uniformity
+            source_name = args[0]
+            table_name = args[1]
+            if args[0].type == 'kwarg':
+                source_name = args[0].child_by_field_name('value')
+            if args[1].type == 'kwarg':
+                table_name = args[1].child_by_field_name('value')
+
+            return ('source', _to_typed(source_bytes, source_name), _to_typed(source_bytes, table_name))
 
         elif name == 'config':
             if arg_count < 1:
@@ -146,7 +163,7 @@ def _to_typed(source_bytes, node):
                 key_name = text_from_node(source_bytes, arg.child_by_field_name('key'))
                 if key_name in excluded_config_args:
                     raise TypeCheckFailure(f"excluded config kwarg found: {key_name}")
-            return ('config', *tuple(_to_typed(source_bytes, arg) for arg in args))
+            return ('config', *(_to_typed(source_bytes, arg) for arg in args))
 
         else:
             raise TypeCheckFailure(f"unexpected function call to {name}")
@@ -165,30 +182,6 @@ def type_check(source_bytes, node):
     except TypeCheckFailure as e:
         return e
 
-
-# applies transformations to the typed_ast
-def transformations(node):
-    # reached a leaf
-    if not isinstance(node, tuple):
-        return node
-
-    # transforms the following config arguments so that they don't make it into the final form
-    elif node[0] == 'config' and has_kwarg_child_named(['partition_by', 'dataset', 'project' 'enabled'], node):
-        kwargs = node[1:]
-        # local mutation
-        new_kwargs = []
-        for kwarg in kwargs:
-            if kwarg[1] in ['partition_by', 'dataset', 'project', 'enabled']:
-                pass
-            else:
-                new_kwargs.append(kwarg)
-        # sending the top-level config through again to catch any other config tranformations 
-        return transformations(('config', *new_kwargs))
-
-    else:
-        return (node[0], *tuple(transformations(child) for child in node[1:]))
-
-
 # operates on a typed ast
 def _extract(node, data):
     # reached a leaf
@@ -199,7 +192,7 @@ def _extract(node, data):
         return list(_extract(child, data) for child in node[1:])
 
     if node[0] == 'dict':
-        return { node[1][0]: _extract(node[1][1], data) }
+        return { pair[0]: _extract(pair[1], data) for pair in node[1:] }
 
     if node[0] == 'ref':
         # no package name
@@ -248,13 +241,12 @@ def process_source(parser, string):
         err = checked_ast_or_error
         return err
     
-    # if there are no parsing errors and no type errors, transform and return
+    # if there are no parsing errors and no type errors, return the typed ast
     typed_root = checked_ast_or_error
-    transformed_root = transformations(typed_root)
-    return transformed_root
+    return typed_root
 
 # entry point function
-def extract_from_source(parser, string):
+def extract_from_source(string):
     res = process_source(parser, string)
 
     if isinstance(res, Exception):
@@ -265,5 +257,5 @@ def extract_from_source(parser, string):
             'python_jinja': True
         }
 
-    transformed_root = res
-    return extract(transformed_root)
+    typed_root = res
+    return extract(typed_root)

@@ -1,4 +1,4 @@
-import src.parse_results as parse_results
+import scripts.parse_results as parse_results
 
 base_result = {
     'model_count': 0,

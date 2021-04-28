@@ -1,10 +1,10 @@
 from pprint import pprint
-import src.compiler as compiler
+import dbt_jinja.compiler as compiler
 
-parser = compiler.get_parser()
+parser = compiler.parser
 
 def extraction(input, expected):
-    got = compiler.extract_from_source(parser, input)
+    got = compiler.extract_from_source(input)
     passed = expected == got
     if not passed:
         source_bytes = bytes(input, "utf8")
@@ -74,3 +74,11 @@ def test_deeply_nested_config():
         )
     )
 
+def test_extracts_dict_with_multiple_keys():
+    assert extraction(
+        "{{ config(dict={'a':'x', 'b': 'y', 'c':'z'}) }}"
+        ,
+        exctracted(
+            configs=[('dict', {'a': 'x', 'b': 'y', 'c':'z'})]
+        )
+    )

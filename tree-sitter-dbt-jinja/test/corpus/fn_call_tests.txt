@@ -198,7 +198,7 @@ bool kwargs
 True is an invalid fn name
 ==================
 
-{{ True() }
+{{ True() }}
 
 ---
 
@@ -207,14 +207,3 @@ True is an invalid fn name
     (bool)
   )
 )
-
-==================
-the kind of quotes you use don't matter
-==================
-
-{{ 'a' }}
-{{ "b" }}
-
----
-
-(source_file (lit_string) (lit_string))

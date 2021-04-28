@@ -25,12 +25,13 @@ build: install
 # python unit tests have a hard-coded relative path for the generated tree-sitter
 # code, so the test runner needs to be run from the src directory
 # using && so that unit tests don't run if tree-sitter tests fail.
-# TODO run the different compiler stage tests as separate commands so it stops early
 test: build
 	cd tree-sitter-dbt-jinja \
 	&& ../node_modules/tree-sitter-cli/tree-sitter test \
 	&& cd .. \
-	&& PYTHONPATH=src ./$(VENV)/bin/pytest
+	&& PYTHONPATH=src ./$(VENV)/bin/pytest tests/dbt_jinja/test_type_checker.py \
+	&& PYTHONPATH=src ./$(VENV)/bin/pytest tests/dbt_jinja/test_extractor.py \
+	&& PYTHONPATH=src ./$(VENV)/bin/pytest tests/scripts/test_parse_results.py \
 
 # runs the python application
 # arguments must be passed like `make run ARGS="arg1 arg2"`
@@ -40,7 +41,7 @@ repl: build
 # runs the python application
 # arguments must be passed like `make run ARGS="arg1 arg2"`
 run: build
-	./$(VENV)/bin/python3 src/main.py $(ARGS)
+	PYTHONPATH=src ./$(VENV)/bin/python3 src/scripts/main.py $(ARGS)
 
 # runs the demo http server
 serve: build

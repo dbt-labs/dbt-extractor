@@ -1,7 +1,7 @@
+import dbt_jinja.compiler as compiler
 from functools import reduce
 import itertools
 import json
-import compiler
 from pprint import pprint
 
 
@@ -72,8 +72,8 @@ def flatten_project_results(project_model_results):
     return project_id, stats
 
 # this function is where all the equality checking rules live
-def process_row(parser, project_id, raw_sql, configs, refs, sources, model_id):
-    res = compiler.extract_from_source(parser, raw_sql)
+def process_row(project_id, raw_sql, configs, refs, sources, model_id):
+    res = compiler.extract_from_source(raw_sql)
 
     # if it can't be parsed or type checked, we can't extract anything.
     if res['python_jinja']:
@@ -90,6 +90,13 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources, model_id):
     # We set them equal to bypass correcteness checks here. 
     if not res['configs']:
         res['configs'] = configs
+
+    # remove these specific configs for equality checking only
+    filtered_kwargs = []
+    for kwarg in res['configs']:
+        if kwarg[0] not in ['partition_by', 'dataset', 'project' 'enabled']:
+            filtered_kwargs.append(kwarg)
+    res['configs'] = filtered_kwargs
 
     # if you define a config value twice, it doesn't matter.
     # not using the set() trick here because there's unhashable types involved (like lists)
@@ -173,9 +180,8 @@ def process_row(parser, project_id, raw_sql, configs, refs, sources, model_id):
     }
 
 def _run_on(json_list):
-    def apply_row(parser, row):
+    def apply_row(row):
         return process_row(
-            parser,
             row['manifest_file_name'],
             row['raw_sql'],
             row['config'],
@@ -246,9 +252,8 @@ def _run_on(json_list):
     all_rows = filter(lambda row: not is_bad_example(row['unique_id']) , json_list)
     all_rows = map(preprocess_row, all_rows)
 
-    parser = compiler.get_parser()
     # tree-sitter results
-    all_results = list(map(lambda row: apply_row(parser, row), all_rows))
+    all_results = list(map(apply_row, all_rows))
     # model results from the same projects together
     grouped_results = group_by_project(all_results)
     # aggregate each set of project results

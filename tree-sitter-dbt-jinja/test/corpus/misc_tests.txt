@@ -1,16 +1,4 @@
 ==================
-floating string literal
-==================
-
-{{ 'floating lit' }}
-
----
-
-(source_file 
-  (lit_string)
-)
-
-==================
 bare words fail
 ==================
 
@@ -37,26 +25,6 @@ some text {{ 'floating lit' }} more text {{ config() }} text.
   (fn_call
     (identifier)
     (argument_list)
-  )
-)
-
-==================
-kwargs retain both key and value
-==================
-
-{{ config(key='value') }}
-
----
-
-(source_file
-  (fn_call
-    (identifier)
-    (argument_list
-      (kwarg
-        (identifier)
-        (lit_string)
-      )
-    )
   )
 )
 
@@ -92,57 +60,3 @@ unclosed jinja calls fail
   )
   (MISSING "}}")
 )
-
-==================
-comments
-==================
-
-{# jinja comment #}
-{{ True }}
-{# jinja comment #}
-
----
-
-(source_file
-  (bool)
-)
-
-==================
-empty comment
-==================
-
-{##}
-{{ True }}
-
-
----
-
-(source_file
-  (bool)
-)
-
-==================
-wild comment formatting
-==================
-
-{{ True }}
-{############
-# {comment} #
-#############}
-{{ False }}
-
----
-
-(source_file
-  (bool)
-  (bool)
-)
-
-==================
-text ending in a bracket fails
-==================
-I'd like this to work, but it doesn't rn and this test
-makes a note of that {
----
-
-(source_file (ERROR))
