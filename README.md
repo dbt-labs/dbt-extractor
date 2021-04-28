@@ -78,4 +78,6 @@ If you have sample files in the form
 Use the `jsonify.sh` script provided in this repo to stitch them together into one large JSON array before running the above commands.
 
 ## Future Work
+- Refactor the tree-sitter jinja parser into its own repository to potentially open source and engage with the community on implementing improvements.
+- Remove ref, source, and config type checking as hard coded rules and instead read these function types from external function definition statements.
 - Create input path for a manifest file so it can be run on any project without additional pre-processing
