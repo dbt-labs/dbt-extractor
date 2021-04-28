@@ -11,7 +11,7 @@ The current strategy is for this processor to be 100% certain when it can accura
 
 There are two cases we want to avoid because they would risk correctness to user's projects:
 1. Confidently extracting values that would not be extracted by python jinja (false positives)
-2. Confidently extracting values where values that python jinja would have extracted additional values. (misses)
+2. Confidently extracting a set of values that are missing values that python jinja would have extracted. (misses)
 
 If we instead error when we could have confidently extracted values, there is no correctness risk to the user. Only an opportunity to expand the rules to encompass this class of cases as well.
 
