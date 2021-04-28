@@ -3,7 +3,7 @@
 
 ![demo app](demo/demo.gif)
 
-This repository contains a tool that parses the most common jinja value templates which uses tree-sitter, as well as a python app that can run the parser against example model file contents and collect either the aggregated stats for how well it does.
+This repository contains a tool that parses the most common jinja value templates which uses tree-sitter, as well as a python app that can run the parser against example model file contents and collect the aggregated stats for how well it does.
 
 # Architecture
 
@@ -15,9 +15,8 @@ This processor is composed of several stages:
 
 Additionally, the following tools utilize the above processor:
 1. python runner for aggregating results against test data
-2. python runner for collecting failed segments from test data
-3. browser-based demo of dbt extraction as you type
-5. browser-based demo of tree-sitter ast generation as you type
+2. browser-based demo of dbt extraction as you type
+3. browser-based demo of tree-sitter ast generation as you type
 
 The parser is generated into C code by tree-sitter via the grammar in `tree-sitter-dbt-jinja/grammar.js`. The python hooks are used to traverse the concrete syntax tree that tree-sitter creates in order to create a typed ast in the type checking stage (in Python, we have chosen to represent this with a nested tuple of strings). The errors in the type checking stage are not raised to the user, and are instead used by developers to debug tests. The parser is solely responsible for turning text into recognized values, while the type checker does arity checking, and enforces argument list types (e.g. nested function calls like `ref(ref('table'))` will parse but not type check since ref only accepts string arguments).
 
@@ -47,15 +46,10 @@ To see the tree-sitter demo which displays the abstract syntax tree as you type,
 make treedemo
 ```
 
-## Running On Real Data With The Python App
-To collect aggregated results on how well the parser does on the sample data:
+## Running On Real Data With The Python Script
+To collect aggregated results on how well this tool does on the sample data:
 ```
 make run ARGS="results your-data-file.json"
-```
-
-To write a file with all the segments that this tool failed to process:
-```
-make run ARGS="missed your-data-file.json out-file.txt"
 ```
 
 If you have sample files in the form 

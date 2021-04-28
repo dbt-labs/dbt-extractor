@@ -1,7 +1,6 @@
 import argparse
 import dbt_jinja.compiler as compiler
 import parse_results
-import parser_misses
 import sys
 
 
@@ -13,7 +12,7 @@ class MyParser(argparse.ArgumentParser):
         print()
         sys.exit(2)
 
-def parse_args():
+def build_parser():
     parser = MyParser(description='Applies parser to sample data')
     subparsers = parser.add_subparsers(
         dest='command',
@@ -30,32 +29,16 @@ def parse_args():
         help="JSON data file. Must contain exactly one valid JSON array."
     )
 
-    misses_parser = subparsers.add_parser(
-        'misses',
-        help='[subcommand] Outputs jinja calls that could not be parsed'
-    )
-    misses_parser.add_argument(
-        'data_file',
-        type=str,
-        help="JSON data file. Must contain exactly one valid JSON array."
-    )
-    misses_parser.add_argument(
-        'out_file',
-        type=str,
-        help="Output destination"
-    )
-
-    return parser.parse_args()
+    return parser
 
 def main():
-    args = parse_args()
+    parser = build_parser()
+    args = parser.parse_args()
 
     if args.command == 'results':
         print("Collecting parser results")
         parse_results.run_on(args.data_file)
-    elif args.command == 'misses':
-        print("Collecting parser misses")
-        parser_misses.run_on(args.data_file, args.out_file)
+    # parse_args() will print help if an unrecognized command is used.
 
 
 if __name__ == "__main__":
