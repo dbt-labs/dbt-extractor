@@ -38,18 +38,6 @@ The parser is solely responsible for turning text into recognized values, while 
 
 The transformation stage takes a typed ast and modifies values to change names, remove unnecessary values, and generally reshape the tree into the form we would like to use. The extractor uses this tree to easily identify all the refs, sources, and configs present and extract them to a dictionary. 
 
-## Testing The Project
-```
-make test
-```
-Make will handle dependencies and building prior to running tests.
-
-- Tests for the grammar are in `tree-sitter-dbt-jinja/test/corpus`
-- Tests for the type checker in `tests/test_type_checker.py`
-- Tests for the extractor in `tests/test_extractor.py`
-- Tests for the transformer in `tests/test_transformations.py`
-- Tests for the python runner are in `tests/test_parse_results.py`
-
 ## Running The Demo Apps
 To see the full implementation extract dbt values run live as you type in a browser, run:
 ```
@@ -61,6 +49,18 @@ To see the tree-sitter demo which displays the abstract syntax tree as you type,
 ```
 make treedemo
 ```
+
+## Testing The Project
+```
+make test
+```
+Make will handle dependencies and building prior to running tests.
+
+- Tests for the grammar are in `tree-sitter-dbt-jinja/test/corpus`
+- Tests for the type checker in `tests/test_type_checker.py`
+- Tests for the extractor in `tests/test_extractor.py`
+- Tests for the transformer in `tests/test_transformations.py`
+- Tests for the python runner are in `tests/test_parse_results.py`
 
 ## Running On Real Data With The Python Script
 To collect aggregated results on how well this tool does on the sample data:
