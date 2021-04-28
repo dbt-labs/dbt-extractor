@@ -1,6 +1,6 @@
 import itertools
 import json
-import compiler
+import dbt_jinja.compiler
 
 # TODO make this not hard coded
 data_path = '/Users/nate/data/customer-manifest-raw-sql/data.json'

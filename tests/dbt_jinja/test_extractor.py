@@ -1,5 +1,5 @@
 from pprint import pprint
-import src.compiler as compiler
+import dbt_jinja.compiler as compiler
 
 parser = compiler.parser
 

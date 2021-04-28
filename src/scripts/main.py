@@ -1,5 +1,5 @@
 import argparse
-import compiler
+import dbt_jinja.compiler as compiler
 import parse_results
 import parser_misses
 import sys

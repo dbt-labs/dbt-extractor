@@ -1,7 +1,7 @@
+import dbt_jinja.compiler as compiler
 from functools import reduce
 import itertools
 import json
-import compiler
 from pprint import pprint
 
 
