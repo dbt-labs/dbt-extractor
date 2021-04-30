@@ -6,7 +6,7 @@ from tree_sitter import Language, Parser
 
 Language.build_library(
   # Store the library in the `build` directory
-  './build/sql.so',
+  './build/dbtjinja.so',
 
   # Include one or more languages
   [
@@ -15,7 +15,7 @@ Language.build_library(
 )
 
 # global values
-JINJA2_LANGUAGE = Language('./build/sql.so', 'dbt_jinja')
+JINJA2_LANGUAGE = Language('./build/dbtjinja.so', 'dbt_jinja')
 parser = Parser()
 parser.set_language(JINJA2_LANGUAGE)
 
