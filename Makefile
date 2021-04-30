@@ -19,7 +19,9 @@ install: $(VENV)/bin/activate node_modules/tree-sitter-cli/tree-sitter
 
 build: install
 	cd tree-sitter-dbt-jinja \
-	&& ../node_modules/tree-sitter-cli/tree-sitter generate
+	&& ../node_modules/tree-sitter-cli/tree-sitter generate \
+	&& cd .. \
+	&& ./$(VENV)/bin/python3 build.py
 
 # runs the tree-sitter tests and python unit tests
 # python unit tests have a hard-coded relative path for the generated tree-sitter
