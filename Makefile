@@ -23,6 +23,16 @@ build: install
 	&& cd .. \
 	&& ./$(VENV)/bin/python3 build.py
 
+# build the .so file for linux
+# docker must be running
+# cleans before and after to not mix compiled architectures
+buildlinux:
+	make clean \
+	&& toast \
+	&& mkdir -p ./linux-target/ \
+	&& cp ./build/* linux-target \
+	&& make clean
+
 # runs the tree-sitter tests and python unit tests
 # python unit tests have a hard-coded relative path for the generated tree-sitter
 # code, so the test runner needs to be run from the src directory
@@ -70,7 +80,7 @@ clean:
 	rm -rf .pytest_cache/
 	rm -rf build/
 	rm -rf tree-sitter-dbt-jinja/{src,bindings,build}
-	rm tree-sitter-dbt-jinja/Cargo.toml
+	rm -f tree-sitter-dbt-jinja/Cargo.toml
 
 # these stages don't output files by the same name
 .PHONY: all install build test run clean

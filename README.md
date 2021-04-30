@@ -75,6 +75,13 @@ If you have sample files in the form
 ```
 Use the `jsonify.sh` script provided in this repo to stitch them together into one large JSON array before running the above commands.
 
+## Building for Another Architecture
+1. Have the docker daemon running
+2. Install [Toast](https://github.com/stepchowfun/toast) (alternative to dockercompose)
+3. run `make buildlinux`
+
+If you want to build for another architecture, open `toast.yml` and name a different docker image.
+
 ## Future Work
 - Refactor the tree-sitter jinja parser into its own repository to potentially open source and engage with the community on implementing improvements.
 - Remove ref, source, and config type checking as hard coded rules and instead read these function types from external function definition statements.

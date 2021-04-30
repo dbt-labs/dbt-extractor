@@ -4,3 +4,4 @@ build/
 tree-sitter-dbt-jinja/src/*
 tree-sitter-dbt-jinja/tree-sitter-dbt_jinja.wasm
 node_modules/
+linux-target/
