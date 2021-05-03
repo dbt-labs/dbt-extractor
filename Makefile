@@ -62,7 +62,7 @@ serve: build
 # runs the demo http server
 demo: build
 	open demo/demo.html \
-	&& ./$(VENV)/bin/python3 src/demo_server.py
+	&& PYTHONPATH=src ./$(VENV)/bin/python3 src/scripts/demo_server.py
 
 # docker must be running. build-wasm stage will print that error though
 treedemo: build

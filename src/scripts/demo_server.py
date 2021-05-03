@@ -1,4 +1,4 @@
-import compiler
+import dbt_jinja.compiler as compiler
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import logging
@@ -25,7 +25,7 @@ class Handler(BaseHTTPRequestHandler):
         content_length = int(self.headers['Content-Length'])
         post_data = json.loads(self.rfile.read(content_length))
         process_start = time.perf_counter()
-        res = compiler.process_source(compiler.get_parser(), post_data)
+        res = compiler.process_source(compiler.parser, post_data)
         process_end = time.perf_counter()
         timer = process_end - process_start
         if isinstance(res, compiler.ParseFailure):
