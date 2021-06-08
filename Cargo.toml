@@ -1,0 +1,12 @@
+[package]
+name = "dbt-parser-generator"
+version = "0.0.1"
+authors = ["Nathaniel May <nathaniel.may@fishtownanalytics.com>"]
+edition = "2018"
+
+# for depending on private git repos
+[net]
+git-fetch-with-cli = true
+
+[dependencies]
+tree-sitter-jinja2 = { git = "ssh://git@github.com/fishtown-analytics/tree-sitter-jinja2", branch = "rust-bindings" }
