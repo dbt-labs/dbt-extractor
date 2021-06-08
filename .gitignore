@@ -1,26 +1,3 @@
-__pycache__/
-env/
-build/
-tree-sitter-dbt-jinja/src/*
-tree-sitter-dbt-jinja/tree-sitter-dbt_jinja.wasm
-node_modules/
-linux-target/
-
-# Added by cargo
-
-/target
-
-
-# Added by cargo
-#
-# already existing elements were commented out
-
-#/target
+# rust
 Cargo.lock
-
-
-# Added by cargo
-#
-# already existing elements were commented out
-
-#/target
+/target

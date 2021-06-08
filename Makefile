@@ -1,86 +1,21 @@
-# name of the virtual environment directory
-VENV := env
 
 # without args just build the project
 all: build
 
-# installs python dependencies
-$(VENV)/bin/activate: requirements.txt
-	python3 -m venv $(VENV)
-	./$(VENV)/bin/pip install --upgrade pip
-	./$(VENV)/bin/pip install -r requirements.txt
-
-# installs npm dependencies
-node_modules/tree-sitter-cli/tree-sitter:
-	npm install
-
-# install just needs the venv and tree-sitter binary
-install: $(VENV)/bin/activate node_modules/tree-sitter-cli/tree-sitter
+install:
+	cargo update
 
 build: install
-	cd tree-sitter-dbt-jinja \
-	&& ../node_modules/tree-sitter-cli/tree-sitter generate \
-	&& cd .. \
-	&& ./$(VENV)/bin/python3 build.py
+	cargo build --release
 
-# build the .so file for linux
-# docker must be running
-# cleans before and after to not mix compiled architectures
-buildlinux:
-	make clean \
-	&& toast \
-	&& mkdir -p ./linux-target/ \
-	&& cp ./build/* linux-target \
-	&& make clean
+test: install
+	cargo build && cargo test
 
-# runs the tree-sitter tests and python unit tests
-# python unit tests have a hard-coded relative path for the generated tree-sitter
-# code, so the test runner needs to be run from the src directory
-# using && so that unit tests don't run if tree-sitter tests fail.
-test: build
-	cd tree-sitter-dbt-jinja \
-	&& ../node_modules/tree-sitter-cli/tree-sitter test \
-	&& cd .. \
-	&& PYTHONPATH=src ./$(VENV)/bin/pytest tests/dbt_jinja/test_type_checker.py \
-	&& PYTHONPATH=src ./$(VENV)/bin/pytest tests/dbt_jinja/test_extractor.py \
-	&& PYTHONPATH=src ./$(VENV)/bin/pytest tests/scripts/test_parse_results.py \
-
-# runs the python application
-# arguments must be passed like `make run ARGS="arg1 arg2"`
-repl: build
-	./$(VENV)/bin/python3
-
-# runs the python application
-# arguments must be passed like `make run ARGS="arg1 arg2"`
-run: build
-	PYTHONPATH=src ./$(VENV)/bin/python3 src/scripts/main.py $(ARGS)
-
-# runs the demo http server
-serve: build
-	./$(VENV)/bin/python3 src/demo_server.py
-
-# runs the demo http server
-demo: build
-	open demo/demo.html \
-	&& PYTHONPATH=src ./$(VENV)/bin/python3 src/scripts/demo_server.py
-
-# docker must be running. build-wasm stage will print that error though
-treedemo: build
-	cd tree-sitter-dbt-jinja/ \
-	&& ../node_modules/tree-sitter-cli/tree-sitter build-wasm \
-	&& ../node_modules/tree-sitter-cli/tree-sitter web-ui
+run:
+	cargo build && cargo run
 
 clean:
-	rm -rf $(VENV)
-	rm -rf node_modules
-	find . -type f -name '*.pyc' -delete
-	find . -type f -name '*.wasm' -delete
-	find . -type f -name '*.gyp' -delete
-	find . -type d -name '__pycache__' -delete
-	rm -rf .pytest_cache/
-	rm -rf build/
-	rm -rf tree-sitter-dbt-jinja/{src,bindings,build}
-	rm -f tree-sitter-dbt-jinja/Cargo.toml
+	cargo clean
 
 # these stages don't output files by the same name
 .PHONY: all install build test run clean
