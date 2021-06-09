@@ -115,6 +115,18 @@ fn _type_check(source: &Vec<u8>, node: Node) -> Result<ExprT, TypeError> {
             Ok(ExprT::DictT(dict))
         },
 
+        "list" => {
+            let mut list = vec![];
+            for elem in named_children(node) {
+                if elem.kind() == "fn_call" {
+                    return Err(TypeError::BadAssignment("list element".to_owned(), "fn_call".to_owned()))
+                }
+                let e = _type_check(source, elem)?;
+                list.push(e);
+            }
+            Ok(ExprT::ListT(list))
+        },
+
         s => Err(TypeError::UnknownNodeType(s.to_owned()))
     }
 }
