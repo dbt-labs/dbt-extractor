@@ -303,6 +303,8 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                                 ExprU::KwargU(key, _) if excluded.contains(&&key[..]) =>
                                     Err(TypeError::ExcludedKwarg(key)),
                                 ExprU::KwargU(key, value) =>
+                                    // TODO this allows way too much like ref() values.
+                                    // fix the extraction type for configs and do the checks here.
                                     type_check(*value).and_then(|v| Ok((key, v))),
                                 _ =>
                                     Err(TypeError::TypeMismatch { expected: "keyword argument".to_owned() }),
