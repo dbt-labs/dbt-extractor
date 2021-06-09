@@ -2,6 +2,8 @@ use std::fmt;
 use std::fmt::Display;
 use std::str::Utf8Error;
 
+// TODO change Errors to contain &str not String?
+
 
 // Top-level error type in the hierarchy
 #[derive(Debug, Clone)]
@@ -42,6 +44,13 @@ impl Display for SourceError {
 pub enum TypeError {
     BadAssignment(String, String),
     KwargsAreNotLast,
+    // TODO expected should be a Vec<usize>
+    ArgumentMismatch { expected: String, found: usize },
+    // TODO shouldn't be a string
+    TypeMismatch { expected: String },
+    UnrecognizedFunction(String),
+    UnexpectedKwarg(String),
+    ExcludedKwarg(String),
 }
 
 impl Display for TypeError {
@@ -51,6 +60,16 @@ impl Display for TypeError {
                 write!(f, "{} cannot be assigned a {}", outer, inner),
             TypeError::KwargsAreNotLast =>
                 write!(f, "Keyword arguments must come at the end of the argument list."),
+            TypeError::ArgumentMismatch { expected, found } =>
+                write!(f, "Expected {} arguments. Found {}.", expected, found),
+            TypeError::TypeMismatch { expected } =>
+                write!(f, "Expected {} type.", expected),
+            TypeError::UnrecognizedFunction(name) =>
+                write!(f, "Found unrecognized function named {}.", name),
+            TypeError::UnexpectedKwarg(key) =>
+                write!(f, "Found unexpected keyword argument {}.", key),
+            TypeError::ExcludedKwarg(key) =>
+                write!(f, "Excluded keyword argument found: {}.", key),
         }
     }
 }
