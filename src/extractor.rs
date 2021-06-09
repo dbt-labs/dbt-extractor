@@ -85,6 +85,19 @@ fn _type_check(source: &Vec<u8>, node: &Node) -> Result<ExprT, TypeError> {
             }
         },
 
+        // Throw away names. 
+        // In the step before getting here, names will be checked for correctness.
+        "kwarg" => {
+            let value = 
+                node.child_by_field_name("value")
+                    .ok_or(TypeError::MissingValue("kwarg".to_owned(), "value".to_owned()))?;
+            match value.kind() {
+                "fn_call" => Err(TypeError::BadAssignment("kwarg".to_owned(), "fn_call".to_owned())),
+                // No intermediary kwarg type. Just return the underlying value.
+                _         => _type_check(source, &value),
+            }
+        },
+
         s => Err(TypeError::UnknownNodeType(s.to_owned()))
     }
 }
