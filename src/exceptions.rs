@@ -1,9 +1,11 @@
 use std::fmt;
 use std::fmt::Display;
+use std::str::Utf8Error;
 
 #[derive(Debug, Clone)]
 pub enum TypeError {
     BadSourceExtraction,
+    Utf8Err(Utf8Error),
     BadBoolean(String),
     UnknownNodeType(String),
     BadAssignment(String, String),
@@ -15,6 +17,8 @@ impl Display for TypeError {
         match self {
             TypeError::BadSourceExtraction =>
                 write!(f, "BadSourceExtraction"),
+            TypeError::Utf8Err(e) =>
+                e.fmt(f),
             TypeError::BadBoolean(s) =>
                 write!(f, "Unknown Boolean value: {}", s),
             TypeError::UnknownNodeType(s) =>
