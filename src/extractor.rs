@@ -1,3 +1,4 @@
+use crate::exceptions::TypeError;
 use std::collections::HashMap;
 use std::str::{
     Utf8Error,
@@ -48,15 +49,15 @@ fn strip_first_and_last(s: String) -> String {
     }
 }
 
-fn type_check(source_bytes: &Vec<u8>, tree: &Tree) -> Result<ExprT, String> {
+fn type_check(source_bytes: &Vec<u8>, tree: &Tree) -> Result<ExprT, TypeError> {
     _type_check(source_bytes, &tree.root_node())
 }
 
-fn _type_check(source: &Vec<u8>, node: &Node) -> Result<ExprT, String> {
+fn _type_check(source: &Vec<u8>, node: &Node) -> Result<ExprT, TypeError> {
     let kind = node.kind();
     match kind {
         "source_file" => {
-            let x: Result<Vec<ExprT>, String> = 
+            let x: Result<Vec<ExprT>, TypeError> = 
                 named_children(*node)
                     .into_iter()
                     .map(|child| _type_check(&source, &child))
@@ -64,28 +65,31 @@ fn _type_check(source: &Vec<u8>, node: &Node) -> Result<ExprT, String> {
 
             match x {
                 Ok(children) => Ok(ExprT::Root(children)),
-                Err(e) => Err(e),
+                Err(_)       => Err(TypeError::BadSourceExtraction),
             }
         },
+
         "lit_string" => {
             match text_from_node(&source, node) {
-                Ok(s) => Ok(ExprT::StringT(strip_first_and_last(s.to_string()))),
-                Err(_) => Err("Bad source extraction".to_owned()),
+                Ok(s)  => Ok(ExprT::StringT(strip_first_and_last(s.to_string()))),
+                Err(_) => Err(TypeError::BadSourceExtraction),
             }
         },
+
         "bool" => {
             match text_from_node(&source, node) {
-                Ok("True") => Ok(ExprT::BoolT(true)),
+                Ok("True")  => Ok(ExprT::BoolT(true)),
                 Ok("False") => Ok(ExprT::BoolT(false)),
-                Ok(s) => Err(["Unknown Boolean value:", s].join(" ")),
-                Err(_) => Err("Bad source extraction".to_owned()),
+                Ok(s)       => Err(TypeError::BadBoolean(s.to_owned())),
+                Err(_)      => Err(TypeError::BadSourceExtraction),
             }
         },
-        t => Err(["unknown node type:", t].join(" "))
+
+        s => Err(TypeError::UnknownNodeType(s.to_owned()))
     }
 }
 
-pub fn extract_from_source(source: &str) -> Result<Extraction, String> {
+pub fn extract_from_source(source: &str) -> Result<Extraction, TypeError> {
     let source_bytes: Vec<u8> = source.as_bytes().to_vec();
     let mut parser = tree_sitter::Parser::new();
     parser.set_language(tree_sitter_jinja2::language()).expect("Error loading jinja2 grammar");
