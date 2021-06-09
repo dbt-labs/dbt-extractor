@@ -11,11 +11,32 @@ use tree_sitter::Node;
 
 
 // final result
+// slightly looser types than ExprT to match dbt
 #[derive(Clone, Debug)]
 pub struct Extraction {
-    refs: Vec<String>,
+    refs: Vec<(String, Option<String>)>,
     sources: Vec<(String, String)>,
-    configs: Vec<HashMap<String, String>>,
+    // TODO is ExprT really the right type to put here?
+    configs: HashMap<String, ExprT>,
+}
+
+impl Extraction {
+    // monoidal mappend
+    fn mappend(&self, other: &Extraction) -> Extraction {
+        Extraction {
+            refs: [&self.refs[..], &other.refs[..]].concat(),
+            sources: [&self.sources[..], &other.sources[..]].concat(),
+            configs: self.configs.clone().into_iter().chain(other.configs.clone()).collect(),
+        }
+    }
+
+    fn new() -> Extraction {
+        Extraction {
+            refs: vec![],
+            sources: vec![],
+            configs: HashMap::new(),
+        }
+    }
 }
 
 // untyped ast
@@ -297,6 +318,34 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
     }
 }
 
+fn extract_from(ast: ExprT) -> Extraction {
+    match ast {
+        ExprT::RootT(exprs) => 
+            exprs.into_iter().fold(Extraction::new(), |b, a| b.mappend(&extract_from(a))),
+        ExprT::RefT(x, y) =>
+            Extraction {
+                refs: vec![(x, y)],
+                sources: vec![],
+                configs: HashMap::new(),
+            },
+        ExprT::SourceT(x, y) =>
+            Extraction {
+                refs: vec![],
+                sources: vec![(x, y)],
+                configs: HashMap::new(),
+            },
+        ExprT::ConfigT(configs) =>
+            Extraction {
+                refs: vec![],
+                sources: vec![],
+                configs: configs,
+            },
+        // otherwise, there's nothing to extract
+        _ =>
+            Extraction::new()
+    }
+}
+
 pub fn extract_from_source(source: &str) -> Result<Extraction, ParseError> {
     // run tree-sitter parser
     let source_bytes: Vec<u8> = source.as_bytes().to_vec();
@@ -308,14 +357,8 @@ pub fn extract_from_source(source: &str) -> Result<Extraction, ParseError> {
     let ast = map_err(to_ast(&source_bytes, tree.root_node()), ParseError::SourceE)?;
     
     // type check ast
-    map_err(type_check(ast), ParseError::TypeE)?;
+    let typed_ast = map_err(type_check(ast), ParseError::TypeE)?;
 
-    // TODO extract
-
-    // stub
-    Ok(Extraction {
-        refs: vec![],
-        sources: vec![],
-        configs: vec![],
-    })
+    // extract
+    Ok(extract_from(typed_ast))
 }
