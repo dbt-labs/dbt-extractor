@@ -151,7 +151,7 @@ fn to_ast(source: &Vec<u8>, node: Node) -> Result<ExprU, SourceError> {
             for pair in named_children(node) {
                 let key_node = child_by_field_name(&pair, "key")?;
                 let key = strip_first_and_last(text_from_node(&source, &key_node)?);
-                let value_node = child_by_field_name(&pair, "key")?;
+                let value_node = child_by_field_name(&pair, "value")?;
                 let value = to_ast(source, value_node)?;
 
                 dict.insert(key, value);
