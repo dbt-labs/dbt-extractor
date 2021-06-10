@@ -12,7 +12,7 @@ use tree_sitter::Node;
 
 // final result
 // slightly looser types than ExprT to match dbt
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Extraction {
     refs: Vec<(String, Option<String>)>,
     sources: Vec<(String, String)>,
@@ -22,7 +22,7 @@ pub struct Extraction {
 
 impl Extraction {
     // monoidal mappend
-    fn mappend(&self, other: &Extraction) -> Extraction {
+    pub fn mappend(&self, other: &Extraction) -> Extraction {
         Extraction {
             refs: [&self.refs[..], &other.refs[..]].concat(),
             sources: [&self.sources[..], &other.sources[..]].concat(),
@@ -30,17 +30,25 @@ impl Extraction {
         }
     }
 
-    fn new() -> Extraction {
+    pub fn new() -> Extraction {
+        Extraction::populate(None, None, None)
+    }
+
+    pub fn populate(
+        refs: Option<Vec<(String, Option<String>)>>,
+        sources: Option<Vec<(String, String)>>,
+        configs: Option<HashMap<String, ExprT>>
+    ) -> Extraction {
         Extraction {
-            refs: vec![],
-            sources: vec![],
-            configs: HashMap::new(),
+            refs: refs.unwrap_or(vec![]),
+            sources: sources.unwrap_or(vec![]),
+            configs: configs.unwrap_or(HashMap::new()),
         }
     }
 }
 
 // untyped ast
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 enum ExprU {
     RootU(Vec<ExprU>),
     StringU(String),
@@ -52,8 +60,9 @@ enum ExprU {
 }
 
 // typed ast
-#[derive(Clone, Debug)]
-enum ExprT {
+#[derive(Clone, Debug, Eq, PartialEq)]
+// TODO make private
+pub enum ExprT {
     RootT(Vec<ExprT>),
     StringT(String),
     BoolT(bool),

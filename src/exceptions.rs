@@ -6,14 +6,14 @@ use std::str::Utf8Error;
 
 
 // Top-level error type in the hierarchy
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum ParseError {
     SourceE(SourceError),
     TypeE(TypeError),
 }
 
 // TODO use crate `thiserror` to simplify boilerplate
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum SourceError {
     BadSourceExtraction,
     Utf8Err(Utf8Error),
@@ -40,7 +40,7 @@ impl Display for SourceError {
 }
 
 // TODO use crate `thiserror` to simplify boilerplate
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum TypeError {
     BadAssignment(String, String),
     KwargsAreNotLast,
