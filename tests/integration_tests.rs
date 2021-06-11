@@ -12,12 +12,12 @@ use std::collections::HashMap;
 fn assert_extraction(source: &str, expected: Extraction) {
     match extract_from_source(source) {
         Ok(x) => assert_eq!(x, expected),
-        Err(e) => print!("expected: {:?}\n     got: {:?}", expected, e),
+        Err(e) => print!("expected: {:?}\n     got: {}", expected, e),
     }
 }
 
 #[test]
-fn test_ref() {
+fn extracts_refs() {
     assert_extraction(
         "{{ ref('my_table') }} {{ ref('other_table')}}"
         ,
@@ -33,7 +33,7 @@ fn test_ref() {
 }
 
 #[test]
-fn test_config() {
+fn extracts_configs() {
     let mut configs = HashMap::new();
     configs.insert("key".to_string(), ExprT::StringT("value".to_string()));
     
@@ -49,7 +49,7 @@ fn test_config() {
 }
 
 #[test]
-fn test_source() {
+fn extracts_sources() {
     assert_extraction(
         "{{ source('package', 'table') }} {{ source('x', 'y') }}"
         ,
@@ -65,7 +65,7 @@ fn test_source() {
 }
 
 #[test]
-fn test_all() {
+fn extracts_all() {
     let mut configs = HashMap::new();
     configs.insert("k".to_string(), ExprT::StringT("v".to_string()));
     configs.insert("x".to_string(), ExprT::BoolT(true));
@@ -87,7 +87,7 @@ fn test_all() {
 
 // TODO wow this needs a refactor. get some helpers in here.
 #[test]
-fn test_deepyly_nested_config() {
+fn extracts_from_deepyly_nested_config() {
     let mut inner_inner_dict = HashMap::new();
     inner_inner_dict.insert(
         "x".to_string(),
@@ -128,7 +128,7 @@ fn test_deepyly_nested_config() {
 }
 
 #[test]
-fn test_multi_key_config() {
+fn extracts_multi_key_config() {
     let mut dict = HashMap::new();
     dict.insert("a".to_string(), ExprT::StringT("x".to_string()));
     dict.insert("b".to_string(), ExprT::StringT("y".to_string()));

@@ -12,6 +12,15 @@ pub enum ParseError {
     TypeE(TypeError),
 }
 
+impl Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ParseError::SourceE(e) => Display::fmt(e, f),
+            ParseError::TypeE(e) => Display::fmt(e, f),
+        }
+    }
+}
+
 // TODO use crate `thiserror` to simplify boilerplate
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum SourceError {
@@ -20,6 +29,7 @@ pub enum SourceError {
     BadBoolean(String),
     UnknownNodeType(String),
     MissingValue(String, String),
+    ParseFailure,
 }
 
 impl Display for SourceError {
@@ -35,6 +45,8 @@ impl Display for SourceError {
                 write!(f, "Unknown node type: {}", s),
             SourceError::MissingValue(outer, inner) =>
                 write!(f, "{} is missing the required value {}", outer, inner),
+            SourceError::ParseFailure =>
+                write!(f, "tree-sitter failed to parse the source"),
         }
     }
 }

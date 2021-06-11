@@ -7,7 +7,10 @@ use std::collections::HashMap;
 use std::str::{
     from_utf8,
 };
-use tree_sitter::Node;
+use tree_sitter::{
+    Node,
+    Tree,
+};
 
 
 // final result
@@ -357,12 +360,18 @@ fn extract_from(ast: ExprT) -> Extraction {
     }
 }
 
-pub fn extract_from_source(source: &str) -> Result<Extraction, ParseError> {
-    // run tree-sitter parser
-    let source_bytes: Vec<u8> = source.as_bytes().to_vec();
+fn run_tree_sitter(source_bytes: &Vec<u8>) -> Result<Tree, SourceError> {
     let mut parser = tree_sitter::Parser::new();
     parser.set_language(tree_sitter_jinja2::language()).expect("Error loading jinja2 grammar");
-    let tree = parser.parse(source, None).unwrap();
+    parser.parse(source_bytes, None).ok_or(SourceError::ParseFailure)
+}
+
+pub fn extract_from_source(source: &str) -> Result<Extraction, ParseError> {
+    // convert text to bytes
+    let source_bytes = source.as_bytes().to_vec();
+    
+    // run tree sitter on source
+    let tree = map_err(run_tree_sitter(&source_bytes), ParseError::SourceE)?;
 
     // convert to internal ast
     let ast = map_err(to_ast(&source_bytes, tree.root_node()), ParseError::SourceE)?;
@@ -372,4 +381,38 @@ pub fn extract_from_source(source: &str) -> Result<Extraction, ParseError> {
 
     // extract
     Ok(extract_from(typed_ast))
+}
+
+mod typecheck_tests {
+    use super::*;
+
+    fn assert_all_type_check(sources: Vec<&str>) {
+        let results = sources.into_iter().map(|source| {
+            let source_bytes = source.as_bytes().to_vec();
+            let ast = run_tree_sitter(&source_bytes)
+                .and_then(|tree| to_ast(&source_bytes, tree.root_node()));
+            let typed_ast = map_err(ast, ParseError::SourceE)
+                .and_then(|ast| map_err(type_check(ast), ParseError::TypeE));
+            (source, typed_ast)
+        });
+        for result in results {
+            match result {
+                (_, Ok(_)) => assert!(true),
+                (source, Err(e)) => {
+                    println!("source:         {}", source);
+                    println!("produced error: {}", e);
+                    assert!(false)
+                },
+            }
+        } 
+    }
+
+    #[test]
+    fn recognizes_ref_source_config() {
+        assert_all_type_check(vec![
+            "select * from {{ ref('my_table') }}",
+            "{{ config(key='value') }}",
+            "{{ source('a', 'b') }}"
+        ])
+    }
 }
