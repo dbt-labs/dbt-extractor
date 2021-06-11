@@ -20,7 +20,7 @@ pub struct Extraction {
     refs: Vec<(String, Option<String>)>,
     sources: Vec<(String, String)>,
     // TODO is ExprT really the right type to put here?
-    configs: HashMap<String, ExprT>,
+    configs: HashMap<String, ConfigVal>,
 }
 
 impl Extraction {
@@ -40,7 +40,7 @@ impl Extraction {
     pub fn populate(
         refs: Option<Vec<(String, Option<String>)>>,
         sources: Option<Vec<(String, String)>>,
-        configs: Option<HashMap<String, ExprT>>
+        configs: Option<HashMap<String, ConfigVal>>
     ) -> Extraction {
         Extraction {
             refs: refs.unwrap_or(vec![]),
@@ -48,18 +48,6 @@ impl Extraction {
             configs: configs.unwrap_or(HashMap::new()),
         }
     }
-}
-
-// untyped ast
-#[derive(Clone, Debug, Eq, PartialEq)]
-enum ExprU {
-    RootU(Vec<ExprU>),
-    StringU(String),
-    BoolU(bool),
-    ListU(Vec<ExprU>),
-    DictU(HashMap<String, ExprU>),
-    KwargU(String, Box<ExprU>),
-    FnCallU(String, Vec<ExprU>),
 }
 
 // typed ast
@@ -76,7 +64,28 @@ pub enum ExprT {
     // args represented as positional regardless of kwargs in source
     RefT(String, Option<String>),
     SourceT(String, String),
-    ConfigT(HashMap<String, ExprT>),
+    ConfigT(HashMap<String, ConfigVal>),
+}
+
+// wrappers for config return types
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ConfigVal {
+    StringC(String),
+    BoolC(bool),
+    ListC(Vec<ConfigVal>),
+    DictC(HashMap<String, ConfigVal>),
+}
+
+// untyped ast
+#[derive(Clone, Debug, Eq, PartialEq)]
+enum ExprU {
+    RootU(Vec<ExprU>),
+    StringU(String),
+    BoolU(bool),
+    ListU(Vec<ExprU>),
+    DictU(HashMap<String, ExprU>),
+    KwargU(String, Box<ExprU>),
+    FnCallU(String, Vec<ExprU>),
 }
 
 fn map_err<A, E1, E2>(r: Result<A, E1>, f: fn(E1) -> E2) -> Result<A, E2> {
@@ -201,6 +210,29 @@ fn kwargs_last(args: &Vec<ExprU>) -> bool {
     true
 }
 
+fn type_check_configs(expr: ExprU) -> Result<ConfigVal, TypeError> {
+    match expr {
+        ExprU::BoolU(v) => Ok(ConfigVal::BoolC(v)),
+
+        ExprU::StringU(v) => Ok(ConfigVal::StringC(v)),
+
+        ExprU::ListU(elems) => elems
+            .into_iter()
+            .map(|elem| type_check_configs(elem))
+            .collect::<Result<Vec<ConfigVal>, TypeError>>()
+            .map(|typed_elems| ConfigVal::ListC(typed_elems)),
+
+        ExprU::DictU(m) => m
+            .into_iter()
+            .map(|(key, elem)| type_check_configs(elem).map(|typed| (key, typed)))
+            .collect::<Result<HashMap<String, ConfigVal>, TypeError>>()
+            .map(|typed_elems| ConfigVal::DictC(typed_elems)),
+            
+        // TODO use exprU -> string function here instead of dummy
+        unsupported => Err(TypeError::UnsupportedConfigValue("TODO".to_string())),
+    }
+}
+
 fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
     match ast {
         ExprU::RootU(exprs) => {
@@ -314,15 +346,17 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                             match arg {
                                 ExprU::KwargU(key, _) if excluded.contains(&&key[..]) =>
                                     Err(TypeError::ExcludedKwarg(key)),
-                                ExprU::KwargU(key, value) =>
-                                    // TODO this allows way too much like ref() values.
-                                    // fix the extraction type for configs and do the checks here.
-                                    type_check(*value).and_then(|v| Ok((key, v))),
+                                ExprU::KwargU(key, value) => {
+                                    // valid config value types are smaller than the whole set
+                                    // so we're using this specialized function instead of `type_check`
+                                    let typed_value = type_check_configs(*value)?;
+                                    Ok((key, typed_value))
+                                },
                                 _ =>
                                     Err(TypeError::TypeMismatch { expected: "keyword argument".to_owned() }),
                             }
                         })
-                        .collect::<Result<HashMap<String, ExprT>, TypeError>>()?;
+                        .collect::<Result<HashMap<String, ConfigVal>, TypeError>>()?;
                     Ok(ExprT::ConfigT(typed_args))
                 },
 

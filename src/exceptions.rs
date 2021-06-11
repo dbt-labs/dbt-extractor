@@ -63,6 +63,7 @@ pub enum TypeError {
     UnrecognizedFunction(String),
     UnexpectedKwarg(String),
     ExcludedKwarg(String),
+    UnsupportedConfigValue(String),
 }
 
 impl Display for TypeError {
@@ -82,6 +83,8 @@ impl Display for TypeError {
                 write!(f, "Found unexpected keyword argument {}.", key),
             TypeError::ExcludedKwarg(key) =>
                 write!(f, "Excluded keyword argument found: {}.", key),
+            TypeError::UnsupportedConfigValue(value_type) =>
+                write!(f, "Config value cannot be of the type {}.", value_type),
         }
     }
 }
