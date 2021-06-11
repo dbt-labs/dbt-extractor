@@ -502,7 +502,6 @@ mod typecheck_tests {
         assert_all_type_check(vec![
             "{{ source(source_name='src', table_name='table') }}",
             "{{ source('src', table_name='table') }}",
-            "{{ source(source_name='src', 'table') }}",
             "{{ source('src', 'table') }}"
         ])
     }
@@ -522,7 +521,7 @@ mod typecheck_tests {
             "{{ source('one isnt enough') }}",
             "{{ source('three', 'is', 'too many') }}",
             "{{ source('one', 'two', 'three', 'four') }}",
-            "{{ source(source_name='src', table_name='table', 'extra') }}",
+            "{{ source('extra', source_name='src', table_name='table') }}",
         ])
     }
 
@@ -646,10 +645,19 @@ other as (
 
     #[test]
     fn config_ast() {
+        let mut dict = HashMap::new();
+        dict.insert("dict".to_string(), ExprT::ListT(vec![ExprT::StringT("value".to_string())]));
+
+        let mut config = HashMap::new();
+        config.insert("k1".to_string(), ExprT::DictT(dict));
+        config.insert("k2".to_string(), ExprT::StringT("str".to_string()));
+
         assert_produces_tree(
             "{{ config(k1={'dict': ['value']}, k2='str') }}"
             ,
-            ExprT::RootT(vec![])
+            ExprT::RootT(vec![
+                ExprT::ConfigT(config)
+            ])
         )
     }
 
@@ -658,7 +666,9 @@ other as (
         assert_produces_tree(
             "{{ source('x', table_name='y') }}"
             ,
-            ExprT::RootT(vec![])
+            ExprT::RootT(vec![
+                ExprT::SourceT("x".to_string(), "y".to_string())
+            ])
         )
     }
 
