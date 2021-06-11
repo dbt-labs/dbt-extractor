@@ -229,7 +229,7 @@ fn type_check_configs(expr: ExprU) -> Result<ConfigVal, TypeError> {
             .map(|typed_elems| ConfigVal::DictC(typed_elems)),
             
         // TODO use exprU -> string function here instead of dummy
-        unsupported => Err(TypeError::UnsupportedConfigValue("TODO".to_string())),
+        _unsupported => Err(TypeError::UnsupportedConfigValue("TODO".to_string())),
     }
 }
 
@@ -680,11 +680,11 @@ other as (
     #[test]
     fn config_ast() {
         let mut dict = HashMap::new();
-        dict.insert("dict".to_string(), ExprT::ListT(vec![ExprT::StringT("value".to_string())]));
+        dict.insert("dict".to_string(), ConfigVal::ListC(vec![ConfigVal::StringC("value".to_string())]));
 
         let mut config = HashMap::new();
-        config.insert("k1".to_string(), ExprT::DictT(dict));
-        config.insert("k2".to_string(), ExprT::StringT("str".to_string()));
+        config.insert("k1".to_string(), ConfigVal::DictC(dict));
+        config.insert("k2".to_string(), ConfigVal::StringC("str".to_string()));
 
         assert_produces_tree(
             "{{ config(k1={'dict': ['value']}, k2='str') }}"

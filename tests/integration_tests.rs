@@ -2,7 +2,7 @@
 // library from the outside like our users would
 
 use dbt_extractor::{
-    ExprT,
+    ConfigVal,
     Extraction,
     extract_from_source,
 };
@@ -35,7 +35,7 @@ fn extracts_refs() {
 #[test]
 fn extracts_configs() {
     let mut configs = HashMap::new();
-    configs.insert("key".to_string(), ExprT::StringT("value".to_string()));
+    configs.insert("key".to_string(), ConfigVal::StringC("value".to_string()));
     
     assert_extraction(
         "{{ config(key='value') }}"
@@ -67,8 +67,8 @@ fn extracts_sources() {
 #[test]
 fn extracts_all() {
     let mut configs = HashMap::new();
-    configs.insert("k".to_string(), ExprT::StringT("v".to_string()));
-    configs.insert("x".to_string(), ExprT::BoolT(true));
+    configs.insert("k".to_string(), ConfigVal::StringC("v".to_string()));
+    configs.insert("x".to_string(), ConfigVal::BoolC(true));
     
     assert_extraction(
         "{{ source('package', 'table') }} {{ ref('x') }} {{ config(k='v', x=True) }}"
@@ -91,27 +91,27 @@ fn extracts_from_deepyly_nested_config() {
     let mut inner_inner_dict = HashMap::new();
     inner_inner_dict.insert(
         "x".to_string(),
-        ExprT::StringT("y".to_string())
+        ConfigVal::StringC("y".to_string())
     );
 
     let mut inner_dict = HashMap::new();
     inner_dict.insert(
         "k".to_string(),
-        ExprT::ListT(vec![
-            ExprT::StringT("v".to_string()),
-            ExprT::DictT(inner_inner_dict)
+        ConfigVal::ListC(vec![
+            ConfigVal::StringC("v".to_string()),
+            ConfigVal::DictC(inner_inner_dict)
         ])
     );
 
     let mut configs = HashMap::new();
     configs.insert(
         "key".to_string(), 
-        ExprT::ListT(vec![
-            ExprT::DictT(inner_dict),
-            ExprT::ListT(vec![
-                ExprT::StringT("a".to_string()),
-                ExprT::StringT("b".to_string()),
-                ExprT::StringT("c".to_string()),
+        ConfigVal::ListC(vec![
+            ConfigVal::DictC(inner_dict),
+            ConfigVal::ListC(vec![
+                ConfigVal::StringC("a".to_string()),
+                ConfigVal::StringC("b".to_string()),
+                ConfigVal::StringC("c".to_string()),
             ]),
         ])
     );
@@ -130,12 +130,12 @@ fn extracts_from_deepyly_nested_config() {
 #[test]
 fn extracts_multi_key_config() {
     let mut dict = HashMap::new();
-    dict.insert("a".to_string(), ExprT::StringT("x".to_string()));
-    dict.insert("b".to_string(), ExprT::StringT("y".to_string()));
-    dict.insert("c".to_string(), ExprT::StringT("z".to_string()));
+    dict.insert("a".to_string(), ConfigVal::StringC("x".to_string()));
+    dict.insert("b".to_string(), ConfigVal::StringC("y".to_string()));
+    dict.insert("c".to_string(), ConfigVal::StringC("z".to_string()));
 
     let mut configs = HashMap::new();
-    configs.insert("dict".to_string(), ExprT::DictT(dict));
+    configs.insert("dict".to_string(), ConfigVal::DictC(dict));
     
     assert_extraction(
         "{{ config(dict={'a':'x', 'b': 'y', 'c':'z'}) }}"
