@@ -24,7 +24,7 @@ impl Display for ParseError {
 // TODO use crate `thiserror` to simplify boilerplate
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum SourceError {
-    BadSourceExtraction,
+    TreeSitterError,
     Utf8Err(Utf8Error),
     BadBoolean(String),
     UnknownNodeType(String),
@@ -35,8 +35,8 @@ pub enum SourceError {
 impl Display for SourceError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            SourceError::BadSourceExtraction =>
-                write!(f, "BadSourceExtraction"),
+            SourceError::TreeSitterError =>
+                write!(f, "tree-sitter found an error"),
             SourceError::Utf8Err(e) =>
                 e.fmt(f),
             SourceError::BadBoolean(s) =>

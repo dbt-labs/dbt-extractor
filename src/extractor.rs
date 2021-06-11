@@ -123,14 +123,14 @@ fn to_ast(source: &Vec<u8>, node: Node) -> Result<ExprU, SourceError> {
 
             match x {
                 Ok(children) => Ok(ExprU::RootU(children)),
-                Err(_)       => Err(SourceError::BadSourceExtraction),
+                Err(_)       => Err(SourceError::TreeSitterError),
             }
         },
 
         "lit_string" => {
             match text_from_node(&source, &node) {
                 Ok(s)  => Ok(ExprU::StringU(strip_first_and_last(s))),
-                Err(_) => Err(SourceError::BadSourceExtraction),
+                Err(_) => Err(SourceError::TreeSitterError),
             }
         },
 
@@ -139,7 +139,7 @@ fn to_ast(source: &Vec<u8>, node: Node) -> Result<ExprU, SourceError> {
                 Ok("True")  => Ok(ExprU::BoolU(true)),
                 Ok("False") => Ok(ExprU::BoolU(false)),
                 Ok(s)       => Err(SourceError::BadBoolean(s.to_owned())),
-                Err(_)      => Err(SourceError::BadSourceExtraction),
+                Err(_)      => Err(SourceError::TreeSitterError),
             }
         },
 
@@ -383,6 +383,7 @@ pub fn extract_from_source(source: &str) -> Result<Extraction, ParseError> {
     Ok(extract_from(typed_ast))
 }
 
+#[cfg(test)]
 mod typecheck_tests {
     use super::*;
 
@@ -433,6 +434,18 @@ mod typecheck_tests {
                 assert!(false)
             },
         } 
+    }
+
+    fn assert_fails_with(source: &str, expect: ParseError) {
+        match &get_results(vec![source])[0] {
+            (source, Ok(ast)) => {
+                println!("expected error from source.");
+                println!("source: {}", source);
+                println!("produced ast: {:?}", ast);
+                assert!(false)
+            },
+            (_, Err(e)) => assert_eq!(*e, expect),
+        }
     }
 
     #[test]
@@ -579,7 +592,7 @@ mod typecheck_tests {
     }
 
     #[test]
-    fn multi_block_with_jinja_function_call_rejected() {
+    fn multi_block_with_jinja_expression_rejected() {
         assert_none_type_check(vec![r#"
 {{ config(key='value') }}
 with
@@ -646,6 +659,24 @@ other as (
             "{{ source('x', table_name='y') }}"
             ,
             ExprT::RootT(vec![])
+        )
+    }
+
+    #[test]
+    fn jinja_expression_ast() {
+        assert_fails_with(
+            "{% expression %}"
+            ,
+            ParseError::SourceE(SourceError::TreeSitterError)
+        )
+    }
+
+    #[test]
+    fn kwarg_order() {
+        assert_fails_with(
+            "{{ source(source_name='kwarg', 'positional') }}"
+            ,
+            ParseError::TypeE(TypeError::KwargsAreNotLast)
         )
     }
 }
