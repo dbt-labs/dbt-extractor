@@ -450,4 +450,146 @@ mod typecheck_tests {
             "{{ REF('a', 'b') }}",
         ])
     }
+
+    #[test]
+    fn test_config_all_inputs() {
+        assert_all_type_check(vec![
+            "{{ config(key='value') }}",
+            "{{ config(key=True) }}",
+            "{{ config(key=False) }}",
+            "{{ config(key=['v1,','v2']) }}",
+            "{{ config(key={'k': 'v'}) }}",
+            "{{ config(key=[{'k':['v', {'x': 'y'}]}, ['a', 'b', 'c']]) }}"
+        ])
+    }
+
+    #[test]
+    fn config_fails_non_kwarg_inputs() {
+        assert_none_type_check(vec![
+            "{{ config('value') }}",
+            "{{ config(True) }}",
+            "{{ config(['v1,','v2']) }}",
+            "{{ config({'k': 'v'}) }}"
+        ])
+    }
+
+    #[test]
+    fn source_keyword_args() {
+        assert_all_type_check(vec![
+            "{{ source(source_name='src', table_name='table') }}",
+            "{{ source('src', table_name='table') }}",
+            "{{ source(source_name='src', 'table') }}",
+            "{{ source('src', 'table') }}"
+        ])
+    }
+
+    #[test]
+    fn bad_source_keyword_args() {
+        assert_none_type_check(vec![
+            "{{ source(source_name='src', BAD_NAME='table') }}",
+            "{{ source(BAD_NAME='src', table_name='table') }}",
+            "{{ source(BAD_NAME='src', BAD_NAME='table') }}"
+        ])
+    }
+
+    #[test]
+    fn source_must_have_2_args() {
+        assert_none_type_check(vec![
+            "{{ source('one isnt enough') }}",
+            "{{ source('three', 'is', 'too many') }}",
+            "{{ source('one', 'two', 'three', 'four') }}",
+            "{{ source(source_name='src', table_name='table', 'extra') }}",
+        ])
+    }
+
+    #[test]
+    fn source_args_must_be_strings() {
+        assert_none_type_check(vec![
+            "{{ source(True, False) }}",
+            "{{ source(key='str', key2='str2') }}",
+            "{{ source([], []) }}",
+            "{{ source({}, {}) }}",
+        ])
+    }
+
+    #[test]
+    fn ref_accepts_one_and_two_strings() {
+        assert_all_type_check(vec![
+            "{{ ref('two', 'args') }}",
+            "{{ ref('one arg') }}"
+        ])
+    }
+
+    #[test]
+    fn ref_bad_inputs_fail() {
+        assert_none_type_check(vec![
+            "{{ ref('too', 'many', 'strings') }}",
+            "{{ ref() }}",
+            "{{ ref(kwarg='is_wrong') }}",
+            "{{ ref(['list is wrong']) }}"
+        ])
+    }
+
+    #[test]
+    fn nested_fn_calls_fail() {
+        assert_none_type_check(vec![
+            "{{ [ref('my_table')] }}",
+            "{{ [config(x='y')] }}",
+            "{{ config(x=ref('my_table')) }}",
+            "{{ source(ref('my_table')) }}"
+        ])
+    }
+
+    #[test]
+    fn config_excluded_kwargs() {
+        assert_none_type_check(vec![
+            "{{ config(pre_hook='x') }}",
+            "{{ config(pre-hook='x') }}",
+            "{{ config(post_hook='x') }}",
+            "{{ config(post-hook='x') }}"
+        ])
+    }
+
+    #[test]
+    fn jinja_expressions_fail_everywhere() {
+        assert_none_type_check(vec![
+            "{% config(x='y') %}",
+            "{% if(whatever) do_something() %}",
+            "doing stuff {{ ref('str') }} stuff {% expression %}",
+            "{{ {% psych! nested expression %} }}"
+        ])
+    }
+
+    #[test]
+    fn top_level_kwargs_are_rejected() {
+        assert_none_type_check(vec![
+            "{{ kwarg='value' }}"
+        ])
+    }
+
+    #[test]
+    fn multi_block_with_jinja_function_call_rejected() {
+        assert_none_type_check(vec![r#"
+{{ config(key='value') }}
+with
+something as (
+    select whatever from {{ ref('my_table') }}
+where {% is_incremental() %} and my_bool
+),
+other as (
+    there's like ten more of these as blocks.
+)"#
+        ])
+    }
+
+    // this triggers "missing" not "error" nodes from tree-sitter
+    #[test]
+    fn fails_on_open_jinja_brackets() {
+        assert_none_type_check(vec![
+            "{{ ref()",
+            "{{ True",
+            "{{",
+            "{{ 'str' "
+        ])
+    }
 }
