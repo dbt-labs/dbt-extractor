@@ -51,15 +51,14 @@ impl Display for SourceError {
     }
 }
 
-// TODO use crate `thiserror` to simplify boilerplate
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum TypeError {
     BadAssignment(String, String),
     KwargsAreNotLast,
-    // TODO expected should be a Vec<usize>
+    // TODO expected should be a Vec<usize> (e.g. - ref takes 1 or 2 args)
     ArgumentMismatch { expected: String, found: usize },
-    // TODO shouldn't be a string
-    TypeMismatch { expected: String },
+    // use ExprU::type_string() when creating this exception
+    TypeMismatch { expected: String, got: String },
     UnrecognizedFunction(String),
     UnexpectedKwarg(String),
     ExcludedKwarg(String),
@@ -75,8 +74,8 @@ impl Display for TypeError {
                 write!(f, "Keyword arguments must come at the end of the argument list."),
             TypeError::ArgumentMismatch { expected, found } =>
                 write!(f, "Expected {} arguments. Found {}.", expected, found),
-            TypeError::TypeMismatch { expected } =>
-                write!(f, "Expected {} type.", expected),
+            TypeError::TypeMismatch { expected, got } =>
+                write!(f, "Expected {}. Got {} ", expected, got),
             TypeError::UnrecognizedFunction(name) =>
                 write!(f, "Found unrecognized function named {}.", name),
             TypeError::UnexpectedKwarg(key) =>

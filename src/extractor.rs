@@ -14,17 +14,16 @@ use tree_sitter::{
 
 
 // final result
-// slightly looser types than ExprT to match dbt
+// this is snug fit for the shape of the data
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Extraction {
     refs: Vec<(String, Option<String>)>,
     sources: Vec<(String, String)>,
-    // TODO is ExprT really the right type to put here?
     configs: HashMap<String, ConfigVal>,
 }
 
 impl Extraction {
-    // monoidal mappend
+    // monoidal mappend (associative binary operation with id element (i.e. Extraction::new())
     pub fn mappend(&self, other: &Extraction) -> Extraction {
         Extraction {
             refs: [&self.refs[..], &other.refs[..]].concat(),
@@ -52,8 +51,7 @@ impl Extraction {
 
 // typed ast
 #[derive(Clone, Debug, Eq, PartialEq)]
-// TODO make private
-pub enum ExprT {
+enum ExprT {
     RootT(Vec<ExprT>),
     StringT(String),
     BoolT(bool),
@@ -88,6 +86,22 @@ enum ExprU {
     FnCallU(String, Vec<ExprU>),
 }
 
+impl ExprU {
+    fn type_string(&self) -> &str {
+        match self {
+            ExprU::RootU(_)      => "root",
+            ExprU::StringU(_)    => "string",
+            ExprU::BoolU(_)      => "bool",
+            ExprU::ListU(_)      => "list",
+            ExprU::DictU(_)      => "dict",
+            ExprU::KwargU(_, _)  => "kwarg",
+            ExprU::FnCallU(_, _) => "fn_call",
+        }
+    }
+}
+
+// change the error of a result value
+// frequently used to wrap exceptions lower on the hierarchy into their parent type
 fn map_err<A, E1, E2>(r: Result<A, E1>, f: fn(E1) -> E2) -> Result<A, E2> {
     match r {
         Ok(a)  => Ok(a),
@@ -95,6 +109,7 @@ fn map_err<A, E1, E2>(r: Result<A, E1>, f: fn(E1) -> E2) -> Result<A, E2> {
     }
 }
 
+// checks for tree-sitter `error` and `missing` values
 fn error_anywhere(node: &Node) -> bool {
     if node.has_error() {
         return true
@@ -107,16 +122,19 @@ fn error_anywhere(node: &Node) -> bool {
     false
 }
 
+// in the tree-sitter grammar some elements are named, those are the string values used to retrieve children.
 fn child_by_field_name<'a, 'b>(node: &'a Node, name: &'b str) -> Result<Node<'a>, SourceError> {
     node.child_by_field_name(name)
         .ok_or(SourceError::MissingValue(node.kind().to_owned(), name.to_owned()))
 }
 
+// tree-sitter returns a concrete syntax tree. only named elements form the abstract syntax tree.
 fn named_children(node: Node) -> Vec<Node> {
     // calling allocating a new cursor every time is less effecient, but juggling lifetimes also sucks.
     node.named_children(&mut node.walk()).collect()
 }
 
+// tree-sitter nodes do not contain all necessary text values. This maps back to source to retrieve them.
 fn text_from_node<'a>(source: &'a Vec<u8>, node: &Node) -> Result<&'a str, SourceError> {
     match from_utf8(&source[node.start_byte()..node.end_byte()]) {
         Ok(s) => Ok(s),
@@ -124,6 +142,7 @@ fn text_from_node<'a>(source: &'a Vec<u8>, node: &Node) -> Result<&'a str, Sourc
     }
 }
 
+// generally used to strip quotes off strings from the source file
 fn strip_first_and_last(s: &str) -> String {
     if s.len() <= 2 {
         "".to_owned()
@@ -132,6 +151,8 @@ fn strip_first_and_last(s: &str) -> String {
     }
 }
 
+// transforms the tree-sitter tree structure which relies on a lot of string matching
+// into the more structured ExprU type. This allows the rust compiler to be much more helpful.
 fn to_ast(source: &Vec<u8>, node: Node) -> Result<ExprU, SourceError> {
     let kind = node.kind();
     match kind {
@@ -242,11 +263,11 @@ fn type_check_configs(expr: ExprU) -> Result<ConfigVal, TypeError> {
             .collect::<Result<HashMap<String, ConfigVal>, TypeError>>()
             .map(|typed_elems| ConfigVal::DictC(typed_elems)),
             
-        // TODO use exprU -> string function here instead of dummy
-        _unsupported => Err(TypeError::UnsupportedConfigValue("TODO".to_string())),
+        unsupported => Err(TypeError::UnsupportedConfigValue(unsupported.type_string().to_string())),
     }
 }
 
+// Attempts to convert the untypted ast into the typed ast, returning errors when necessary.
 fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
     match ast {
         ExprU::RootU(exprs) => {
@@ -306,9 +327,15 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                         .into_iter()
                         .map(|arg| {
                             match arg {
+                                // refs can only take string literals
                                 ExprU::StringU(s) => Ok(s),
-                                // TODO typeof function
-                                _ => Err(TypeError::TypeMismatch { expected: "String".to_owned() } )
+                                // error on everything that isn't a string literal
+                                not_string => Err(
+                                    TypeError::TypeMismatch {
+                                        expected: ExprU::StringU("".to_string()).type_string().to_string(),
+                                        got: not_string.type_string().to_string()
+                                    }
+                                )
                             }
                         })
                         .collect::<Result<Vec<String>, TypeError>>()?;
@@ -323,28 +350,48 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                     let source_name = match &source_args[0] {
                         ExprU::KwargU(name, value) if name == "source_name" =>
                             match &**value {
+                                // source_name if called by kwarg can only be a string literal
                                 ExprU::StringU(s) => Ok(s),
-                                _ => Err(TypeError::TypeMismatch { expected: "String".to_owned() } ),
+                                // error on everything else
+                                other_type => Err(TypeError::TypeMismatch {
+                                    expected: "String".to_owned(),
+                                    got: other_type.type_string().to_owned()
+                                }),
                             }
                         ExprU::KwargU(name, _) if name != "source_name" =>
                             Err(TypeError::UnexpectedKwarg(name.to_owned())),
+                        // source_name if called positionally can only be a string literal
                         ExprU::StringU(s) =>
                             Ok(s),
-                        _ => 
-                            Err(TypeError::TypeMismatch { expected: "String or keyword argument source_name".to_owned() } ),
+                        // error on everything else
+                        other_type => 
+                            Err(TypeError::TypeMismatch {
+                                expected: "String or keyword argument source_name".to_owned(),
+                                got: other_type.type_string().to_owned()
+                            }),
                     }?;
                     let table_name = match &source_args[1] {
                         ExprU::KwargU(name, value) if name == "table_name" =>
                         match &**value {
+                            // source table_name if called by kwarg can only be string a literal
                             ExprU::StringU(s) => Ok(s),
-                            _ => Err(TypeError::TypeMismatch { expected: "String".to_owned() } ),
+                            // error on everything else
+                            other_type => Err(TypeError::TypeMismatch {
+                                expected: "String".to_owned(),
+                                got: other_type.type_string().to_owned()
+                            }),
                         }
                         ExprU::KwargU(name, _) if name != "table_name" =>
                             Err(TypeError::UnexpectedKwarg(name.to_owned())),
+                        // source table_name if called positionally can only be string a literal
                         ExprU::StringU(s) =>
                             Ok(s),
-                        _ => 
-                            Err(TypeError::TypeMismatch { expected: "String or keyword argument table_name".to_owned() } ),
+                        // error on everything else
+                        other_type => 
+                            Err(TypeError::TypeMismatch {
+                                expected: "String or keyword argument table_name".to_owned(),
+                                got: other_type.type_string().to_owned()
+                            } ),
                     }?;
                     Ok(ExprT::SourceT(source_name.to_owned(), table_name.to_owned()))
                 },
@@ -358,16 +405,21 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                         .into_iter()
                         .map(|arg| {
                             match arg {
+                                // error on these specific kwargs that this extractor can't handle yet
                                 ExprU::KwargU(key, _) if excluded.contains(&&key[..]) =>
                                     Err(TypeError::ExcludedKwarg(key)),
                                 ExprU::KwargU(key, value) => {
                                     // valid config value types are smaller than the whole set
-                                    // so we're using this specialized function instead of `type_check`
+                                    // so we're using this specialized function to return a narrower type
+                                    // instead of `type_check` which returns ExprT
                                     let typed_value = type_check_configs(*value)?;
                                     Ok((key, typed_value))
                                 },
-                                _ =>
-                                    Err(TypeError::TypeMismatch { expected: "keyword argument".to_owned() }),
+                                other_type =>
+                                    Err(TypeError::TypeMismatch {
+                                        expected: "keyword argument".to_owned(),
+                                        got: other_type.type_string().to_owned() 
+                                    }),
                             }
                         })
                         .collect::<Result<HashMap<String, ConfigVal>, TypeError>>()?;
@@ -380,9 +432,14 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
     }
 }
 
+// extract refs sources and configs from the typed ast. 
+// there is no error in the return type because we have caught them all at this point
+// that invariant is encoded in the ExprT input type. 
+// implemented like `fold` over a tree structure.
 fn extract_from(ast: ExprT) -> Extraction {
     match ast {
         ExprT::RootT(exprs) => 
+            // immutably rolls all the results up into one
             exprs.into_iter().fold(Extraction::new(), |b, a| b.mappend(&extract_from(a))),
         ExprT::RefT(x, y) =>
             Extraction {
@@ -408,17 +465,21 @@ fn extract_from(ast: ExprT) -> Extraction {
     }
 }
 
+// go go gadget tree-sitter!
 fn run_tree_sitter(source_bytes: &Vec<u8>) -> Result<Tree, SourceError> {
     let mut parser = tree_sitter::Parser::new();
     parser.set_language(tree_sitter_jinja2::language()).expect("Error loading jinja2 grammar");
     let tree = parser.parse(source_bytes, None).ok_or(SourceError::ParseFailure)?;
     if error_anywhere(&tree.root_node()) {
+        // we may want to know what this error is. Could use a different function to walk
+        // the tree and collect error information instead of just detecting errors.
         Err(SourceError::TreeSitterError)
     } else {
         Ok(tree)
     }
 }
 
+// public entry point
 pub fn extract_from_source(source: &str) -> Result<Extraction, ParseError> {
     // convert text to bytes
     let source_bytes = source.as_bytes().to_vec();
@@ -436,8 +497,9 @@ pub fn extract_from_source(source: &str) -> Result<Extraction, ParseError> {
     Ok(extract_from(typed_ast))
 }
 
+// unit tests for private function `type_check`
 #[cfg(test)]
-mod typecheck_tests {
+mod type_check_tests {
     use super::*;
 
     fn get_results(sources: Vec<&str>) -> Vec<(&str, Result<ExprT, ParseError>)> {
