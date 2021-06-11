@@ -386,16 +386,19 @@ pub fn extract_from_source(source: &str) -> Result<Extraction, ParseError> {
 mod typecheck_tests {
     use super::*;
 
-    fn assert_all_type_check(sources: Vec<&str>) {
-        let results = sources.into_iter().map(|source| {
+    fn get_results(sources: Vec<&str>) -> Vec<(&str, Result<ExprT, ParseError>)> {
+        sources.into_iter().map(|source| {
             let source_bytes = source.as_bytes().to_vec();
             let ast = run_tree_sitter(&source_bytes)
                 .and_then(|tree| to_ast(&source_bytes, tree.root_node()));
             let typed_ast = map_err(ast, ParseError::SourceE)
                 .and_then(|ast| map_err(type_check(ast), ParseError::TypeE));
             (source, typed_ast)
-        });
-        for result in results {
+        }).collect()
+    }
+
+    fn assert_all_type_check(sources: Vec<&str>) {
+        for result in get_results(sources) {
             match result {
                 (_, Ok(_)) => assert!(true),
                 (source, Err(e)) => {
@@ -407,12 +410,44 @@ mod typecheck_tests {
         } 
     }
 
+    fn assert_none_type_check(sources: Vec<&str>) {
+        for result in get_results(sources) {
+            match result {
+                (source, Ok(ast)) => {
+                    println!("expected error from source.");
+                    println!("source: {}", source);
+                    println!("produced ast: {:?}", ast);
+                    assert!(false)
+                },
+                (_, Err(_)) => assert!(true),
+            }
+        } 
+    }
+
     #[test]
     fn recognizes_ref_source_config() {
         assert_all_type_check(vec![
             "select * from {{ ref('my_table') }}",
             "{{ config(key='value') }}",
-            "{{ source('a', 'b') }}"
+            "{{ source('a', 'b') }}",
+        ])
+    }
+
+    #[test]
+    fn recognizes_multiple_jinja_calls() {
+        assert_all_type_check(vec![
+            "{{ ref('x') }} {{ ref('y') }}",
+            "{{ config(key='value') }} {{ config(k='v') }}",
+            "{{ source('a', 'b') }} {{ source('c', 'd') }}",
+        ])
+    }
+
+    #[test]
+    fn fails_on_other_fn_names() {
+        assert_none_type_check(vec![
+            "select * from {{ reff('my_table') }}",
+            "{{ fn(key='value') }}",
+            "{{ REF('a', 'b') }}",
         ])
     }
 }
