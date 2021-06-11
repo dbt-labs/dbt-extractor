@@ -424,6 +424,17 @@ mod typecheck_tests {
         } 
     }
 
+    fn assert_produces_tree(source: &str, expect: ExprT) {
+        match &get_results(vec![source])[0] {
+            (_, Ok(ast)) => assert_eq!(*ast, expect),
+            (source, Err(e)) => {
+                println!("source:         {}", source);
+                println!("produced error: {}", e);
+                assert!(false)
+            },
+        } 
+    }
+
     #[test]
     fn recognizes_ref_source_config() {
         assert_all_type_check(vec![
@@ -591,5 +602,50 @@ other as (
             "{{",
             "{{ 'str' "
         ])
+    }
+
+    #[test]
+    fn ref_ast() {
+        assert_produces_tree(
+            "{{ ref('my_table') }}"
+            ,
+            ExprT::RootT(
+                vec![ExprT::RefT("my_table".to_string(), None)]
+            )
+        )
+    }
+
+    #[test]
+    fn buried_refs_ast() {
+        assert_produces_tree(
+            r#"
+            select
+                field1,
+                field2,
+                field3
+            from {{ ref('x') }}
+            join {{ ref('y') }}
+            "#
+            ,
+            ExprT::RootT(vec![])
+        )
+    }
+
+    #[test]
+    fn config_ast() {
+        assert_produces_tree(
+            "{{ config(k1={'dict': ['value']}, k2='str') }}"
+            ,
+            ExprT::RootT(vec![])
+        )
+    }
+
+    #[test]
+    fn source_ast() {
+        assert_produces_tree(
+            "{{ source('x', table_name='y') }}"
+            ,
+            ExprT::RootT(vec![])
+        )
     }
 }
