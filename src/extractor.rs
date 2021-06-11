@@ -95,6 +95,18 @@ fn map_err<A, E1, E2>(r: Result<A, E1>, f: fn(E1) -> E2) -> Result<A, E2> {
     }
 }
 
+fn error_anywhere(node: &Node) -> bool {
+    if node.has_error() {
+        return true
+    };
+
+    for child in node.children(&mut node.walk()) {
+        error_anywhere(&child);
+    };
+
+    false
+}
+
 fn child_by_field_name<'a, 'b>(node: &'a Node, name: &'b str) -> Result<Node<'a>, SourceError> {
     node.child_by_field_name(name)
         .ok_or(SourceError::MissingValue(node.kind().to_owned(), name.to_owned()))
@@ -210,6 +222,8 @@ fn kwargs_last(args: &Vec<ExprU>) -> bool {
     true
 }
 
+// for now, configs are constrained to a subset of types. This function checks
+// for those types specifically returning a type that maintains that invariant
 fn type_check_configs(expr: ExprU) -> Result<ConfigVal, TypeError> {
     match expr {
         ExprU::BoolU(v) => Ok(ConfigVal::BoolC(v)),
@@ -397,7 +411,12 @@ fn extract_from(ast: ExprT) -> Extraction {
 fn run_tree_sitter(source_bytes: &Vec<u8>) -> Result<Tree, SourceError> {
     let mut parser = tree_sitter::Parser::new();
     parser.set_language(tree_sitter_jinja2::language()).expect("Error loading jinja2 grammar");
-    parser.parse(source_bytes, None).ok_or(SourceError::ParseFailure)
+    let tree = parser.parse(source_bytes, None).ok_or(SourceError::ParseFailure)?;
+    if error_anywhere(&tree.root_node()) {
+        Err(SourceError::TreeSitterError)
+    } else {
+        Ok(tree)
+    }
 }
 
 pub fn extract_from_source(source: &str) -> Result<Extraction, ParseError> {
@@ -640,6 +659,8 @@ other as (
     }
 
     // this triggers "missing" not "error" nodes from tree-sitter
+    // checks that we've examined the whole tree-sitter tree for
+    // all the kinds of errors it could return.
     #[test]
     fn fails_on_open_jinja_brackets() {
         assert_none_type_check(vec![
@@ -673,7 +694,9 @@ other as (
             join {{ ref('y') }}
             "#
             ,
-            ExprT::RootT(vec![])
+            ExprT::RootT(vec![
+                ExprT::RefT("x".to_string(), None), 
+                ExprT::RefT("y".to_string(), None)])
         )
     }
 
