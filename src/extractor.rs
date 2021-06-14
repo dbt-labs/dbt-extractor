@@ -148,7 +148,7 @@ fn text_from_node<'a>(source: &'a Vec<u8>, node: &Node) -> Result<&'a str, Sourc
 
 // generally used to strip quotes off strings from the source file
 fn strip_first_and_last(s: &str) -> String {
-    if s.len() <= 2 {
+    if s.chars().count() <= 2 {
         "".to_owned()
     } else {
         s[1..s.len()-1].to_string()
