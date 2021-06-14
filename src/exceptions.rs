@@ -57,7 +57,8 @@ pub enum TypeError {
     KwargsAreNotLast,
     // TODO expected should be a Vec<usize> (e.g. - ref takes 1 or 2 args)
     ArgumentMismatch { expected: String, found: usize },
-    // use ExprU::type_string() when creating this exception
+    // use ExprU::type_string() when creating this exception to get the right human readable name for each type.
+    // TODO add a new type `ExprType` that maps 1:1 values - types. Do string conversion after on that value.
     TypeMismatch { expected: String, got: String },
     UnrecognizedFunction(String),
     UnexpectedKwarg(String),
