@@ -17,9 +17,9 @@ use tree_sitter::{
 // this is snug fit for the shape of the data
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Extraction {
-    refs: Vec<(String, Option<String>)>,
-    sources: Vec<(String, String)>,
-    configs: HashMap<String, ConfigVal>,
+    pub refs: Vec<(String, Option<String>)>,
+    pub sources: Vec<(String, String)>,
+    pub configs: HashMap<String, ConfigVal>,
 }
 
 impl Extraction {
