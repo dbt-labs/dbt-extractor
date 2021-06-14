@@ -1,4 +1,0 @@
-argparse
-jinja2
-pytest
-tree_sitter
