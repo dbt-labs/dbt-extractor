@@ -23,7 +23,11 @@ pub struct Extraction {
 }
 
 impl Extraction {
-    // monoidal mappend (associative binary operation with id element (i.e. Extraction::new())
+    // monoidal mappend: takes two Extraction values and immutably merges them into a single Extraction value
+    // id element: Extraction::new()
+    // associative: x.mappend(y).mappend(z) === x.mappend(y.mappend(z))
+    // left identity: Extraction::new().mappend(x) === x
+    // right identity: x.mappend(Extraction::new()) === x
     pub fn mappend(&self, other: &Extraction) -> Extraction {
         Extraction {
             refs: [&self.refs[..], &other.refs[..]].concat(),
