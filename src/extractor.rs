@@ -445,23 +445,11 @@ fn extract_from(ast: ExprT) -> Extraction {
             // immutably rolls all the results up into one
             exprs.into_iter().fold(Extraction::new(), |b, a| b.mappend(&extract_from(a))),
         ExprT::RefT(x, y) =>
-            Extraction {
-                refs: vec![(x, y)],
-                sources: vec![],
-                configs: HashMap::new(),
-            },
+            Extraction::populate(Some(vec![(x, y)]), None, None),
         ExprT::SourceT(x, y) =>
-            Extraction {
-                refs: vec![],
-                sources: vec![(x, y)],
-                configs: HashMap::new(),
-            },
+            Extraction::populate(None, Some(vec![(x, y)]), None),
         ExprT::ConfigT(configs) =>
-            Extraction {
-                refs: vec![],
-                sources: vec![],
-                configs: configs,
-            },
+            Extraction::populate(None, None, Some(configs)),
         // otherwise, there's nothing to extract
         _ =>
             Extraction::new()
