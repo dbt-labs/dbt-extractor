@@ -1,3 +1,4 @@
+use crate::extractor::ExprType;
 use std::str::Utf8Error;
 use thiserror::Error;
 
@@ -37,18 +38,16 @@ pub enum TypeError {
     KwargsAreNotLast,
     #[error("Expected {} arguments. Found {found}.", expected_arity(expected))]
     ArgumentMismatch { expected: Vec<usize>, found: usize },
-    // use ExprU::type_string() when creating this exception to get the right human readable name for each type.
-    // TODO add a new type `ExprType` that maps 1:1 values - types. Do string conversion after on that value.
-    #[error("Expected {expected:?}. Got {got:?} ")]
-    TypeMismatch { expected: String, got: String },
+    #[error("Expected {}. Got {}.", .expected.to_string(), .expected.to_string())]
+    TypeMismatch { expected: ExprType, got: ExprType },
     #[error("Found unrecognized function named {0}.")]
     UnrecognizedFunction(String),
     #[error("Found unexpected keyword argument {0}.")]
     UnexpectedKwarg(String),
     #[error("Excluded keyword argument found: {0}.")]
     ExcludedKwarg(String),
-    #[error("Config value cannot be of the type {0}.")]
-    UnsupportedConfigValue(String),
+    #[error("Config value cannot be of the type {}.", .0.to_string())]
+    UnsupportedConfigValue(ExprType),
 }
 
 

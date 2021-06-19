@@ -53,6 +53,18 @@ impl Extraction {
     }
 }
 
+// untyped ast
+#[derive(Clone, Debug, Eq, PartialEq)]
+enum ExprU {
+    RootU(Vec<ExprU>),
+    StringU(String),
+    BoolU(bool),
+    ListU(Vec<ExprU>),
+    DictU(HashMap<String, ExprU>),
+    KwargU(String, Box<ExprU>),
+    FnCallU(String, Vec<ExprU>),
+}
+
 // typed ast
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum ExprT {
@@ -78,28 +90,43 @@ pub enum ConfigVal {
     DictC(HashMap<String, ConfigVal>),
 }
 
-// untyped ast
+// values that represent types
+// generally used to pass type information to exceptions
 #[derive(Clone, Debug, Eq, PartialEq)]
-enum ExprU {
-    RootU(Vec<ExprU>),
-    StringU(String),
-    BoolU(bool),
-    ListU(Vec<ExprU>),
-    DictU(HashMap<String, ExprU>),
-    KwargU(String, Box<ExprU>),
-    FnCallU(String, Vec<ExprU>),
+pub enum ExprType {
+    String,
+    Bool,
+    List,
+    Dict,
+    FnCall,
+    Root,
+    Kwarg,
 }
 
-impl ExprU {
-    fn type_string(&self) -> &str {
+impl ToString for ExprType {
+    fn to_string(&self) -> String {
         match self {
-            ExprU::RootU(_)      => "root",
-            ExprU::StringU(_)    => "string",
-            ExprU::BoolU(_)      => "bool",
-            ExprU::ListU(_)      => "list",
-            ExprU::DictU(_)      => "dict",
-            ExprU::KwargU(_, _)  => "kwarg",
-            ExprU::FnCallU(_, _) => "fn_call",
+            ExprType::String => "string".to_owned(),
+            ExprType::Bool   => "bool".to_owned(),
+            ExprType::List   => "list".to_owned(),
+            ExprType::Dict   => "dict".to_owned(),
+            ExprType::FnCall => "fn_call".to_owned(),
+            ExprType::Root   => "root".to_owned(),
+            ExprType::Kwarg  => "kwarg".to_owned(),
+        }
+    }
+}
+
+impl ExprType {
+    fn from(expr: &ExprU) -> ExprType {
+        match expr {
+            ExprU::StringU(..) => ExprType::String,
+            ExprU::BoolU(..) => ExprType::Bool,
+            ExprU::ListU(..) => ExprType::List,
+            ExprU::DictU(..) => ExprType::Dict,
+            ExprU::FnCallU(..) => ExprType::FnCall,
+            ExprU::RootU(..) => ExprType::Root,
+            ExprU::KwargU(..) => ExprType::Kwarg,
         }
     }
 }
@@ -266,7 +293,7 @@ fn type_check_configs(expr: ExprU) -> Result<ConfigVal, TypeError> {
             .collect::<Result<HashMap<String, ConfigVal>, TypeError>>()
             .map(|typed_elems| ConfigVal::DictC(typed_elems)),
             
-        unsupported => Err(TypeError::UnsupportedConfigValue(unsupported.type_string().to_string())),
+        unsupported => Err(TypeError::UnsupportedConfigValue(ExprType::from(&unsupported))),
     }
 }
 
@@ -335,8 +362,8 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                                 // error on everything that isn't a string literal
                                 not_string => Err(
                                     TypeError::TypeMismatch {
-                                        expected: ExprU::StringU("".to_string()).type_string().to_string(),
-                                        got: not_string.type_string().to_string()
+                                        expected: ExprType::String,
+                                        got: ExprType::from(&not_string)
                                     }
                                 )
                             }
@@ -357,8 +384,8 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                                 ExprU::StringU(s) => Ok(s),
                                 // error on everything else
                                 other_type => Err(TypeError::TypeMismatch {
-                                    expected: "String".to_owned(),
-                                    got: other_type.type_string().to_owned()
+                                    expected: ExprType::String,
+                                    got: ExprType::from(other_type).to_owned()
                                 }),
                             }
                         ExprU::KwargU(name, _) if name != "source_name" =>
@@ -369,8 +396,8 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                         // error on everything else
                         other_type => 
                             Err(TypeError::TypeMismatch {
-                                expected: "String or keyword argument source_name".to_owned(),
-                                got: other_type.type_string().to_owned()
+                                expected: ExprType::String,
+                                got: ExprType::from(other_type),
                             }),
                     }?;
                     let table_name = match &source_args[1] {
@@ -380,8 +407,8 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                             ExprU::StringU(s) => Ok(s),
                             // error on everything else
                             other_type => Err(TypeError::TypeMismatch {
-                                expected: "String".to_owned(),
-                                got: other_type.type_string().to_owned()
+                                expected: ExprType::String,
+                                got: ExprType::from(other_type).to_owned()
                             }),
                         }
                         ExprU::KwargU(name, _) if name != "table_name" =>
@@ -392,9 +419,9 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                         // error on everything else
                         other_type => 
                             Err(TypeError::TypeMismatch {
-                                expected: "String or keyword argument table_name".to_owned(),
-                                got: other_type.type_string().to_owned()
-                            } ),
+                                expected: ExprType::String,
+                                got: ExprType::from(other_type),
+                            }),
                     }?;
                     Ok(ExprT::SourceT(source_name.to_owned(), table_name.to_owned()))
                 },
@@ -420,8 +447,8 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                                 },
                                 other_type =>
                                     Err(TypeError::TypeMismatch {
-                                        expected: "keyword argument".to_owned(),
-                                        got: other_type.type_string().to_owned() 
+                                        expected: ExprType::Kwarg,
+                                        got: ExprType::from(&other_type)
                                     }),
                             }
                         })
