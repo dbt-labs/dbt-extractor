@@ -35,9 +35,8 @@ pub enum TypeError {
     BadAssignment(String, String),
     #[error("Keyword arguments must come at the end of the argument list.")]
     KwargsAreNotLast,
-    // TODO expected should be a Vec<usize> (e.g. - ref takes 1 or 2 args)
-    #[error("Expected {expected:?} arguments. Found {found:?}.")]
-    ArgumentMismatch { expected: String, found: usize },
+    #[error("Expected {} arguments. Found {found}.", expected_arity(expected))]
+    ArgumentMismatch { expected: Vec<usize>, found: usize },
     // use ExprU::type_string() when creating this exception to get the right human readable name for each type.
     // TODO add a new type `ExprType` that maps 1:1 values - types. Do string conversion after on that value.
     #[error("Expected {expected:?}. Got {got:?} ")]
@@ -50,4 +49,27 @@ pub enum TypeError {
     ExcludedKwarg(String),
     #[error("Config value cannot be of the type {0}.")]
     UnsupportedConfigValue(String),
+}
+
+
+// -- helper functions --
+
+
+// expected_arity(vec![1,4,3,2]) == "1 to 4"
+// expected_arity(vec![1,4]) == "1 to 4"
+// expected_arity(vec![3]) == "3"
+// expected_arity(vec![]) == "any"
+fn expected_arity(expected: &Vec<usize>) -> String {
+    let mut _sorted = expected.clone();
+    _sorted.sort();
+    let sorted = _sorted;
+
+    match expected.len() {
+        x if x == 1 => 
+            sorted[0].to_string(),
+        x if x > 1 => 
+            vec![sorted[0].to_string(), "to".to_owned(), sorted[x-1].to_string()].join(" "),
+        _ => 
+            "any".to_owned(),
+    }
 }

@@ -324,7 +324,7 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
             match &name[..] {
                 "ref" => {
                     if args.len() != 1 && args.len() != 2 {
-                        return Err(TypeError::ArgumentMismatch { expected: "1 or 2".to_owned(), found: args.len() } )
+                        return Err(TypeError::ArgumentMismatch { expected: vec![1, 2], found: args.len() } )
                     }
                     let typed_args = args
                         .into_iter()
@@ -348,7 +348,7 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                 "source" => {
                     let source_args = args.clone();
                     if args.len() != 2 {
-                        return Err(TypeError::ArgumentMismatch { expected: "2".to_owned(), found: args.len() } )
+                        return Err(TypeError::ArgumentMismatch { expected: vec![2], found: args.len() } )
                     }
                     let source_name = match &source_args[0] {
                         ExprU::KwargU(name, value) if name == "source_name" =>
@@ -401,7 +401,7 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
 
                 "config" => {
                     if args.len() < 1 {
-                        return Err(TypeError::ArgumentMismatch { expected: "any".to_owned(), found: args.len() } )
+                        return Err(TypeError::ArgumentMismatch { expected: vec![], found: args.len() } )
                     }
                     let excluded = vec!["post-hook", "post_hook", "pre-hook", "pre_hook"];
                     let typed_args = args
