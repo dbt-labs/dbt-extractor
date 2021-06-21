@@ -3,8 +3,8 @@ use dbt_extractor::{
     Extraction,
     extract_from_source,
 };
-use serde::Serialize;
 use serde_json::json;
+use serde::Serialize;
 use std::time::Instant;
 
 
@@ -14,7 +14,8 @@ struct ExtractedResponse {
     error: String,
     refs: Vec<Vec<String>>,
     sources: Vec<Vec<String>>,
-    configs: Vec<Vec<String>>,
+    // dipping into JSON to represent an Object of heterogeneous types
+    configs: serde_json::Value,
 }
 
 #[async_std::main]
@@ -40,7 +41,9 @@ async fn parse(mut req: tide::Request<()>) -> tide::Result {
                     (x, None) => vec![x]
                 }).collect(),
                 sources: sources.into_iter().map(|(x, y)| vec![x, y]).collect(),
-                configs: configs.into_iter().map(|(k, v)| vec![k, stringify_config(v)]).collect(),
+                configs: serde_json::Value::Object(
+                    configs.into_iter().map(|(k, v)| (k, jsonify_config(v))).collect()
+                ),
             }).into()
         }, 
         Err(e) => {
@@ -48,10 +51,10 @@ async fn parse(mut req: tide::Request<()>) -> tide::Result {
             let millis: f64 = (micros as f64) / 1000.0;
             json!(ExtractedResponse {
                 ms: millis,
-                error: e.to_string(), // TODO is this right?
+                error: e.to_string(),
                 refs: vec![],
                 sources: vec![],
-                configs: vec![],
+                configs: serde_json::Value::Object(serde_json::Map::new()),
             }).into()
         },
     };
@@ -59,22 +62,17 @@ async fn parse(mut req: tide::Request<()>) -> tide::Result {
     tide::Result::Ok(res)
 }
 
-fn stringify_config(v: ConfigVal) -> String {
+fn jsonify_config(v: ConfigVal) -> serde_json::Value {
     match v {
-        ConfigVal::StringC(s) => s,
-        ConfigVal::BoolC(true) => "True".to_owned(),
-        ConfigVal::BoolC(false) => "False".to_owned(),
-        // TODO represents lists as "[]" with the quotes.
-        ConfigVal::ListC(list) => format!("[{}]", 
-            list.into_iter().map(stringify_config).collect::<Vec<String>>().join(", ")
+        ConfigVal::StringC(s) => serde_json::Value::String(s),
+        ConfigVal::BoolC(b) => serde_json::Value::Bool(b),
+        ConfigVal::ListC(list) => serde_json::Value::Array(
+            list.into_iter().map(jsonify_config).collect()
         ),
-        // TODO represents dicts as "{}" with the quotes.
-        ConfigVal::DictC(m) => {
-            let mut result = "{".to_owned();
-            let contents = m.into_iter().map(|(k, v)| format!("{}: {}", k, stringify_config(v))).collect::<Vec<String>>().join(", ");
-            result.push_str(&contents);
-            result.push_str("}");
-            result
-        }
+        ConfigVal::DictC(m) => serde_json::Value::Object(
+            m.into_iter()
+                .map(|(k, v)| (k, jsonify_config(v)))
+                .collect()
+        ),
     }
 }
