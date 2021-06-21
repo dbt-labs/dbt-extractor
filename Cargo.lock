@@ -59,7 +59,7 @@ dependencies = [
 [[package]]
 name = "tree-sitter-jinja2"
 version = "0.1.0"
-source = "git+ssh://git@github.com/fishtown-analytics/tree-sitter-jinja2?branch=rust-bindings#3a208bbc068c3e2f0aca6aee5edf65d89eff0287"
+source = "git+ssh://git@github.com/fishtown-analytics/tree-sitter-jinja2?branch=main#4f54210139bd1f7cd34737b3f52bab7bc2922812"
 dependencies = [
  "cc",
  "tree-sitter",
