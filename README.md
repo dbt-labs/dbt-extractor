@@ -27,7 +27,7 @@ This processor is composed of several stages:
 3. extractor
 
 Additionally, the following tools utilize the above processor:
-1. [TODO] browser-based demo of dbt extraction as you type
+1. browser-based demo of dbt extraction as you type
 
 The tree-sitter parser is located in the tree-sitter-jinja2 library. The rust bindings are used to traverse the concrete syntax tree that tree-sitter creates in order to create a typed abstract syntax tree in the type checking stage. The errors in the type checking stage are not raised to the user, and are instead used by developers to debug tests.
 
@@ -35,11 +35,13 @@ The parser is solely responsible for turning text into recognized values, while 
 
 The extractor uses the typed abstract syntax tree to easily identify all the refs, sources, and configs present and extract them.
 
-## [TODO] Running The Demo App
-To see the full implementation extract dbt values run live as you type in a browser, run:
+## Running The Demo App
+To see the full implementation extract dbt values live as you type in a browser, run:
 ```
 make demo
 ```
+It may take a moment for the demo to compile an optimized version of itself.
+
 Kill the server with ctrl+c to end the demo.
 
 ## Testing The Project
