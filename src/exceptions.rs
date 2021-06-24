@@ -72,3 +72,18 @@ fn expected_arity(expected: &Vec<usize>) -> String {
             "any".to_owned(),
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    // if you change this test, change the comments on the function to match
+    fn test_expected_arity() {
+        use super::expected_arity;
+        assert_eq!(expected_arity(&vec![1,4,3,2]), "1 to 4");
+        assert_eq!(expected_arity(&vec![1,4]), "1 to 4");
+        assert_eq!(expected_arity(&vec![3]), "3");
+        assert_eq!(expected_arity(&vec![]), "any");
+    }
+
+}
