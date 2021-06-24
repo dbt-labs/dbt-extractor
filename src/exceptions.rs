@@ -15,7 +15,7 @@ pub enum ParseError {
 // Errors from tree-sitter -> ExprU
 #[derive(Error, Debug, Clone, Eq, PartialEq)]
 pub enum SourceError {
-    #[error("Tree Sitter Error")]
+    #[error("Syntax error in source")]
     TreeSitterError,
     #[error("Utf8 Error: {0}")]
     Utf8Err(#[from] Utf8Error),
@@ -85,10 +85,9 @@ mod tests {
         use ExprType::*;
 
         let examples = [
-            // TODO: "syntax error in source"
             (
                 SourceE(TreeSitterError), 
-                "Source Error: Tree Sitter Error"
+                "Source Error: Syntax error in source"
             ),
             // excluding Utf8Err for now,
             (
