@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 tree-sitter = "0.19"
 tree-sitter-jinja2 = { git = "ssh://git@github.com/fishtown-analytics/tree-sitter-jinja2", branch = "main" }
+thiserror = "1.0.25"
