@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-D warnings"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build --tests
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - run: rustup component add rustfmt
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  python-macos:
+    needs: [check, build, test, fmt]
+    name: Build macos-py${{ matrix.python-version }}
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          default: true
+      - name: Build wheels - x86_64
+        uses: messense/maturin-action@v1
+        with:
+          target: x86_64
+          args: --release --out dist
+      - name: Install built wheel - x86_64
+        run: |
+          pip install dbt_extractor --no-index --find-links dist --force-reinstall
+          python -c "import dbt_extractor"
+      # - name: Build wheels - universal2
+      #   uses: messense/maturin-action@v1
+      #   with:
+      #     args: --release --universal2 --out dist --no-sdist -m python/Cargo.toml
+      # - name: Install built wheel - universal2
+      #   run: |
+      #     pip install crfs --no-index --find-links dist --force-reinstall
+      #     python -c "import crfs"
+      - name: Upload wheels
+        uses: actions/upload-artifact@v2
+        with:
+          name: wheels
+          path: dist
+
