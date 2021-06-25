@@ -1,90 +1,159 @@
-use std::fmt;
-use std::fmt::Display;
+use crate::extractor::ExprType;
 use std::str::Utf8Error;
-
-// TODO change Errors to contain &str not String?
+use thiserror::Error;
 
 
 // Top-level error type in the hierarchy
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Error, Debug, Clone, Eq, PartialEq)]
 pub enum ParseError {
-    SourceE(SourceError),
-    TypeE(TypeError),
+    #[error("Source Error: {0}")]
+    SourceE(#[from] SourceError),
+    #[error("Type Error: {0}")]
+    TypeE(#[from] TypeError),
 }
 
-impl Display for ParseError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ParseError::SourceE(e) => Display::fmt(e, f),
-            ParseError::TypeE(e) => Display::fmt(e, f),
-        }
-    }
-}
-
-// TODO use crate `thiserror` to simplify boilerplate
-#[derive(Debug, Clone, Eq, PartialEq)]
+// Errors from tree-sitter -> ExprU
+#[derive(Error, Debug, Clone, Eq, PartialEq)]
 pub enum SourceError {
+    #[error("Syntax error in source")]
     TreeSitterError,
-    Utf8Err(Utf8Error),
+    #[error("Utf8 Error: {0}")]
+    Utf8Err(#[from] Utf8Error),
+    #[error("Unknown Boolean value: {0}")]
     BadBoolean(String),
+    #[error("Unknown node type: {0}")]
     UnknownNodeType(String),
+    #[error("{0} is missing the required value {1}")]
     MissingValue(String, String),
+    #[error("Parse Failure")]
     ParseFailure,
 }
 
-impl Display for SourceError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            SourceError::TreeSitterError =>
-                write!(f, "tree-sitter found an error"),
-            SourceError::Utf8Err(e) =>
-                e.fmt(f),
-            SourceError::BadBoolean(s) =>
-                write!(f, "Unknown Boolean value: {}", s),
-            SourceError::UnknownNodeType(s) =>
-                write!(f, "Unknown node type: {}", s),
-            SourceError::MissingValue(outer, inner) =>
-                write!(f, "{} is missing the required value {}", outer, inner),
-            SourceError::ParseFailure =>
-                write!(f, "tree-sitter failed to parse the source"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
+// errors from ExprU -> ExprT
+#[derive(Error, Debug, Clone, Eq, PartialEq)]
 pub enum TypeError {
+    #[error("{0} cannot be assigned a {1}")]
     BadAssignment(String, String),
+    #[error("Keyword arguments must come at the end of the argument list.")]
     KwargsAreNotLast,
-    // TODO expected should be a Vec<usize> (e.g. - ref takes 1 or 2 args)
-    ArgumentMismatch { expected: String, found: usize },
-    // use ExprU::type_string() when creating this exception to get the right human readable name for each type.
-    // TODO add a new type `ExprType` that maps 1:1 values - types. Do string conversion after on that value.
-    TypeMismatch { expected: String, got: String },
+    #[error("Expected {} arguments. Found {found}.", expected_arity(expected))]
+    ArgumentMismatch { expected: Vec<usize>, found: usize },
+    #[error("Expected {}. Got {}.", .expected.to_string(), .got.to_string())]
+    TypeMismatch { expected: ExprType, got: ExprType },
+    #[error("Found unrecognized function named {0}.")]
     UnrecognizedFunction(String),
+    #[error("Found unexpected keyword argument {0}.")]
     UnexpectedKwarg(String),
+    #[error("Excluded keyword argument found: {0}.")]
     ExcludedKwarg(String),
-    UnsupportedConfigValue(String),
+    #[error("Config value cannot be of the type {}.", .0.to_string())]
+    UnsupportedConfigValue(ExprType),
 }
 
-impl Display for TypeError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            TypeError::BadAssignment(outer, inner) =>
-                write!(f, "{} cannot be assigned a {}", outer, inner),
-            TypeError::KwargsAreNotLast =>
-                write!(f, "Keyword arguments must come at the end of the argument list."),
-            TypeError::ArgumentMismatch { expected, found } =>
-                write!(f, "Expected {} arguments. Found {}.", expected, found),
-            TypeError::TypeMismatch { expected, got } =>
-                write!(f, "Expected {}. Got {} ", expected, got),
-            TypeError::UnrecognizedFunction(name) =>
-                write!(f, "Found unrecognized function named {}.", name),
-            TypeError::UnexpectedKwarg(key) =>
-                write!(f, "Found unexpected keyword argument {}.", key),
-            TypeError::ExcludedKwarg(key) =>
-                write!(f, "Excluded keyword argument found: {}.", key),
-            TypeError::UnsupportedConfigValue(value_type) =>
-                write!(f, "Config value cannot be of the type {}.", value_type),
+
+// -- helper functions --
+
+
+// expected_arity(vec![1,4,3,2]) == "1 to 4"
+// expected_arity(vec![1,4]) == "1 to 4"
+// expected_arity(vec![3]) == "3"
+// expected_arity(vec![]) == "any"
+fn expected_arity(expected: &Vec<usize>) -> String {
+    let mut _sorted = expected.clone();
+    _sorted.sort();
+    let sorted = _sorted;
+
+    match expected.len() {
+        x if x == 1 => 
+            sorted[0].to_string(),
+        x if x > 1 => 
+            vec![sorted[0].to_string(), "to".to_owned(), sorted[x-1].to_string()].join(" "),
+        _ => 
+            "any".to_owned(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn exception_messages_render_as_expected() {
+        use ParseError::*;
+        use SourceError::*;
+        use TypeError::*;
+        use ExprType::*;
+
+        let examples = [
+            (
+                SourceE(TreeSitterError), 
+                "Source Error: Syntax error in source"
+            ),
+            // excluding Utf8Err for now,
+            (
+                SourceE(BadBoolean("TrueFalse".to_owned())), 
+                "Source Error: Unknown Boolean value: TrueFalse"
+            ),
+            (
+                SourceE(UnknownNodeType("not_a_node".to_owned())),
+                "Source Error: Unknown node type: not_a_node"
+            ),
+            (
+                SourceE(MissingValue("kwarg".to_owned(), "key".to_owned())),
+                "Source Error: kwarg is missing the required value key"
+            ),
+            (
+                SourceE(ParseFailure),
+                "Source Error: Parse Failure"
+            ),
+            (
+                // TODO this exception shouldn't be taking String args
+                TypeE(BadAssignment("kwarg".to_owned(), "fn_call".to_owned())),
+                "Type Error: kwarg cannot be assigned a fn_call"
+            ),
+            (
+                TypeE(KwargsAreNotLast),
+                "Type Error: Keyword arguments must come at the end of the argument list."
+            ),
+            (
+                TypeE(ArgumentMismatch { expected: vec![1, 2], found: 0 }),
+                "Type Error: Expected 1 to 2 arguments. Found 0."
+            ),
+            (
+                TypeE(TypeMismatch { expected: Kwarg, got: String }),
+                "Type Error: Expected kwarg. Got string."
+            ),
+            (
+                TypeE(UnrecognizedFunction("refsourceconfig".to_owned())),
+                "Type Error: Found unrecognized function named refsourceconfig."
+            ),
+            (
+                TypeE(UnexpectedKwarg("boop".to_owned())),
+                "Type Error: Found unexpected keyword argument boop."
+            ),
+            (
+                TypeE(ExcludedKwarg("pre-hook".to_owned())),
+                "Type Error: Excluded keyword argument found: pre-hook."
+            ),
+            (
+                TypeE(UnsupportedConfigValue(FnCall)),
+                "Type Error: Config value cannot be of the type fn_call."
+            ),
+        ];
+
+        // actually make the assertions
+        for (e, msg) in &examples {
+            assert_eq!(format!("{}", e), msg.to_owned())
         }
     }
+
+    #[test]
+    // if you change this test, change the comments on the function to match
+    fn test_expected_arity() {
+        assert_eq!(expected_arity(&vec![1,4,3,2]), "1 to 4");
+        assert_eq!(expected_arity(&vec![1,4]), "1 to 4");
+        assert_eq!(expected_arity(&vec![3]), "3");
+        assert_eq!(expected_arity(&vec![]), "any");
+    }
+
 }

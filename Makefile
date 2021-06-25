@@ -14,8 +14,15 @@ test: install
 run:
 	cargo build && cargo run
 
+# builds optimized binary since the demo displays rumtimes
+demo:
+	cd demo \
+	&& open demo.html \
+	&& cargo run --release
+
 clean:
-	cargo clean
+	cargo clean && \
+	cd demo && cargo clean
 
 # these stages don't output files by the same name
-.PHONY: all install build test run clean
+.PHONY: all install build test run demo clean

@@ -42,6 +42,10 @@ name = "dbt-extractor"
 version = "0.0.1"
 dependencies = [
  "pyo3",
+<<<<<<< HEAD
+=======
+ "thiserror",
+>>>>>>> c11f5ca165ac4ccd822d1ace46449853c62ed5bc
  "tree-sitter",
  "tree-sitter-jinja2",
 ]
@@ -241,9 +245,15 @@ dependencies = [
 
 [[package]]
 name = "redox_syscall"
+<<<<<<< HEAD
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "742739e41cd49414de871ea5e549afb7e2a3ac77b589bcbebe8c82fab37147fc"
+=======
+version = "0.2.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ab49abadf3f9e1c4bc499e8845e152ad87d2ad2d30371841171169e9d75feee"
+>>>>>>> c11f5ca165ac4ccd822d1ace46449853c62ed5bc
 dependencies = [
  "bitflags",
 ]
@@ -289,6 +299,29 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
+=======
+name = "thiserror"
+version = "1.0.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fa6f76457f59514c7eeb4e59d891395fab0b2fd1d40723ae737d64153392e9c6"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8a36768c0fbf1bb15eca10defa29526bda730a2376c2ab4393ccfa16fb1a318d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+>>>>>>> c11f5ca165ac4ccd822d1ace46449853c62ed5bc
 name = "tree-sitter"
 version = "0.19.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -301,7 +334,7 @@ dependencies = [
 [[package]]
 name = "tree-sitter-jinja2"
 version = "0.1.0"
-source = "git+ssh://git@github.com/fishtown-analytics/tree-sitter-jinja2?branch=rust-bindings#3a208bbc068c3e2f0aca6aee5edf65d89eff0287"
+source = "git+ssh://git@github.com/fishtown-analytics/tree-sitter-jinja2?branch=main#52da7b0b1480b23381ea84cf5ea3bf058dd6d8c4"
 dependencies = [
  "cc",
  "tree-sitter",
