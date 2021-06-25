@@ -53,7 +53,7 @@ jobs:
           args: --all -- --check
 
   python-macos:
-    needs: [check, build, test, fmt]
+    needs: [build, test, fmt]
     name: Build macos-py${{ matrix.python-version }}
     runs-on: macos-latest
     steps:
