@@ -204,23 +204,22 @@ jobs:
   #     with:
   #       name: wheels
   #       path: dist
-
-    publish:
-      needs: [python-macos, python-windows, python-linux]
-      name: Publish to PyPI
-      runs-on: ubuntu-latest
-      if: ${{ github.event.inputs.publish == 'true' }}
-      steps:
-        - uses: actions/download-artifact@v2
-          with:
-            name: wheels
-        - uses: actions/setup-python@v2
-          with:
-            python-version: 3.9
-        - name: Publish to PyPi
-          env:
-            TWINE_USERNAME: __token__
-            TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-          run: |
-            pip install --upgrade twine
-            twine upload --skip-existing *
+  publish:
+    needs: [python-macos, python-windows, python-linux]
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.publish == 'true' }}
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: wheels
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Publish to PyPi
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          pip install --upgrade twine
+          twine upload --skip-existing *
