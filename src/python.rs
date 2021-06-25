@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 
-// Can't export PyConfig directly: https://github.com/PyO3/pyo3/issues/417
+// Can't export ConfigVal directly: https://github.com/PyO3/pyo3/issues/417
 fn convert_config(py: Python, v: ConfigVal) -> PyObject {
     match v {
         ConfigVal::StringC(s) => s.to_object(py),
@@ -46,8 +46,8 @@ fn pythonize(py: Python, extraction: Extraction) -> PyResult<PyObject> {
     Ok(dict.to_object(py))
 }
 
-// naively converts a Result to a PyResult by using the string representation of the
-// Rust exception as the value for a PyException.
+// Naively converts a Result to a PyResult by using the string
+// representation of the Rust exception as the value for a PyException.
 fn to_py_result<T, E: Display>(r: Result<T, E>) -> PyResult<T>{
     match r {
         Ok(v)  => Ok(v),
@@ -55,7 +55,7 @@ fn to_py_result<T, E: Display>(r: Result<T, E>) -> PyResult<T>{
     }
 }
 
-// The python function exposing this rust implementation
+// The python function exposing this rust implementation.
 // `PyResult` raises Python exceptions. Calling code should catch and continue.
 #[pyfunction]
 pub fn py_extract_from_source(source: &str) -> PyResult<PyObject> {
