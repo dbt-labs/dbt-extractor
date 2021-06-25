@@ -20,7 +20,8 @@ jobs:
           override: true
       - uses: actions-rs/cargo@v1
         with:
-          command: build --tests
+          command: build 
+          args: --tests
 
   test:
     name: Test
