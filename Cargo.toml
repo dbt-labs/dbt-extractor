@@ -1,6 +1,6 @@
 [package]
 name = "dbt-extractor"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Nathaniel May <nathaniel.may@fishtownanalytics.com>"]
 edition = "2018"
 
