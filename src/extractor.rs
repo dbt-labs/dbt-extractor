@@ -1,17 +1,7 @@
-use crate::exceptions::{
-    ParseError,
-    SourceError,
-    TypeError,
-};
+use crate::exceptions::{ParseError, SourceError, TypeError};
 use std::collections::HashMap;
-use std::str::{
-    from_utf8,
-};
-use tree_sitter::{
-    Node,
-    Tree,
-};
-
+use std::str::from_utf8;
+use tree_sitter::{Node, Tree};
 
 // final result
 // this is snug fit for the shape of the data
@@ -32,7 +22,12 @@ impl Extraction {
         Extraction {
             refs: [&self.refs[..], &other.refs[..]].concat(),
             sources: [&self.sources[..], &other.sources[..]].concat(),
-            configs: self.configs.clone().into_iter().chain(other.configs.clone()).collect(),
+            configs: self
+                .configs
+                .clone()
+                .into_iter()
+                .chain(other.configs.clone())
+                .collect(),
         }
     }
 
@@ -43,7 +38,7 @@ impl Extraction {
     pub fn populate(
         refs: Option<Vec<(String, Option<String>)>>,
         sources: Option<Vec<(String, String)>>,
-        configs: Option<HashMap<String, ConfigVal>>
+        configs: Option<HashMap<String, ConfigVal>>,
     ) -> Extraction {
         Extraction {
             refs: refs.unwrap_or(vec![]),
@@ -107,12 +102,12 @@ impl ToString for ExprType {
     fn to_string(&self) -> String {
         match self {
             ExprType::String => "string".to_owned(),
-            ExprType::Bool   => "bool".to_owned(),
-            ExprType::List   => "list".to_owned(),
-            ExprType::Dict   => "dict".to_owned(),
+            ExprType::Bool => "bool".to_owned(),
+            ExprType::List => "list".to_owned(),
+            ExprType::Dict => "dict".to_owned(),
             ExprType::FnCall => "fn_call".to_owned(),
-            ExprType::Root   => "root".to_owned(),
-            ExprType::Kwarg  => "kwarg".to_owned(),
+            ExprType::Root => "root".to_owned(),
+            ExprType::Kwarg => "kwarg".to_owned(),
         }
     }
 }
@@ -135,7 +130,7 @@ impl ExprType {
 // frequently used to wrap exceptions lower on the hierarchy into their parent type
 fn map_err<A, E1, E2>(r: Result<A, E1>, f: fn(E1) -> E2) -> Result<A, E2> {
     match r {
-        Ok(a)  => Ok(a),
+        Ok(a) => Ok(a),
         Err(e) => Err(f(e)),
     }
 }
@@ -143,12 +138,12 @@ fn map_err<A, E1, E2>(r: Result<A, E1>, f: fn(E1) -> E2) -> Result<A, E2> {
 // checks for tree-sitter `error` and `missing` values
 fn error_anywhere(node: &Node) -> bool {
     if node.has_error() {
-        return true
+        return true;
     };
 
     for child in node.children(&mut node.walk()) {
         error_anywhere(&child);
-    };
+    }
 
     false
 }
@@ -156,7 +151,10 @@ fn error_anywhere(node: &Node) -> bool {
 // in the tree-sitter grammar some elements are named, those are the string values used to retrieve children.
 fn child_by_field_name<'a, 'b>(node: &'a Node, name: &'b str) -> Result<Node<'a>, SourceError> {
     node.child_by_field_name(name)
-        .ok_or(SourceError::MissingValue(node.kind().to_owned(), name.to_owned()))
+        .ok_or(SourceError::MissingValue(
+            node.kind().to_owned(),
+            name.to_owned(),
+        ))
 }
 
 // tree-sitter returns a concrete syntax tree. only named elements form the abstract syntax tree.
@@ -187,39 +185,37 @@ fn to_ast(source: &Vec<u8>, node: Node) -> Result<ExprU, SourceError> {
     let kind = node.kind();
     match kind {
         "source_file" => {
-            let x: Result<Vec<ExprU>, SourceError> = 
-            named_children(node)
-                    .into_iter()
-                    .map(|child| to_ast(source, child))
-                    .collect();
+            let x: Result<Vec<ExprU>, SourceError> = named_children(node)
+                .into_iter()
+                .map(|child| to_ast(source, child))
+                .collect();
 
             match x {
                 Ok(children) => Ok(ExprU::RootU(children)),
-                Err(_)       => Err(SourceError::TreeSitterError),
-            }
-        },
-
-        "lit_string" => {
-            match text_from_node(&source, &node) {
-                Ok(s)  => Ok(ExprU::StringU(strip_first_and_last(s))),
                 Err(_) => Err(SourceError::TreeSitterError),
             }
+        }
+
+        "lit_string" => match text_from_node(&source, &node) {
+            Ok(s) => Ok(ExprU::StringU(strip_first_and_last(s))),
+            Err(_) => Err(SourceError::TreeSitterError),
         },
 
-        "bool" => {
-            match text_from_node(&source, &node) {
-                Ok("True")  => Ok(ExprU::BoolU(true)),
-                Ok("False") => Ok(ExprU::BoolU(false)),
-                Ok(s)       => Err(SourceError::BadBoolean(s.to_owned())),
-                Err(_)      => Err(SourceError::TreeSitterError),
-            }
+        "bool" => match text_from_node(&source, &node) {
+            Ok("True") => Ok(ExprU::BoolU(true)),
+            Ok("False") => Ok(ExprU::BoolU(false)),
+            Ok(s) => Err(SourceError::BadBoolean(s.to_owned())),
+            Err(_) => Err(SourceError::TreeSitterError),
         },
 
         "kwarg" => {
             let key = text_from_node(source, &child_by_field_name(&node, "key")?)?;
             let value = child_by_field_name(&node, "value")?;
-            Ok(ExprU::KwargU(key.to_owned(), Box::new(to_ast(source, value)?)))
-        },
+            Ok(ExprU::KwargU(
+                key.to_owned(),
+                Box::new(to_ast(source, value)?),
+            ))
+        }
 
         "dict" => {
             let mut dict = HashMap::new();
@@ -232,7 +228,7 @@ fn to_ast(source: &Vec<u8>, node: Node) -> Result<ExprU, SourceError> {
                 dict.insert(key, value);
             }
             Ok(ExprU::DictU(dict))
-        },
+        }
 
         "list" => {
             let mut list = vec![];
@@ -240,7 +236,7 @@ fn to_ast(source: &Vec<u8>, node: Node) -> Result<ExprU, SourceError> {
                 list.push(to_ast(source, elem)?);
             }
             Ok(ExprU::ListU(list))
-        },
+        }
 
         "fn_call" => {
             let name = text_from_node(source, &child_by_field_name(&node, "fn_name")?)?;
@@ -250,9 +246,9 @@ fn to_ast(source: &Vec<u8>, node: Node) -> Result<ExprU, SourceError> {
                 args.push(to_ast(source, arg)?)
             }
             Ok(ExprU::FnCallU(name.to_owned(), args))
-        },
+        }
 
-        s => Err(SourceError::UnknownNodeType(s.to_owned()))
+        s => Err(SourceError::UnknownNodeType(s.to_owned())),
     }
 }
 
@@ -260,16 +256,16 @@ fn kwargs_last(args: &Vec<ExprU>) -> bool {
     let mut seen_kwarg = false;
     for arg in args {
         match arg {
-            ExprU::KwargU(_, _) => 
-                seen_kwarg = true,
-            _ => 
+            ExprU::KwargU(_, _) => seen_kwarg = true,
+            _ => {
                 if seen_kwarg {
-                    return false
+                    return false;
                 } else {
                     ()
-                },
+                }
+            }
         }
-    };
+    }
     true
 }
 
@@ -292,8 +288,10 @@ fn type_check_configs(expr: ExprU) -> Result<ConfigVal, TypeError> {
             .map(|(key, elem)| type_check_configs(elem).map(|typed| (key, typed)))
             .collect::<Result<HashMap<String, ConfigVal>, TypeError>>()
             .map(|typed_elems| ConfigVal::DictC(typed_elems)),
-            
-        unsupported => Err(TypeError::UnsupportedConfigValue(ExprType::from(&unsupported))),
+
+        unsupported => Err(TypeError::UnsupportedConfigValue(ExprType::from(
+            &unsupported,
+        ))),
     }
 }
 
@@ -301,57 +299,63 @@ fn type_check_configs(expr: ExprU) -> Result<ConfigVal, TypeError> {
 fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
     match ast {
         ExprU::RootU(exprs) => {
-            let x: Result<Vec<ExprT>, TypeError> = 
-                exprs
-                    .into_iter()
-                    .map(type_check)
-                    .collect();
+            let x: Result<Vec<ExprT>, TypeError> = exprs.into_iter().map(type_check).collect();
             x.map(ExprT::RootT)
-        },
+        }
 
         ExprU::StringU(v) => Ok(ExprT::StringT(v)),
 
         ExprU::BoolU(v) => Ok(ExprT::BoolT(v)),
 
-        // Throw away names. 
+        // Throw away names.
         // In the step before getting here, names will be checked for correctness.
         ExprU::KwargU(_, value) => {
             match *value {
-                ExprU::FnCallU(name, _) => Err(TypeError::BadAssignment("kwarg".to_owned(), ["fn_call", &name].join(" "))),
+                ExprU::FnCallU(name, _) => Err(TypeError::BadAssignment(
+                    "kwarg".to_owned(),
+                    ["fn_call", &name].join(" "),
+                )),
                 // No intermediary kwarg type. Just return the underlying value.
                 _ => type_check(*value),
             }
-        },
+        }
 
         ExprU::DictU(m) => {
-            let x = m.iter()
+            let x = m
+                .iter()
                 .map(|(k, vu)| type_check(vu.clone()).map(|vt| (k.clone(), vt)))
                 .collect::<Result<HashMap<String, ExprT>, TypeError>>()?;
             Ok(ExprT::DictT(x))
-        },
+        }
 
         ExprU::ListU(elems) => {
             let mut list = vec![];
             for elem in elems {
-                match elem  {
-                    ExprU::FnCallU(name, _) => 
-                        return Err(TypeError::BadAssignment("list element".to_owned(), ["fn_call", &name].join(" "))),
-                    _ => 
-                        ()
+                match elem {
+                    ExprU::FnCallU(name, _) => {
+                        return Err(TypeError::BadAssignment(
+                            "list element".to_owned(),
+                            ["fn_call", &name].join(" "),
+                        ))
+                    }
+                    _ => (),
                 }
                 list.push(type_check(elem)?);
             }
             Ok(ExprT::ListT(list))
-        },
+        }
 
         ExprU::FnCallU(name, args) => {
             if !kwargs_last(&args) {
-                return Err(TypeError::KwargsAreNotLast)
+                return Err(TypeError::KwargsAreNotLast);
             };
             match &name[..] {
                 "ref" => {
                     if args.len() != 1 && args.len() != 2 {
-                        return Err(TypeError::ArgumentMismatch { expected: vec![1, 2], found: args.len() } )
+                        return Err(TypeError::ArgumentMismatch {
+                            expected: vec![1, 2],
+                            found: args.len(),
+                        });
                     }
                     let typed_args = args
                         .into_iter()
@@ -360,75 +364,81 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                                 // refs can only take string literals
                                 ExprU::StringU(s) => Ok(s),
                                 // error on everything that isn't a string literal
-                                not_string => Err(
-                                    TypeError::TypeMismatch {
-                                        expected: ExprType::String,
-                                        got: ExprType::from(&not_string)
-                                    }
-                                )
+                                not_string => Err(TypeError::TypeMismatch {
+                                    expected: ExprType::String,
+                                    got: ExprType::from(&not_string),
+                                }),
                             }
                         })
                         .collect::<Result<Vec<String>, TypeError>>()?;
-                    Ok(ExprT::RefT(typed_args[0].clone(), typed_args.get(1).map(|x| x.to_owned())))
-                },
+                    Ok(ExprT::RefT(
+                        typed_args[0].clone(),
+                        typed_args.get(1).map(|x| x.to_owned()),
+                    ))
+                }
 
                 "source" => {
                     let source_args = args.clone();
                     if args.len() != 2 {
-                        return Err(TypeError::ArgumentMismatch { expected: vec![2], found: args.len() } )
+                        return Err(TypeError::ArgumentMismatch {
+                            expected: vec![2],
+                            found: args.len(),
+                        });
                     }
                     let source_name = match &source_args[0] {
-                        ExprU::KwargU(name, value) if name == "source_name" =>
-                            match &**value {
-                                // source_name if called by kwarg can only be a string literal
-                                ExprU::StringU(s) => Ok(s),
-                                // error on everything else
-                                other_type => Err(TypeError::TypeMismatch {
-                                    expected: ExprType::String,
-                                    got: ExprType::from(other_type).to_owned()
-                                }),
-                            }
-                        ExprU::KwargU(name, _) if name != "source_name" =>
-                            Err(TypeError::UnexpectedKwarg(name.to_owned())),
-                        // source_name if called positionally can only be a string literal
-                        ExprU::StringU(s) =>
-                            Ok(s),
-                        // error on everything else
-                        other_type => 
-                            Err(TypeError::TypeMismatch {
+                        ExprU::KwargU(name, value) if name == "source_name" => match &**value {
+                            // source_name if called by kwarg can only be a string literal
+                            ExprU::StringU(s) => Ok(s),
+                            // error on everything else
+                            other_type => Err(TypeError::TypeMismatch {
                                 expected: ExprType::String,
-                                got: ExprType::from(other_type),
+                                got: ExprType::from(other_type).to_owned(),
                             }),
+                        },
+                        ExprU::KwargU(name, _) if name != "source_name" => {
+                            Err(TypeError::UnexpectedKwarg(name.to_owned()))
+                        }
+                        // source_name if called positionally can only be a string literal
+                        ExprU::StringU(s) => Ok(s),
+                        // error on everything else
+                        other_type => Err(TypeError::TypeMismatch {
+                            expected: ExprType::String,
+                            got: ExprType::from(other_type),
+                        }),
                     }?;
                     let table_name = match &source_args[1] {
-                        ExprU::KwargU(name, value) if name == "table_name" =>
-                        match &**value {
+                        ExprU::KwargU(name, value) if name == "table_name" => match &**value {
                             // source table_name if called by kwarg can only be string a literal
                             ExprU::StringU(s) => Ok(s),
                             // error on everything else
                             other_type => Err(TypeError::TypeMismatch {
                                 expected: ExprType::String,
-                                got: ExprType::from(other_type).to_owned()
+                                got: ExprType::from(other_type).to_owned(),
                             }),
+                        },
+                        ExprU::KwargU(name, _) if name != "table_name" => {
+                            Err(TypeError::UnexpectedKwarg(name.to_owned()))
                         }
-                        ExprU::KwargU(name, _) if name != "table_name" =>
-                            Err(TypeError::UnexpectedKwarg(name.to_owned())),
                         // source table_name if called positionally can only be string a literal
-                        ExprU::StringU(s) =>
-                            Ok(s),
+                        ExprU::StringU(s) => Ok(s),
                         // error on everything else
-                        other_type => 
-                            Err(TypeError::TypeMismatch {
-                                expected: ExprType::String,
-                                got: ExprType::from(other_type),
-                            }),
+                        other_type => Err(TypeError::TypeMismatch {
+                            expected: ExprType::String,
+                            got: ExprType::from(other_type),
+                        }),
                     }?;
-                    Ok(ExprT::SourceT(source_name.to_owned(), table_name.to_owned()))
-                },
+                    Ok(ExprT::SourceT(
+                        source_name.to_owned(),
+                        table_name.to_owned(),
+                    ))
+                }
 
                 "config" => {
                     if args.len() < 1 {
-                        return Err(TypeError::ArgumentMismatch { expected: vec![], found: args.len() } )
+                        return Err(TypeError::ArgumentMismatch {
+                            expected: vec![],
+                            found: args.len(),
+                        });
                     }
                     let excluded = vec!["post-hook", "post_hook", "pre-hook", "pre_hook"];
                     let typed_args = args
@@ -436,58 +446,62 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                         .map(|arg| {
                             match arg {
                                 // error on these specific kwargs that this extractor can't handle yet
-                                ExprU::KwargU(key, _) if excluded.contains(&&key[..]) =>
-                                    Err(TypeError::ExcludedKwarg(key)),
+                                ExprU::KwargU(key, _) if excluded.contains(&&key[..]) => {
+                                    Err(TypeError::ExcludedKwarg(key))
+                                }
                                 ExprU::KwargU(key, value) => {
                                     // valid config value types are smaller than the whole set
                                     // so we're using this specialized function to return a narrower type
                                     // instead of `type_check` which returns ExprT
                                     let typed_value = type_check_configs(*value)?;
                                     Ok((key, typed_value))
-                                },
-                                other_type =>
-                                    Err(TypeError::TypeMismatch {
-                                        expected: ExprType::Kwarg,
-                                        got: ExprType::from(&other_type)
-                                    }),
+                                }
+                                other_type => Err(TypeError::TypeMismatch {
+                                    expected: ExprType::Kwarg,
+                                    got: ExprType::from(&other_type),
+                                }),
                             }
                         })
                         .collect::<Result<HashMap<String, ConfigVal>, TypeError>>()?;
                     Ok(ExprT::ConfigT(typed_args))
-                },
+                }
 
                 name => Err(TypeError::UnrecognizedFunction(name.to_owned())),
             }
-        },
+        }
     }
 }
 
-// extract refs sources and configs from the typed ast. 
+// extract refs sources and configs from the typed ast.
 // there is no error in the return type because we have caught them all at this point
-// that invariant is encoded in the ExprT input type. 
+// that invariant is encoded in the ExprT input type.
 // implemented like `fold` over a tree structure.
 fn extract_from(ast: ExprT) -> Extraction {
     match ast {
-        ExprT::RootT(exprs) => 
-            // immutably rolls all the results up into one
-            exprs.into_iter().fold(Extraction::new(), |b, a| b.mappend(&extract_from(a))),
-        ExprT::RefT(x, y) =>
-            Extraction::populate(Some(vec![(x, y)]), None, None),
-        ExprT::SourceT(x, y) =>
-            Extraction::populate(None, Some(vec![(x, y)]), None),
-        ExprT::ConfigT(configs) =>
-            Extraction::populate(None, None, Some(configs)),
+        ExprT::RootT(exprs) =>
+        // immutably rolls all the results up into one
+        {
+            exprs
+                .into_iter()
+                .fold(Extraction::new(), |b, a| b.mappend(&extract_from(a)))
+        }
+        ExprT::RefT(x, y) => Extraction::populate(Some(vec![(x, y)]), None, None),
+        ExprT::SourceT(x, y) => Extraction::populate(None, Some(vec![(x, y)]), None),
+        ExprT::ConfigT(configs) => Extraction::populate(None, None, Some(configs)),
         // otherwise, there's nothing to extract
-        _ =>
-            Extraction::new()
+        _ => Extraction::new(),
     }
 }
 
 // go go gadget tree-sitter!
 fn run_tree_sitter(source_bytes: &Vec<u8>) -> Result<Tree, SourceError> {
     let mut parser = tree_sitter::Parser::new();
-    parser.set_language(tree_sitter_jinja2::language()).expect("Error loading jinja2 grammar");
-    let tree = parser.parse(source_bytes, None).ok_or(SourceError::ParseFailure)?;
+    parser
+        .set_language(tree_sitter_jinja2::language())
+        .expect("Error loading jinja2 grammar");
+    let tree = parser
+        .parse(source_bytes, None)
+        .ok_or(SourceError::ParseFailure)?;
     if error_anywhere(&tree.root_node()) {
         // we may want to know what this error is. Could use a different function to walk
         // the tree and collect error information instead of just detecting errors.
@@ -501,13 +515,13 @@ fn run_tree_sitter(source_bytes: &Vec<u8>) -> Result<Tree, SourceError> {
 pub fn extract_from_source(source: &str) -> Result<Extraction, ParseError> {
     // convert text to bytes
     let source_bytes = source.as_bytes().to_vec();
-    
+
     // run tree sitter on source
     let tree = map_err(run_tree_sitter(&source_bytes), ParseError::SourceE)?;
 
     // convert to internal ast
     let ast = map_err(to_ast(&source_bytes, tree.root_node()), ParseError::SourceE)?;
-    
+
     // type check ast
     let typed_ast = map_err(type_check(ast), ParseError::TypeE)?;
 
@@ -521,14 +535,17 @@ mod type_check_tests {
     use super::*;
 
     fn get_results(sources: Vec<&str>) -> Vec<(&str, Result<ExprT, ParseError>)> {
-        sources.into_iter().map(|source| {
-            let source_bytes = source.as_bytes().to_vec();
-            let ast = run_tree_sitter(&source_bytes)
-                .and_then(|tree| to_ast(&source_bytes, tree.root_node()));
-            let typed_ast = map_err(ast, ParseError::SourceE)
-                .and_then(|ast| map_err(type_check(ast), ParseError::TypeE));
-            (source, typed_ast)
-        }).collect()
+        sources
+            .into_iter()
+            .map(|source| {
+                let source_bytes = source.as_bytes().to_vec();
+                let ast = run_tree_sitter(&source_bytes)
+                    .and_then(|tree| to_ast(&source_bytes, tree.root_node()));
+                let typed_ast = map_err(ast, ParseError::SourceE)
+                    .and_then(|ast| map_err(type_check(ast), ParseError::TypeE));
+                (source, typed_ast)
+            })
+            .collect()
     }
 
     fn assert_all_type_check(sources: Vec<&str>) {
@@ -539,9 +556,9 @@ mod type_check_tests {
                     println!("source:         {}", source);
                     println!("produced error: {}", e);
                     assert!(false)
-                },
+                }
             }
-        } 
+        }
     }
 
     fn assert_none_type_check(sources: Vec<&str>) {
@@ -552,10 +569,10 @@ mod type_check_tests {
                     println!("source: {}", source);
                     println!("produced ast: {:?}", ast);
                     assert!(false)
-                },
+                }
                 (_, Err(_)) => assert!(true),
             }
-        } 
+        }
     }
 
     fn assert_produces_tree(source: &str, expect: ExprT) {
@@ -565,8 +582,8 @@ mod type_check_tests {
                 println!("source:         {}", source);
                 println!("produced error: {}", e);
                 assert!(false)
-            },
-        } 
+            }
+        }
     }
 
     fn assert_fails_with(source: &str, expect: ParseError) {
@@ -576,7 +593,7 @@ mod type_check_tests {
                 println!("source: {}", source);
                 println!("produced ast: {:?}", ast);
                 assert!(false)
-            },
+            }
             (_, Err(e)) => assert_eq!(*e, expect),
         }
     }
@@ -616,7 +633,7 @@ mod type_check_tests {
             "{{ config(key=False) }}",
             "{{ config(key=['v1,','v2']) }}",
             "{{ config(key={'k': 'v'}) }}",
-            "{{ config(key=[{'k':['v', {'x': 'y'}]}, ['a', 'b', 'c']]) }}"
+            "{{ config(key=[{'k':['v', {'x': 'y'}]}, ['a', 'b', 'c']]) }}",
         ])
     }
 
@@ -626,7 +643,7 @@ mod type_check_tests {
             "{{ config('value') }}",
             "{{ config(True) }}",
             "{{ config(['v1,','v2']) }}",
-            "{{ config({'k': 'v'}) }}"
+            "{{ config({'k': 'v'}) }}",
         ])
     }
 
@@ -635,7 +652,7 @@ mod type_check_tests {
         assert_all_type_check(vec![
             "{{ source(source_name='src', table_name='table') }}",
             "{{ source('src', table_name='table') }}",
-            "{{ source('src', 'table') }}"
+            "{{ source('src', 'table') }}",
         ])
     }
 
@@ -644,7 +661,7 @@ mod type_check_tests {
         assert_none_type_check(vec![
             "{{ source(source_name='src', BAD_NAME='table') }}",
             "{{ source(BAD_NAME='src', table_name='table') }}",
-            "{{ source(BAD_NAME='src', BAD_NAME='table') }}"
+            "{{ source(BAD_NAME='src', BAD_NAME='table') }}",
         ])
     }
 
@@ -670,10 +687,7 @@ mod type_check_tests {
 
     #[test]
     fn ref_accepts_one_and_two_strings() {
-        assert_all_type_check(vec![
-            "{{ ref('two', 'args') }}",
-            "{{ ref('one arg') }}"
-        ])
+        assert_all_type_check(vec!["{{ ref('two', 'args') }}", "{{ ref('one arg') }}"])
     }
 
     #[test]
@@ -682,7 +696,7 @@ mod type_check_tests {
             "{{ ref('too', 'many', 'strings') }}",
             "{{ ref() }}",
             "{{ ref(kwarg='is_wrong') }}",
-            "{{ ref(['list is wrong']) }}"
+            "{{ ref(['list is wrong']) }}",
         ])
     }
 
@@ -692,7 +706,7 @@ mod type_check_tests {
             "{{ [ref('my_table')] }}",
             "{{ [config(x='y')] }}",
             "{{ config(x=ref('my_table')) }}",
-            "{{ source(ref('my_table')) }}"
+            "{{ source(ref('my_table')) }}",
         ])
     }
 
@@ -702,7 +716,7 @@ mod type_check_tests {
             "{{ config(pre_hook='x') }}",
             "{{ config(pre-hook='x') }}",
             "{{ config(post_hook='x') }}",
-            "{{ config(post-hook='x') }}"
+            "{{ config(post-hook='x') }}",
         ])
     }
 
@@ -712,20 +726,19 @@ mod type_check_tests {
             "{% config(x='y') %}",
             "{% if(whatever) do_something() %}",
             "doing stuff {{ ref('str') }} stuff {% expression %}",
-            "{{ {% psych! nested expression %} }}"
+            "{{ {% psych! nested expression %} }}",
         ])
     }
 
     #[test]
     fn top_level_kwargs_are_rejected() {
-        assert_none_type_check(vec![
-            "{{ kwarg='value' }}"
-        ])
+        assert_none_type_check(vec!["{{ kwarg='value' }}"])
     }
 
     #[test]
     fn multi_block_with_jinja_expression_rejected() {
-        assert_none_type_check(vec![r#"
+        assert_none_type_check(vec![
+            r#"
 {{ config(key='value') }}
 with
 something as (
@@ -734,7 +747,7 @@ where {% is_incremental() %} and my_bool
 ),
 other as (
     there's like ten more of these as blocks.
-)"#
+)"#,
         ])
     }
 
@@ -743,22 +756,14 @@ other as (
     // all the kinds of errors it could return.
     #[test]
     fn fails_on_open_jinja_brackets() {
-        assert_none_type_check(vec![
-            "{{ ref()",
-            "{{ True",
-            "{{",
-            "{{ 'str' "
-        ])
+        assert_none_type_check(vec!["{{ ref()", "{{ True", "{{", "{{ 'str' "])
     }
 
     #[test]
     fn ref_ast() {
         assert_produces_tree(
-            "{{ ref('my_table') }}"
-            ,
-            ExprT::RootT(
-                vec![ExprT::RefT("my_table".to_string(), None)]
-            )
+            "{{ ref('my_table') }}",
+            ExprT::RootT(vec![ExprT::RefT("my_table".to_string(), None)]),
         )
     }
 
@@ -772,58 +777,53 @@ other as (
                 field3
             from {{ ref('x') }}
             join {{ ref('y') }}
-            "#
-            ,
+            "#,
             ExprT::RootT(vec![
-                ExprT::RefT("x".to_string(), None), 
-                ExprT::RefT("y".to_string(), None)])
+                ExprT::RefT("x".to_string(), None),
+                ExprT::RefT("y".to_string(), None),
+            ]),
         )
     }
 
     #[test]
     fn config_ast() {
         let mut dict = HashMap::new();
-        dict.insert("dict".to_string(), ConfigVal::ListC(vec![ConfigVal::StringC("value".to_string())]));
+        dict.insert(
+            "dict".to_string(),
+            ConfigVal::ListC(vec![ConfigVal::StringC("value".to_string())]),
+        );
 
         let mut config = HashMap::new();
         config.insert("k1".to_string(), ConfigVal::DictC(dict));
         config.insert("k2".to_string(), ConfigVal::StringC("str".to_string()));
 
         assert_produces_tree(
-            "{{ config(k1={'dict': ['value']}, k2='str') }}"
-            ,
-            ExprT::RootT(vec![
-                ExprT::ConfigT(config)
-            ])
+            "{{ config(k1={'dict': ['value']}, k2='str') }}",
+            ExprT::RootT(vec![ExprT::ConfigT(config)]),
         )
     }
 
     #[test]
     fn source_ast() {
         assert_produces_tree(
-            "{{ source('x', table_name='y') }}"
-            ,
-            ExprT::RootT(vec![
-                ExprT::SourceT("x".to_string(), "y".to_string())
-            ])
+            "{{ source('x', table_name='y') }}",
+            ExprT::RootT(vec![ExprT::SourceT("x".to_string(), "y".to_string())]),
         )
     }
 
     #[test]
     fn jinja_expression_ast() {
         assert_fails_with(
-            "{% expression %}"
-            ,
-            ParseError::SourceE(SourceError::TreeSitterError)
+            "{% expression %}",
+            ParseError::SourceE(SourceError::TreeSitterError),
         )
     }
 
     #[test]
     fn kwarg_order() {
         assert_fails_with(
-            "{{ source(source_name='kwarg', 'positional') }}"
-            ,
-            ParseError::TypeE(TypeError::KwargsAreNotLast)
+            "{{ source(source_name='kwarg', 'positional') }}",
+            ParseError::TypeE(TypeError::KwargsAreNotLast),
         )
     }
 }

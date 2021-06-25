@@ -2,7 +2,6 @@ use crate::extractor::ExprType;
 use std::str::Utf8Error;
 use thiserror::Error;
 
-
 // Top-level error type in the hierarchy
 #[derive(Error, Debug, Clone, Eq, PartialEq)]
 pub enum ParseError {
@@ -50,9 +49,7 @@ pub enum TypeError {
     UnsupportedConfigValue(ExprType),
 }
 
-
 // -- helper functions --
-
 
 // expected_arity(vec![1,4,3,2]) == "1 to 4"
 // expected_arity(vec![1,4]) == "1 to 4"
@@ -64,12 +61,14 @@ fn expected_arity(expected: &Vec<usize>) -> String {
     let sorted = _sorted;
 
     match expected.len() {
-        x if x == 1 => 
+        x if x == 1 => sorted[0].to_string(),
+        x if x > 1 => vec![
             sorted[0].to_string(),
-        x if x > 1 => 
-            vec![sorted[0].to_string(), "to".to_owned(), sorted[x-1].to_string()].join(" "),
-        _ => 
-            "any".to_owned(),
+            "to".to_owned(),
+            sorted[x - 1].to_string(),
+        ]
+        .join(" "),
+        _ => "any".to_owned(),
     }
 }
 
@@ -79,65 +78,68 @@ mod tests {
 
     #[test]
     fn exception_messages_render_as_expected() {
+        use ExprType::*;
         use ParseError::*;
         use SourceError::*;
         use TypeError::*;
-        use ExprType::*;
 
         let examples = [
             (
-                SourceE(TreeSitterError), 
-                "Source Error: Syntax error in source"
+                SourceE(TreeSitterError),
+                "Source Error: Syntax error in source",
             ),
             // excluding Utf8Err for now,
             (
-                SourceE(BadBoolean("TrueFalse".to_owned())), 
-                "Source Error: Unknown Boolean value: TrueFalse"
+                SourceE(BadBoolean("TrueFalse".to_owned())),
+                "Source Error: Unknown Boolean value: TrueFalse",
             ),
             (
                 SourceE(UnknownNodeType("not_a_node".to_owned())),
-                "Source Error: Unknown node type: not_a_node"
+                "Source Error: Unknown node type: not_a_node",
             ),
             (
                 SourceE(MissingValue("kwarg".to_owned(), "key".to_owned())),
-                "Source Error: kwarg is missing the required value key"
+                "Source Error: kwarg is missing the required value key",
             ),
-            (
-                SourceE(ParseFailure),
-                "Source Error: Parse Failure"
-            ),
+            (SourceE(ParseFailure), "Source Error: Parse Failure"),
             (
                 // TODO this exception shouldn't be taking String args
                 TypeE(BadAssignment("kwarg".to_owned(), "fn_call".to_owned())),
-                "Type Error: kwarg cannot be assigned a fn_call"
+                "Type Error: kwarg cannot be assigned a fn_call",
             ),
             (
                 TypeE(KwargsAreNotLast),
-                "Type Error: Keyword arguments must come at the end of the argument list."
+                "Type Error: Keyword arguments must come at the end of the argument list.",
             ),
             (
-                TypeE(ArgumentMismatch { expected: vec![1, 2], found: 0 }),
-                "Type Error: Expected 1 to 2 arguments. Found 0."
+                TypeE(ArgumentMismatch {
+                    expected: vec![1, 2],
+                    found: 0,
+                }),
+                "Type Error: Expected 1 to 2 arguments. Found 0.",
             ),
             (
-                TypeE(TypeMismatch { expected: Kwarg, got: String }),
-                "Type Error: Expected kwarg. Got string."
+                TypeE(TypeMismatch {
+                    expected: Kwarg,
+                    got: String,
+                }),
+                "Type Error: Expected kwarg. Got string.",
             ),
             (
                 TypeE(UnrecognizedFunction("refsourceconfig".to_owned())),
-                "Type Error: Found unrecognized function named refsourceconfig."
+                "Type Error: Found unrecognized function named refsourceconfig.",
             ),
             (
                 TypeE(UnexpectedKwarg("boop".to_owned())),
-                "Type Error: Found unexpected keyword argument boop."
+                "Type Error: Found unexpected keyword argument boop.",
             ),
             (
                 TypeE(ExcludedKwarg("pre-hook".to_owned())),
-                "Type Error: Excluded keyword argument found: pre-hook."
+                "Type Error: Excluded keyword argument found: pre-hook.",
             ),
             (
                 TypeE(UnsupportedConfigValue(FnCall)),
-                "Type Error: Config value cannot be of the type fn_call."
+                "Type Error: Config value cannot be of the type fn_call.",
             ),
         ];
 
@@ -150,10 +152,9 @@ mod tests {
     #[test]
     // if you change this test, change the comments on the function to match
     fn test_expected_arity() {
-        assert_eq!(expected_arity(&vec![1,4,3,2]), "1 to 4");
-        assert_eq!(expected_arity(&vec![1,4]), "1 to 4");
+        assert_eq!(expected_arity(&vec![1, 4, 3, 2]), "1 to 4");
+        assert_eq!(expected_arity(&vec![1, 4]), "1 to 4");
         assert_eq!(expected_arity(&vec![3]), "3");
         assert_eq!(expected_arity(&vec![]), "any");
     }
-
 }
