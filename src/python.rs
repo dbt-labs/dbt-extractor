@@ -1,7 +1,10 @@
 use crate::extractor::{extract_from_source, ConfigVal, Extraction};
 use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
+use pyo3::types:: {
+    PyDict,
+    PySet,
+};
 use pyo3::wrap_pyfunction;
 use std::collections::HashMap;
 use std::fmt::Display;
@@ -34,11 +37,8 @@ fn pythonize(py: Python, extraction: Extraction) -> PyResult<PyObject> {
             (a, None) => vec![a],
         })
         .collect();
-    let sources: Vec<Vec<String>> = extraction
-        .sources
-        .into_iter()
-        .map(|(a, b)| vec![a, b])
-        .collect();
+    let sources: &PySet = 
+        PySet::new(py, &extraction.sources[..])?;
     let configs = PyDict::new(py);
     for (k, v) in extraction.configs.iter() {
         configs.set_item(k, convert_config(py, v.clone()))?;
