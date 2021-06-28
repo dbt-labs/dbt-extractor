@@ -257,7 +257,7 @@ jobs:
         with:
           name: wheels
       - name: Show wheels generated
-        run: ls -lh dist/
+        run: ls -lh ./
       - uses: actions/setup-python@v2
         with:
           python-version: 3.9
