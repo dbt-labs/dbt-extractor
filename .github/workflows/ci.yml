@@ -69,6 +69,15 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: 3.9
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -84,14 +93,16 @@ jobs:
         run: |
           pip install dbt_extractor --no-index --find-links dist --force-reinstall
           python -c "import dbt_extractor"
-      # - name: Build wheels - universal2
-      #   uses: messense/maturin-action@v1
-      #   with:
-      #     args: --release --universal2 --out dist --no-sdist -m python/Cargo.toml
-      # - name: Install built wheel - universal2
-      #   run: |
-      #     pip install crfs --no-index --find-links dist --force-reinstall
-      #     python -c "import crfs"
+      - name: Build wheels - universal2
+        uses: messense/maturin-action@v1
+        with:
+          args: -i python --release --universal2 --out dist --no-sdist
+      - name: Install built wheel - universal2
+        run: |
+          pip install dbt_extractor --no-index --find-links dist --force-reinstall
+          python -c "import dbt_extractor"
+      - name: Show wheels generated
+        run: ls -lh dist/
       - name: Upload wheels
         uses: actions/upload-artifact@v2
         with:
@@ -111,6 +122,18 @@ jobs:
         with:
           python-version: 3.9
           architecture: ${{ matrix.target }}
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+          architecture: ${{ matrix.target }}
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+          architecture: ${{ matrix.target }}
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+          architecture: ${{ matrix.target }}
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -126,6 +149,9 @@ jobs:
         run: |
           pip install dbt_extractor --no-index --find-links dist --force-reinstall
           python -c "import dbt_extractor"
+      - name: Show wheels generated
+        run: ls -lh dist
+        shell: bash
       - name: Upload wheels
         uses: actions/upload-artifact@v2
         with:
@@ -141,9 +167,12 @@ jobs:
         target: [x86_64, i686]
     steps:
     - uses: actions/checkout@v2
+    # the native python is only used to test that the package can be installed
     - uses: actions/setup-python@v2
       with:
         python-version: 3.9
+    # supported python versions
+    # https://github.com/messense/maturin-action/blob/51478586be5dfb16a569cb6bbec182fba9f13f79/src/index.ts#L245
     - name: Build Wheels
       uses: messense/maturin-action@v1
       with:
@@ -155,57 +184,69 @@ jobs:
       run: |
         pip install dbt_extractor --no-index --find-links dist --force-reinstall
         python -c "import dbt_extractor"
+    - name: Show wheels generated
+      run: ls -lh dist/
     - name: Upload wheels
       uses: actions/upload-artifact@v2
       with:
         name: wheels
         path: dist
 
-  # linux-cross:
-  #   needs: [build, test, fmt]
-  #   name: Build linux-cross ${{ matrix.target }}
-  #   runs-on: ubuntu-latest
-  #   env:
-  #     PYO3_CROSS_LIB_DIR: '/opt/python/cp38-cp38/lib'
-  #   strategy:
-  #     matrix:
-  #       target: [aarch64, armv7, s390x, ppc64le, ppc64]
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - uses: actions/setup-python@v2
-  #     with:
-  #       python-version: 3.9
-  #   - name: Build Wheels
-  #     uses: messense/maturin-action@v1
-  #     with:
-  #       target: ${{ matrix.target }}
-  #       manylinux: auto
-  #       args: --release --out dist --no-sdist
-  #   - uses: uraimo/run-on-arch-action@v2.0.5
-  #     if: matrix.target != 'ppc64'
-  #     name: Install built wheel
-  #     with:
-  #       arch: ${{ matrix.target }}
-  #       distro: ubuntu18.04
-  #       githubToken: ${{ github.token }}
-  #       # Mount the dist directory as /artifacts in the container
-  #       dockerRunArgs: |
-  #         --volume "${PWD}/dist:/artifacts"
-  #       install: |
-  #         apt-get update
-  #         apt-get install -y --no-install-recommends python3 python3-pip
-  #         pip3 install -U pip
-  #       run: |
-  #         ls -lrth /artifacts
-  #         pip3 install dbt_extractor --no-index --find-links /artifacts --force-reinstall
-  #         python3 -c "import dbt_extractor"
-  #   - name: Upload wheels
-  #     uses: actions/upload-artifact@v2
-  #     with:
-  #       name: wheels
-  #       path: dist
+  python-linux-cross:
+    needs: [build, test, fmt]
+    name: Build py${{ matrix.python.version }} linux-cross ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [
+          { version: '3.6', abi: 'cp36-cp36m' },
+          { version: '3.7', abi: 'cp37-cp37m' },
+          { version: '3.8', abi: 'cp38-cp38' },
+          { version: '3.9', abi: 'cp39-cp39' },
+        ]
+        target: [aarch64, armv7, s390x, ppc64le, ppc64]
+    env:
+      PYO3_CROSS_LIB_DIR: /opt/python/${{ matrix.python.abi }}/lib
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Wheels
+        uses: messense/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: auto
+          args: -i python${{ matrix.python.version }} --release --out dist --no-sdist
+      - uses: uraimo/run-on-arch-action@v2.0.5
+        if: matrix.target != 'ppc64'
+        name: Install built wheel
+        with:
+          arch: ${{ matrix.target }}
+          distro: ubuntu20.04
+          githubToken: ${{ github.token }}
+          # Mount the dist directory as /artifacts in the container
+          dockerRunArgs: |
+            --volume "${PWD}/dist:/artifacts"
+          install: |
+            apt-get update
+            apt-get install -y --no-install-recommends python3 python3-pip software-properties-common
+            add-apt-repository ppa:deadsnakes/ppa
+            apt-get update
+            apt-get install -y python3.6 python3.7 python3.9
+          run: |
+            ls -lrth /artifacts
+            PYTHON=python${{ matrix.python.version }}
+            $PYTHON -m pip install -U pip
+            $PYTHON -m pip install dbt_extractor --no-index --find-links /artifacts --force-reinstall
+            $PYTHON -c 'import dbt_extractor'
+      - name: Show wheels generated
+        run: ls -lh dist/
+      - name: Upload wheels
+        uses: actions/upload-artifact@v2
+        with:
+          name: wheels
+          path: dist
+
   publish:
-    needs: [python-macos, python-windows, python-linux]
+    needs: [python-macos, python-windows, python-linux, python-linux-cross]
     name: Publish to PyPI
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.publish == 'true' }}
@@ -213,6 +254,8 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: wheels
+      - name: Show wheels generated
+        run: ls -lh dist/
       - uses: actions/setup-python@v2
         with:
           python-version: 3.9
