@@ -248,6 +248,8 @@ jobs:
   publish:
     needs: [python-macos, python-windows, python-linux, python-linux-cross]
     name: Publish to PyPI
+    environment:
+      name: pypi-prod
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.publish == 'true' }}
     steps:
