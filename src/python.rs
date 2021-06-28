@@ -1,10 +1,13 @@
 use crate::extractor::{extract_from_source, ConfigVal, Extraction};
+use pyo3::create_exception;
 use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList, PySet};
 use pyo3::wrap_pyfunction;
 use std::collections::HashMap;
 use std::fmt::Display;
+
+create_exception!(dbt_extractor, ExtractionError, PyException);
 
 // Can't export ConfigVal directly: https://github.com/PyO3/pyo3/issues/417
 fn convert_config(py: Python, v: ConfigVal) -> PyObject {
@@ -50,11 +53,11 @@ fn pythonize(py: Python, extraction: Extraction) -> PyResult<PyObject> {
 }
 
 // Naively converts a Result to a PyResult by using the string
-// representation of the Rust exception as the value for a PyException.
+// representation of the Rust exception as the message for ExtractionError.
 fn to_py_result<T, E: Display>(r: Result<T, E>) -> PyResult<T> {
     match r {
         Ok(v) => Ok(v),
-        Err(e) => Err(PyException::new_err(format!("{}", e))),
+        Err(e) => Err(ExtractionError::new_err(format!("{}", e))),
     }
 }
 
@@ -69,7 +72,10 @@ pub fn py_extract_from_source(source: &str) -> PyResult<PyObject> {
 }
 
 #[pymodule]
-fn dbt_extractor(_py: Python, m: &PyModule) -> PyResult<()> {
+fn dbt_extractor(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add("ExtractionError", py.get_type::<ExtractionError>())
+        .unwrap();
+
     m.add_wrapped(wrap_pyfunction!(py_extract_from_source))
         .unwrap();
 
