@@ -322,7 +322,7 @@ dependencies = [
 [[package]]
 name = "tree-sitter-jinja2"
 version = "0.1.0"
-source = "git+ssh://git@github.com/fishtown-analytics/tree-sitter-jinja2?branch=main#52da7b0b1480b23381ea84cf5ea3bf058dd6d8c4"
+source = "git+git://github.com/fishtown-analytics/tree-sitter-jinja2?branch=main#52da7b0b1480b23381ea84cf5ea3bf058dd6d8c4"
 dependencies = [
  "cc",
  "tree-sitter",

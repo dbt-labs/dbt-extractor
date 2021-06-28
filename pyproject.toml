@@ -1,0 +1,10 @@
+[build-system]
+requires = ["maturin>=0.10,<0.11"]
+build-backend = "maturin"
+
+[project]
+name = "dbt-jinja-extractor"
+classifiers = [
+    "Programming Language :: Rust"
+]
+readme = "README.md"

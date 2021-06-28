@@ -6,4 +6,3 @@ mod python;
 pub use exceptions::*;
 pub use extractor::{extract_from_source, ConfigVal, Extraction};
 pub use python::py_extract_from_source;
-
