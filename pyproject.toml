@@ -3,7 +3,7 @@ requires = ["maturin>=0.10,<0.11"]
 build-backend = "maturin"
 
 [project]
-name = "dbt-jinja-extractor"
+name = "dbt-extractor"
 classifiers = [
     "Programming Language :: Rust"
 ]
