@@ -74,7 +74,10 @@ pub fn py_extract_from_source(source: &str) -> PyResult<PyObject> {
 }
 
 #[pymodule]
-fn dbt_extractor(_py: Python, m: &PyModule) -> PyResult<()> {
+fn dbt_extractor(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add("ExtractionError", py.get_type::<ExtractionError>())
+        .unwrap();
+
     m.add_wrapped(wrap_pyfunction!(py_extract_from_source))
         .unwrap();
 
