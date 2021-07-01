@@ -9,7 +9,8 @@ name = "dbt_extractor"
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
+pyo3 = { version = "0.13.2", features = ["extension-module"] }
+rayon = "1.5.1"
 tree-sitter = "0.19"
 tree-sitter-jinja2 = { git = "git://github.com/fishtown-analytics/tree-sitter-jinja2", branch = "main" }
 thiserror = "1.0.25"
-pyo3 = { version = "0.13.2", features = ["extension-module"] }

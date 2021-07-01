@@ -1,4 +1,5 @@
 use crate::exceptions::{ParseError, SourceError, TypeError};
+use rayon::prelude::*;
 use std::collections::HashMap;
 use std::str::from_utf8;
 use tree_sitter::{Node, Tree};
@@ -299,7 +300,7 @@ fn type_check_configs(expr: ExprU) -> Result<ConfigVal, TypeError> {
 fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
     match ast {
         ExprU::RootU(exprs) => {
-            let x: Result<Vec<ExprT>, TypeError> = exprs.into_iter().map(type_check).collect();
+            let x: Result<Vec<ExprT>, TypeError> = exprs.into_par_iter().map(type_check).collect();
             x.map(ExprT::RootT)
         }
 
@@ -482,8 +483,9 @@ fn extract_from(ast: ExprT) -> Extraction {
         // immutably rolls all the results up into one
         {
             exprs
-                .into_iter()
-                .fold(Extraction::new(), |b, a| b.mappend(&extract_from(a)))
+                .into_par_iter()
+                .map(extract_from)
+                .reduce(|| Extraction::new(), |b, a| b.mappend(&a))
         }
         ExprT::RefT(x, y) => Extraction::populate(Some(vec![(x, y)]), None, None),
         ExprT::SourceT(x, y) => Extraction::populate(None, Some(vec![(x, y)]), None),
