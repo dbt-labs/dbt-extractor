@@ -20,7 +20,7 @@ impl Extraction {
     // left identity: Extraction::new().mappend(x) === x
     // right identity: x.mappend(Extraction::new()) === x
     pub fn mappend(&self, other: &Extraction) -> Extraction {
-        Extraction {
+        let result = Extraction {
             refs: [&self.refs[..], &other.refs[..]].concat(),
             sources: [&self.sources[..], &other.sources[..]].concat(),
             configs: self
@@ -29,6 +29,65 @@ impl Extraction {
                 .into_iter()
                 .chain(other.configs.clone())
                 .collect(),
+        };
+
+        // tags are special and need to be merged into an array instead of reassigned.
+        // this does not break the monoid laws
+        let merged_tags = match (self.configs.get("tags"), other.configs.get("tags")) {
+            // there are tags to merge in a list so we return a result with the merged tags
+            (Some(ConfigVal::ListC(xs)), Some(ConfigVal::ListC(ys))) => {
+                // choosing to clone xs in stead of ys because it makes the order of the
+                // resulting list read in the order of the file top to bottom.
+                let mut merged = xs.clone();
+                for y in ys {
+                    if !merged.contains(y) {
+                        merged.push(y.clone());
+                    }
+                }
+                Some(ConfigVal::ListC(merged))
+            }
+
+            (Some(ConfigVal::ListC(xs)), Some(y)) => {
+                if xs.contains(y) {
+                    Some(ConfigVal::ListC(xs.clone()))
+                } else {
+                    let mut merged = xs.clone();
+                    merged.push(y.clone());
+                    Some(ConfigVal::ListC(merged))
+                }
+            }
+
+            (Some(x), Some(ConfigVal::ListC(ys))) => {
+                if ys.contains(x) {
+                    Some(ConfigVal::ListC(ys.clone()))
+                } else {
+                    let mut merged = ys.clone();
+                    merged.push(x.clone());
+                    Some(ConfigVal::ListC(merged))
+                }
+            }
+
+            // if neither value is a list, just make a list of the values
+            (Some(x), Some(y)) => Some(ConfigVal::ListC(vec![x.clone(), y.clone()])),
+
+            // there aren't tags to merge, so the result has the correct tag value
+            _ => None,
+        };
+
+        match merged_tags {
+            // if there is a new set of tags to apply in the merge
+            Some(tags) => {
+                let mut merged_configs = result.configs.clone();
+                merged_configs.insert("tags".to_owned(), tags);
+                Extraction {
+                    refs: result.refs,
+                    sources: result.sources,
+                    configs: merged_configs,
+                }
+            }
+
+            // if there's not, the result is correct
+            None => result,
         }
     }
 
