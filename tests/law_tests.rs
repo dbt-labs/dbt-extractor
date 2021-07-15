@@ -54,7 +54,7 @@ mod prop_tests {
     use proptest::prelude::*;
 
     proptest! {
-        //#![proptest_config(ProptestConfig::with_cases(100))]
+        #![proptest_config(ProptestConfig::with_cases(100))]
     
         #[test]
         fn left_and_right_identity(x: Extraction) {
@@ -71,5 +71,4 @@ mod prop_tests {
             );
         }
     }
-
 }

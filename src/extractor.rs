@@ -634,7 +634,7 @@ pub fn extract_from_source(source: &str) -> Result<Extraction, ParseError> {
 }
 
 // unit tests for private function `type_check`
-#[cfg(feature = "proptest")]
+#[cfg(test)]
 mod type_check_tests {
     use super::*;
 
