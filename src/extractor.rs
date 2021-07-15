@@ -3,6 +3,8 @@ use rayon::prelude::*;
 use std::collections::HashMap;
 use std::str::from_utf8;
 use tree_sitter::{Node, Tree};
+#[cfg(feature = "proptest")]
+use proptest::prelude::*;
 
 // final result
 // this is snug fit for the shape of the data
@@ -11,6 +13,22 @@ pub struct Extraction {
     pub refs: Vec<(String, Option<String>)>,
     pub sources: Vec<(String, String)>,
     pub configs: HashMap<String, ConfigVal>,
+}
+
+// used for property testing of laws
+#[cfg(feature = "proptest")]
+impl Arbitrary for Extraction {
+    type Parameters = ();
+    type Strategy = BoxedStrategy<Self>;
+    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+        (any::<Vec<(String, Option<String>)>>(), any::<Vec<(String, String)>>(), any::<HashMap<String, ConfigVal>>()).prop_map(|(refs, sources, configs)| {
+            Extraction {
+                refs: refs,
+                sources: sources,
+                configs: configs,
+            }
+        }).boxed()
+    }
 }
 
 impl Extraction {
@@ -143,6 +161,31 @@ pub enum ConfigVal {
     BoolC(bool),
     ListC(Vec<ConfigVal>),
     DictC(HashMap<String, ConfigVal>),
+}
+
+// used for property testing of laws
+#[cfg(feature = "proptest")]
+impl Arbitrary for ConfigVal {
+    type Parameters = ();
+    type Strategy = BoxedStrategy<Self>;
+    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+        let leaf = prop_oneof![
+            any::<bool>().prop_map(ConfigVal::BoolC),
+            ".*".prop_map(ConfigVal::StringC),
+        ];
+
+        leaf.prop_recursive(
+            3, // 3 levels deep
+            5, // Shoot for maximum size of 5 nodes
+            10, // We put up to 10 items per collection
+            |inner| prop_oneof![
+                // Take the inner strategy and make the two recursive cases.
+                prop::collection::vec(inner.clone(), 0..10)
+                    .prop_map(ConfigVal::ListC),
+                prop::collection::hash_map(".*", inner, 0..10)
+                    .prop_map(ConfigVal::DictC),
+        ]).boxed()
+    }
 }
 
 // values that represent types
@@ -591,7 +634,7 @@ pub fn extract_from_source(source: &str) -> Result<Extraction, ParseError> {
 }
 
 // unit tests for private function `type_check`
-#[cfg(test)]
+#[cfg(feature = "proptest")]
 mod type_check_tests {
     use super::*;
 
