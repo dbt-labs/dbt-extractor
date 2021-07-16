@@ -3,6 +3,8 @@ use rayon::prelude::*;
 use std::collections::HashMap;
 use std::str::from_utf8;
 use tree_sitter::{Node, Tree};
+#[cfg(test)] use quickcheck::{Arbitrary, Gen};
+
 
 // final result
 // this is snug fit for the shape of the data
@@ -11,6 +13,17 @@ pub struct Extraction {
     pub refs: Vec<(String, Option<String>)>,
     pub sources: Vec<(String, String)>,
     pub configs: HashMap<String, ConfigVal>,
+}
+
+#[cfg(test)]
+impl Arbitrary for Extraction {
+    fn arbitrary(g: &mut Gen) -> Extraction {
+        Extraction {
+            refs: Vec::<(String, Option<String>)>::arbitrary(g),
+            sources: Vec::<(String, String)>::arbitrary(g),
+            configs: HashMap::<String, ConfigVal>::arbitrary(g),
+        }
+    }
 }
 
 impl Extraction {
@@ -143,6 +156,33 @@ pub enum ConfigVal {
     BoolC(bool),
     ListC(Vec<ConfigVal>),
     DictC(HashMap<String, ConfigVal>),
+}
+
+#[cfg(test)]
+impl Arbitrary for ConfigVal {
+    fn arbitrary(g: &mut Gen) -> ConfigVal {
+        let kind = usize::arbitrary(g) % 4;
+        let list_size = usize::arbitrary(g) % 3;
+        let dict_size = usize::arbitrary(g) % 3;
+        let special = usize::arbitrary(g) % 2;
+        let special_configs = vec!["tags".to_owned()];
+
+        match kind {
+            0 => ConfigVal::StringC(String::arbitrary(g)),
+            1 => ConfigVal::BoolC(bool::arbitrary(g)),
+            2 => ConfigVal::ListC(vec![true; list_size].into_iter().map(|_| ConfigVal::arbitrary(g)).collect()),
+            3 => {
+                let key: String;
+                if special == 0 {
+                    key = Gen::choose(g, &special_configs).unwrap().to_owned();
+                } else {
+                    key = String::arbitrary(g);
+                }
+                ConfigVal::DictC(vec![(true, true); dict_size].into_iter().map(|_| (key.clone(), ConfigVal::arbitrary(g))).collect())
+            },
+            _ => panic!(),
+        }
+    }
 }
 
 // values that represent types
@@ -589,6 +629,30 @@ pub fn extract_from_source(source: &str) -> Result<Extraction, ParseError> {
     // extract
     Ok(extract_from(typed_ast))
 }
+
+
+// use property testing to verify monoid laws
+#[cfg(test)]
+mod monoid_laws {
+    use super::*;
+    use quickcheck_macros::quickcheck;
+
+    #[quickcheck]
+    fn extractor_left_and_right_identity(x: Extraction) {
+        let mempty = Extraction::new();
+        assert_eq!(x, mempty.mappend(&x));
+        assert_eq!(x, x.mappend(&mempty));
+    }
+
+    #[quickcheck]
+    fn extractor_associativity(x: Extraction, y: Extraction, z: Extraction) {
+        assert_eq!(
+            x.mappend(&y).mappend(&z),
+            x.mappend(&y.mappend(&z))
+        );
+    }
+}
+
 
 // unit tests for private function `type_check`
 #[cfg(test)]

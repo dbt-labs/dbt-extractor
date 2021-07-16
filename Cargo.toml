@@ -14,3 +14,7 @@ rayon = "1.5.1"
 tree-sitter = "0.19"
 tree-sitter-jinja2 = { git = "git://github.com/fishtown-analytics/tree-sitter-jinja2", branch = "main" }
 thiserror = "1.0.25"
+
+[dev-dependencies]
+quickcheck = "1"
+quickcheck_macros = "1"
