@@ -165,7 +165,7 @@ fn named_children(node: Node) -> Vec<Node> {
 }
 
 // tree-sitter nodes do not contain all necessary text values. This maps back to source to retrieve them.
-fn text_from_node<'a>(source: &'a Vec<u8>, node: &Node) -> Result<&'a str, SourceError> {
+fn text_from_node<'a>(source: &'a [u8], node: &Node) -> Result<&'a str, SourceError> {
     match from_utf8(&source[node.start_byte()..node.end_byte()]) {
         Ok(s) => Ok(s),
         Err(e) => Err(SourceError::Utf8Err(e)),
@@ -174,7 +174,7 @@ fn text_from_node<'a>(source: &'a Vec<u8>, node: &Node) -> Result<&'a str, Sourc
 
 // generally used to strip quotes off strings from the source file
 fn strip_first_and_last(s: &str) -> String {
-    let mut chars = s.chars();
+    let chars = &mut s.chars();
     chars.next();
     chars.next_back();
     chars.as_str().to_owned()
@@ -182,7 +182,7 @@ fn strip_first_and_last(s: &str) -> String {
 
 // transforms the tree-sitter tree structure which relies on a lot of string matching
 // into the more structured ExprU type. This allows the rust compiler to be much more helpful.
-fn to_ast(source: &Vec<u8>, node: Node) -> Result<ExprU, SourceError> {
+fn to_ast(source: &[u8], node: Node) -> Result<ExprU, SourceError> {
     let kind = node.kind();
     match kind {
         "source_file" => {
@@ -253,7 +253,7 @@ fn to_ast(source: &Vec<u8>, node: Node) -> Result<ExprU, SourceError> {
     }
 }
 
-fn kwargs_last(args: &Vec<ExprU>) -> bool {
+fn kwargs_last(args: &[ExprU]) -> bool {
     let mut seen_kwarg = false;
     for arg in args {
         match arg {
@@ -496,7 +496,7 @@ fn extract_from(ast: ExprT) -> Extraction {
 }
 
 // go go gadget tree-sitter!
-fn run_tree_sitter(source_bytes: &Vec<u8>) -> Result<Tree, SourceError> {
+fn run_tree_sitter(source_bytes: &[u8]) -> Result<Tree, SourceError> {
     let mut parser = tree_sitter::Parser::new();
     parser
         .set_language(tree_sitter_jinja2::language())
