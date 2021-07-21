@@ -187,12 +187,7 @@ impl Arbitrary for ConfigVal {
         match kind {
             0 => ConfigVal::StringC(String::arbitrary(g)),
             1 => ConfigVal::BoolC(bool::arbitrary(g)),
-            2 => ConfigVal::ListC(
-                vec![true; list_size]
-                    .into_iter()
-                    .map(|_| ConfigVal::arbitrary(g))
-                    .collect(),
-            ),
+            2 => ConfigVal::ListC(vec![ConfigVal::arbitrary(g); list_size]),
             3 => {
                 let key: String;
                 if special == 0 {
@@ -201,9 +196,8 @@ impl Arbitrary for ConfigVal {
                     key = String::arbitrary(g);
                 }
                 ConfigVal::DictC(
-                    vec![(true, true); dict_size]
+                    vec![(key.clone(), ConfigVal::arbitrary(g)); dict_size]
                         .into_iter()
-                        .map(|_| (key.clone(), ConfigVal::arbitrary(g)))
                         .collect(),
                 )
             }
