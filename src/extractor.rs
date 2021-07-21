@@ -24,6 +24,37 @@ impl Arbitrary for Extraction {
             configs: HashMap::<String, ConfigVal>::arbitrary(g),
         }
     }
+
+    fn shrink(&self) -> Box<dyn Iterator<Item = Extraction>> {
+        let x: Vec<Vec<Extraction>> = vec![
+            self.configs
+                .shrink()
+                .map(|shrunk_config| Extraction {
+                    refs: self.refs.clone(),
+                    sources: self.sources.clone(),
+                    configs: shrunk_config,
+                })
+                .collect(),
+            self.refs
+                .shrink()
+                .map(|shrunk_refs| Extraction {
+                    refs: shrunk_refs,
+                    sources: self.sources.clone(),
+                    configs: self.configs.clone(),
+                })
+                .collect(),
+            self.sources
+                .shrink()
+                .map(|shrunk_sources| Extraction {
+                    refs: self.refs.clone(),
+                    sources: shrunk_sources,
+                    configs: self.configs.clone(),
+                })
+                .collect(),
+        ];
+
+        Box::new(x.into_iter().flatten())
+    }
 }
 
 impl Extraction {
@@ -191,6 +222,23 @@ impl Arbitrary for ConfigVal {
                 )
             }
             _ => panic!(),
+        }
+    }
+
+    fn shrink(&self) -> Box<dyn Iterator<Item = ConfigVal>> {
+        match self {
+            ConfigVal::StringC(s) => {
+                Box::new(s.shrink().into_iter().map(ConfigVal::StringC).into_iter())
+            }
+            ConfigVal::BoolC(b) => {
+                Box::new(b.shrink().into_iter().map(ConfigVal::BoolC).into_iter())
+            }
+            ConfigVal::ListC(v) => {
+                Box::new(v.shrink().into_iter().map(ConfigVal::ListC).into_iter())
+            }
+            ConfigVal::DictC(m) => {
+                Box::new(m.shrink().into_iter().map(ConfigVal::DictC).into_iter())
+            }
         }
     }
 }
