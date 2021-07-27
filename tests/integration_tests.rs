@@ -117,3 +117,94 @@ fn extracts_multi_key_config() {
         Extraction::populate(None, None, Some(configs)),
     )
 }
+
+#[test]
+fn extracts_multiple_distinct_config_blocks() {
+    let mut configs = HashMap::new();
+    configs.insert("x".to_string(), ConfigVal::BoolC(true));
+    configs.insert("y".to_string(), ConfigVal::BoolC(false));
+
+    assert_extraction(
+        r#"{{ config(x=True) }}
+some sql stuff
+{{ config(y=False) }}"#,
+        Extraction::populate(None, None, Some(configs)),
+    )
+}
+
+#[test]
+fn extracts_multiple_overlapping_config_blocks() {
+    let mut configs = HashMap::new();
+    configs.insert("x".to_string(), ConfigVal::BoolC(false));
+    configs.insert("y".to_string(), ConfigVal::BoolC(false));
+
+    assert_extraction(
+        r#"{{ config(x=True, y=False) }}
+some sql stuff
+{{ config(x=False) }}"#,
+        Extraction::populate(None, None, Some(configs)),
+    )
+}
+
+#[test]
+fn extracts_tag_merging_lists() {
+    let mut configs = HashMap::new();
+    configs.insert(
+        "tags".to_string(),
+        ConfigVal::ListC(
+            vec!["a", "b", "c"]
+                .into_iter()
+                .map(|s| ConfigVal::StringC(s.to_owned()))
+                .collect(),
+        ),
+    );
+
+    assert_extraction(
+        r#"{{ config(tags=['a', 'b']) }}
+some sql stuff
+{{ config(tags=['b', 'c']) }}"#,
+        Extraction::populate(None, None, Some(configs)),
+    )
+}
+
+#[test]
+fn extracts_tag_merging_literals() {
+    let mut configs = HashMap::new();
+    configs.insert(
+        "tags".to_string(),
+        ConfigVal::ListC(
+            vec!["hello", "world"]
+                .into_iter()
+                .map(|s| ConfigVal::StringC(s.to_owned()))
+                .collect(),
+        ),
+    );
+
+    assert_extraction(
+        r#"{{ config(tags='hello') }}
+some sql stuff
+{{ config(tags='world') }}"#,
+        Extraction::populate(None, None, Some(configs)),
+    )
+}
+
+#[test]
+fn extracts_tag_merging_lists_and_literals() {
+    let mut configs = HashMap::new();
+    configs.insert(
+        "tags".to_string(),
+        ConfigVal::ListC(
+            vec!["a", "b", "c"]
+                .into_iter()
+                .map(|s| ConfigVal::StringC(s.to_owned()))
+                .collect(),
+        ),
+    );
+
+    assert_extraction(
+        r#"{{ config(tags=['a', 'b']) }}
+some sql stuff
+{{ config(tags='c') }}"#,
+        Extraction::populate(None, None, Some(configs)),
+    )
+}

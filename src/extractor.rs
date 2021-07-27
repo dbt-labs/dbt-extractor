@@ -1,4 +1,6 @@
 use crate::exceptions::{ParseError, SourceError, TypeError};
+#[cfg(test)]
+use quickcheck::{Arbitrary, Gen};
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::str::from_utf8;
@@ -13,6 +15,48 @@ pub struct Extraction {
     pub configs: HashMap<String, ConfigVal>,
 }
 
+#[cfg(test)]
+impl Arbitrary for Extraction {
+    fn arbitrary(g: &mut Gen) -> Extraction {
+        Extraction {
+            refs: Vec::<(String, Option<String>)>::arbitrary(g),
+            sources: Vec::<(String, String)>::arbitrary(g),
+            configs: HashMap::<String, ConfigVal>::arbitrary(g),
+        }
+    }
+
+    fn shrink(&self) -> Box<dyn Iterator<Item = Extraction>> {
+        let x: Vec<Vec<Extraction>> = vec![
+            self.configs
+                .shrink()
+                .map(|shrunk_config| Extraction {
+                    refs: self.refs.clone(),
+                    sources: self.sources.clone(),
+                    configs: shrunk_config,
+                })
+                .collect(),
+            self.refs
+                .shrink()
+                .map(|shrunk_refs| Extraction {
+                    refs: shrunk_refs,
+                    sources: self.sources.clone(),
+                    configs: self.configs.clone(),
+                })
+                .collect(),
+            self.sources
+                .shrink()
+                .map(|shrunk_sources| Extraction {
+                    refs: self.refs.clone(),
+                    sources: shrunk_sources,
+                    configs: self.configs.clone(),
+                })
+                .collect(),
+        ];
+
+        Box::new(x.into_iter().flatten())
+    }
+}
+
 impl Extraction {
     // monoidal mappend: takes two Extraction values and immutably merges them into a single Extraction value
     // id element: Extraction::new()
@@ -20,7 +64,18 @@ impl Extraction {
     // left identity: Extraction::new().mappend(x) === x
     // right identity: x.mappend(Extraction::new()) === x
     pub fn mappend(&self, other: &Extraction) -> Extraction {
-        Extraction {
+        // results in a deduplicated list that preserves order
+        fn merge(xs: &Vec<ConfigVal>, ys: &Vec<ConfigVal>) -> Vec<ConfigVal> {
+            let mut merged = xs.clone();
+            for y in ys {
+                if !merged.contains(y) {
+                    merged.push(y.clone());
+                }
+            }
+            merged
+        }
+
+        let result = Extraction {
             refs: [&self.refs[..], &other.refs[..]].concat(),
             sources: [&self.sources[..], &other.sources[..]].concat(),
             configs: self
@@ -29,6 +84,40 @@ impl Extraction {
                 .into_iter()
                 .chain(other.configs.clone())
                 .collect(),
+        };
+
+        // tags are special and need to be merged into an array instead of reassigned.
+        // this does not break the monoid laws
+        let merged_tags = match (self.configs.get("tags"), other.configs.get("tags")) {
+            (Some(ConfigVal::ListC(xs)), Some(ConfigVal::ListC(ys))) => {
+                Some(ConfigVal::ListC(merge(xs, ys)))
+            }
+            (Some(ConfigVal::ListC(xs)), Some(y)) => {
+                Some(ConfigVal::ListC(merge(xs, &vec![y.clone()])))
+            }
+            (Some(x), Some(ConfigVal::ListC(ys))) => {
+                Some(ConfigVal::ListC(merge(&vec![x.clone()], ys)))
+            }
+            // if neither value is a list, just make a list of the values
+            (Some(x), Some(y)) => Some(ConfigVal::ListC(vec![x.clone(), y.clone()])),
+            // there aren't tags to merge, so the result has the correct tag value
+            _ => None,
+        };
+
+        match merged_tags {
+            // if there is a new set of tags to apply in the merge
+            Some(tags) => {
+                let mut merged_configs = result.configs.clone();
+                merged_configs.insert("tags".to_owned(), tags);
+                Extraction {
+                    refs: result.refs,
+                    sources: result.sources,
+                    configs: merged_configs,
+                }
+            }
+
+            // if there's not, the result is correct
+            None => result,
         }
     }
 
@@ -84,6 +173,54 @@ pub enum ConfigVal {
     BoolC(bool),
     ListC(Vec<ConfigVal>),
     DictC(HashMap<String, ConfigVal>),
+}
+
+#[cfg(test)]
+impl Arbitrary for ConfigVal {
+    fn arbitrary(g: &mut Gen) -> ConfigVal {
+        let kind = usize::arbitrary(g) % 4;
+        let list_size = usize::arbitrary(g) % 4;
+        let dict_size = usize::arbitrary(g) % 4;
+        let special = usize::arbitrary(g) % 2;
+        let special_configs = vec!["tags".to_owned()];
+
+        match kind {
+            0 => ConfigVal::StringC(String::arbitrary(g)),
+            1 => ConfigVal::BoolC(bool::arbitrary(g)),
+            2 => ConfigVal::ListC(vec![ConfigVal::arbitrary(g); list_size]),
+            3 => {
+                let key: String;
+                if special == 0 {
+                    key = Gen::choose(g, &special_configs).unwrap().to_owned();
+                } else {
+                    key = String::arbitrary(g);
+                }
+                ConfigVal::DictC(
+                    vec![(key.clone(), ConfigVal::arbitrary(g)); dict_size]
+                        .into_iter()
+                        .collect(),
+                )
+            }
+            _ => panic!(),
+        }
+    }
+
+    fn shrink(&self) -> Box<dyn Iterator<Item = ConfigVal>> {
+        match self {
+            ConfigVal::StringC(s) => {
+                Box::new(s.shrink().into_iter().map(ConfigVal::StringC).into_iter())
+            }
+            ConfigVal::BoolC(b) => {
+                Box::new(b.shrink().into_iter().map(ConfigVal::BoolC).into_iter())
+            }
+            ConfigVal::ListC(v) => {
+                Box::new(v.shrink().into_iter().map(ConfigVal::ListC).into_iter())
+            }
+            ConfigVal::DictC(m) => {
+                Box::new(m.shrink().into_iter().map(ConfigVal::DictC).into_iter())
+            }
+        }
+    }
 }
 
 // values that represent types
@@ -529,6 +666,25 @@ pub fn extract_from_source(source: &str) -> Result<Extraction, ParseError> {
 
     // extract
     Ok(extract_from(typed_ast))
+}
+
+// use property testing to verify monoid laws
+#[cfg(test)]
+mod monoid_laws {
+    use super::*;
+    use quickcheck_macros::quickcheck;
+
+    #[quickcheck]
+    fn extractor_left_and_right_identity(x: Extraction) {
+        let mempty = Extraction::new();
+        assert_eq!(x, mempty.mappend(&x));
+        assert_eq!(x, x.mappend(&mempty));
+    }
+
+    #[quickcheck]
+    fn extractor_associativity(x: Extraction, y: Extraction, z: Extraction) {
+        assert_eq!(x.mappend(&y).mappend(&z), x.mappend(&y.mappend(&z)));
+    }
 }
 
 // unit tests for private function `type_check`
