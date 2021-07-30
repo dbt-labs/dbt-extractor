@@ -12,7 +12,7 @@ use tree_sitter::{Node, Tree};
 pub struct Extraction {
     pub refs: Vec<(String, Option<String>)>,
     pub sources: Vec<(String, String)>,
-    pub configs: HashMap<String, ConfigVal>,
+    pub configs: Vec<(String, ConfigVal)>,
 }
 
 #[cfg(test)]
@@ -21,7 +21,7 @@ impl Arbitrary for Extraction {
         Extraction {
             refs: Vec::<(String, Option<String>)>::arbitrary(g),
             sources: Vec::<(String, String)>::arbitrary(g),
-            configs: HashMap::<String, ConfigVal>::arbitrary(g),
+            configs: Vec::<(String, ConfigVal)>::arbitrary(g),
         }
     }
 
@@ -64,60 +64,10 @@ impl Extraction {
     // left identity: Extraction::new().mappend(x) === x
     // right identity: x.mappend(Extraction::new()) === x
     pub fn mappend(&self, other: &Extraction) -> Extraction {
-        // results in a deduplicated list that preserves order
-        fn merge(xs: &Vec<ConfigVal>, ys: &Vec<ConfigVal>) -> Vec<ConfigVal> {
-            let mut merged = xs.clone();
-            for y in ys {
-                if !merged.contains(y) {
-                    merged.push(y.clone());
-                }
-            }
-            merged
-        }
-
-        let result = Extraction {
+        Extraction {
             refs: [&self.refs[..], &other.refs[..]].concat(),
             sources: [&self.sources[..], &other.sources[..]].concat(),
-            configs: self
-                .configs
-                .clone()
-                .into_iter()
-                .chain(other.configs.clone())
-                .collect(),
-        };
-
-        // tags are special and need to be merged into an array instead of reassigned.
-        // this does not break the monoid laws
-        let merged_tags = match (self.configs.get("tags"), other.configs.get("tags")) {
-            (Some(ConfigVal::ListC(xs)), Some(ConfigVal::ListC(ys))) => {
-                Some(ConfigVal::ListC(merge(xs, ys)))
-            }
-            (Some(ConfigVal::ListC(xs)), Some(y)) => {
-                Some(ConfigVal::ListC(merge(xs, &vec![y.clone()])))
-            }
-            (Some(x), Some(ConfigVal::ListC(ys))) => {
-                Some(ConfigVal::ListC(merge(&vec![x.clone()], ys)))
-            }
-            // if neither value is a list, just make a list of the values
-            (Some(x), Some(y)) => Some(ConfigVal::ListC(vec![x.clone(), y.clone()])),
-            // there aren't tags to merge, so the result has the correct tag value
-            _ => None,
-        };
-
-        match merged_tags {
-            // if there is a new set of tags to apply in the merge
-            Some(tags) => {
-                let mut merged_configs = result.configs.clone();
-                merged_configs.insert("tags".to_owned(), tags);
-                Extraction {
-                    refs: result.refs,
-                    sources: result.sources,
-                    configs: merged_configs,
-                }
-            }
-
-            // if there's not, the result is correct
-            None => result,
+            configs: [&self.configs[..], &other.configs[..]].concat(),
         }
     }
 
@@ -128,12 +78,12 @@ impl Extraction {
     pub fn populate(
         refs: Option<Vec<(String, Option<String>)>>,
         sources: Option<Vec<(String, String)>>,
-        configs: Option<HashMap<String, ConfigVal>>,
+        configs: Option<Vec<(String, ConfigVal)>>,
     ) -> Extraction {
         Extraction {
             refs: refs.unwrap_or(vec![]),
             sources: sources.unwrap_or(vec![]),
-            configs: configs.unwrap_or(HashMap::new()),
+            configs: configs.unwrap_or(vec![]),
         }
     }
 }
@@ -163,7 +113,7 @@ enum ExprT {
     // args represented as positional regardless of kwargs in source
     RefT(String, Option<String>),
     SourceT(String, String),
-    ConfigT(HashMap<String, ConfigVal>),
+    ConfigT(Vec<(String, ConfigVal)>),
 }
 
 // wrappers for config return types
@@ -181,26 +131,16 @@ impl Arbitrary for ConfigVal {
         let kind = usize::arbitrary(g) % 4;
         let list_size = usize::arbitrary(g) % 4;
         let dict_size = usize::arbitrary(g) % 4;
-        let special = usize::arbitrary(g) % 2;
-        let special_configs = vec!["tags".to_owned()];
 
         match kind {
             0 => ConfigVal::StringC(String::arbitrary(g)),
             1 => ConfigVal::BoolC(bool::arbitrary(g)),
             2 => ConfigVal::ListC(vec![ConfigVal::arbitrary(g); list_size]),
-            3 => {
-                let key: String;
-                if special == 0 {
-                    key = Gen::choose(g, &special_configs).unwrap().to_owned();
-                } else {
-                    key = String::arbitrary(g);
-                }
-                ConfigVal::DictC(
-                    vec![(key.clone(), ConfigVal::arbitrary(g)); dict_size]
-                        .into_iter()
-                        .collect(),
-                )
-            }
+            3 => ConfigVal::DictC(
+                vec![(String::arbitrary(g), ConfigVal::arbitrary(g)); dict_size]
+                    .into_iter()
+                    .collect(),
+            ),
             _ => panic!(),
         }
     }
@@ -600,7 +540,7 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                                 }),
                             }
                         })
-                        .collect::<Result<HashMap<String, ConfigVal>, TypeError>>()?;
+                        .collect::<Result<Vec<(String, ConfigVal)>, TypeError>>()?;
                     Ok(ExprT::ConfigT(typed_args))
                 }
 
@@ -951,9 +891,10 @@ other as (
             ConfigVal::ListC(vec![ConfigVal::StringC("value".to_string())]),
         );
 
-        let mut config = HashMap::new();
-        config.insert("k1".to_string(), ConfigVal::DictC(dict));
-        config.insert("k2".to_string(), ConfigVal::StringC("str".to_string()));
+        let config = vec![
+            ("k1".to_string(), ConfigVal::DictC(dict)),
+            ("k2".to_string(), ConfigVal::StringC("str".to_string())),
+        ];
 
         assert_produces_tree(
             "{{ config(k1={'dict': ['value']}, k2='str') }}",
