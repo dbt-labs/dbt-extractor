@@ -28,8 +28,7 @@ fn extracts_refs() {
 
 #[test]
 fn extracts_configs() {
-    let mut configs = HashMap::new();
-    configs.insert("key".to_string(), ConfigVal::StringC("value".to_string()));
+    let configs = vec![("key".to_string(), ConfigVal::StringC("value".to_string()))];
 
     assert_extraction(
         "{{ config(key='value') }}",
@@ -54,9 +53,10 @@ fn extracts_sources() {
 
 #[test]
 fn extracts_all() {
-    let mut configs = HashMap::new();
-    configs.insert("k".to_string(), ConfigVal::StringC("v".to_string()));
-    configs.insert("x".to_string(), ConfigVal::BoolC(true));
+    let configs = vec![
+        ("k".to_string(), ConfigVal::StringC("v".to_string())),
+        ("x".to_string(), ConfigVal::BoolC(true)),
+    ];
 
     assert_extraction(
         "{{ source('package', 'table') }} {{ ref('x') }} {{ config(k='v', x=True) }}",
@@ -83,8 +83,7 @@ fn extracts_from_deepyly_nested_config() {
         ]),
     );
 
-    let mut configs = HashMap::new();
-    configs.insert(
+    let configs = vec![(
         "key".to_string(),
         ConfigVal::ListC(vec![
             ConfigVal::DictC(inner_dict),
@@ -94,7 +93,7 @@ fn extracts_from_deepyly_nested_config() {
                 ConfigVal::StringC("c".to_string()),
             ]),
         ]),
-    );
+    )];
 
     assert_extraction(
         "{{ config(key=[{'k':['v', {'x': 'y'}]}, ['a', 'b', 'c']]) }}",
@@ -109,8 +108,7 @@ fn extracts_multi_key_config() {
     dict.insert("b".to_string(), ConfigVal::StringC("y".to_string()));
     dict.insert("c".to_string(), ConfigVal::StringC("z".to_string()));
 
-    let mut configs = HashMap::new();
-    configs.insert("dict".to_string(), ConfigVal::DictC(dict));
+    let configs = vec![("dict".to_string(), ConfigVal::DictC(dict))];
 
     assert_extraction(
         "{{ config(dict={'a':'x', 'b': 'y', 'c':'z'}) }}",
@@ -120,9 +118,10 @@ fn extracts_multi_key_config() {
 
 #[test]
 fn extracts_multiple_distinct_config_blocks() {
-    let mut configs = HashMap::new();
-    configs.insert("x".to_string(), ConfigVal::BoolC(true));
-    configs.insert("y".to_string(), ConfigVal::BoolC(false));
+    let configs = vec![
+        ("x".to_string(), ConfigVal::BoolC(true)),
+        ("y".to_string(), ConfigVal::BoolC(false)),
+    ];
 
     assert_extraction(
         r#"{{ config(x=True) }}
@@ -134,77 +133,16 @@ some sql stuff
 
 #[test]
 fn extracts_multiple_overlapping_config_blocks() {
-    let mut configs = HashMap::new();
-    configs.insert("x".to_string(), ConfigVal::BoolC(false));
-    configs.insert("y".to_string(), ConfigVal::BoolC(false));
+    let configs = vec![
+        ("x".to_string(), ConfigVal::BoolC(true)),
+        ("y".to_string(), ConfigVal::BoolC(false)),
+        ("x".to_string(), ConfigVal::BoolC(false)),
+    ];
 
     assert_extraction(
         r#"{{ config(x=True, y=False) }}
 some sql stuff
 {{ config(x=False) }}"#,
-        Extraction::populate(None, None, Some(configs)),
-    )
-}
-
-#[test]
-fn extracts_tag_merging_lists() {
-    let mut configs = HashMap::new();
-    configs.insert(
-        "tags".to_string(),
-        ConfigVal::ListC(
-            vec!["a", "b", "c"]
-                .into_iter()
-                .map(|s| ConfigVal::StringC(s.to_owned()))
-                .collect(),
-        ),
-    );
-
-    assert_extraction(
-        r#"{{ config(tags=['a', 'b']) }}
-some sql stuff
-{{ config(tags=['b', 'c']) }}"#,
-        Extraction::populate(None, None, Some(configs)),
-    )
-}
-
-#[test]
-fn extracts_tag_merging_literals() {
-    let mut configs = HashMap::new();
-    configs.insert(
-        "tags".to_string(),
-        ConfigVal::ListC(
-            vec!["hello", "world"]
-                .into_iter()
-                .map(|s| ConfigVal::StringC(s.to_owned()))
-                .collect(),
-        ),
-    );
-
-    assert_extraction(
-        r#"{{ config(tags='hello') }}
-some sql stuff
-{{ config(tags='world') }}"#,
-        Extraction::populate(None, None, Some(configs)),
-    )
-}
-
-#[test]
-fn extracts_tag_merging_lists_and_literals() {
-    let mut configs = HashMap::new();
-    configs.insert(
-        "tags".to_string(),
-        ConfigVal::ListC(
-            vec!["a", "b", "c"]
-                .into_iter()
-                .map(|s| ConfigVal::StringC(s.to_owned()))
-                .collect(),
-        ),
-    );
-
-    assert_extraction(
-        r#"{{ config(tags=['a', 'b']) }}
-some sql stuff
-{{ config(tags='c') }}"#,
         Extraction::populate(None, None, Some(configs)),
     )
 }
