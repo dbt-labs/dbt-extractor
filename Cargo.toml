@@ -10,6 +10,8 @@ edition = "2018"
 homepage = "https://github.com/dbt-labs/dbt-parser-generator/"
 repository = "https://github.com/dbt-labs/dbt-parser-generator/"
 publish = false
+# license = "Apache-2.0"
+# license-file = "LICENSE.txt"
 
 [lib]
 name = "dbt_extractor"
