@@ -1,5 +1,5 @@
 
-# dbt Jinja Processor
+# dbt extractor
 
 ![demo app](demo/demo.gif)
 
