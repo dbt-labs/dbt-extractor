@@ -31,7 +31,7 @@ jobs:
         uses: messense/maturin-action@v1
         with:
           target: x86_64
-          args: -i python${{ matrix.python.version }} --release --out dist ${{ matrix.python-version != 3.9 && '--no-sdist' }}
+          args: -i python${{ matrix.python.version }} --release --out dist ${{ matrix.python-version != 3.9 && '--no-sdist' || '' }}
       - name: Build wheels - universal2
         uses: messense/maturin-action@v1
         env:
