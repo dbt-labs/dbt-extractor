@@ -7,7 +7,6 @@ on:
         description: "Publish to PyPI (true/false)"
         required: true
         default: "false"
-  pull_request:
 
 jobs:
   python-macos:
@@ -35,8 +34,6 @@ jobs:
       - name: Build wheels - universal2
         uses: messense/maturin-action@v1
         env:
-          # DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
-          # MACOSX_DEPLOYMENT_TARGET: '10.9'
           PYO3_CROSS_LIB_DIR: /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.8/lib
         with:
           args: -i python${{ matrix.python-version }} --release --universal2 --out dist --no-sdist
@@ -182,26 +179,26 @@ jobs:
           name: wheels
           path: dist
 
-  # publish:
-  #   needs: [python-macos, python-windows, python-linux, python-linux-cross]
-  #   name: Publish to PyPI
-  #   environment:
-  #     name: pypi-prod
-  #   runs-on: ubuntu-latest
-  #   if: ${{ github.event.inputs.publish == 'true' }}
-  #   steps:
-  #     - uses: actions/download-artifact@v2
-  #       with:
-  #         name: wheels
-  #     - name: Show wheels generated
-  #       run: ls -lh ./
-  #     - uses: actions/setup-python@v2
-  #       with:
-  #         python-version: 3.9
-  #     - name: Publish to PyPi
-  #       env:
-  #         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-  #         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-  #       run: |
-  #         pip install --upgrade twine
-  #         twine upload --skip-existing *
+  publish:
+    needs: [python-macos, python-windows, python-linux, python-linux-cross]
+    name: Publish to PyPI
+    environment:
+      name: pypi-prod
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.publish == 'true' }}
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: wheels
+      - name: Show wheels generated
+        run: ls -lh ./
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Publish to PyPi
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          pip install --upgrade twine
+          twine upload --skip-existing *
