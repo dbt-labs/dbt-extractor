@@ -31,7 +31,7 @@ jobs:
         uses: messense/maturin-action@v1
         with:
           target: x86_64
-          args: -i python${{ matrix.python.version }} --release --out dist ${{ matrix.python-version != 3.9 && '--no-sdist' || '' }}
+          args: -i python${{ matrix.python-version }} --release --out dist ${{ matrix.python-version != 3.9 && '--no-sdist' || '' }}
       - name: Build wheels - universal2
         uses: messense/maturin-action@v1
         env:
@@ -39,7 +39,7 @@ jobs:
           # MACOSX_DEPLOYMENT_TARGET: '10.9'
           PYO3_CROSS_LIB_DIR: /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.8/lib
         with:
-          args: -i python${{ matrix.python.version }} --release --universal2 --out dist --no-sdist
+          args: -i python${{ matrix.python-version }} --release --universal2 --out dist --no-sdist
       - name: Show wheels generated
         run: ls -lh dist/
       - name: Upload wheels
