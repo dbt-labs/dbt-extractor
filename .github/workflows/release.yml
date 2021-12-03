@@ -16,8 +16,6 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
-    env:
-      PYO3_CROSS_LIB_DIR: '/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/${{ matrix.python-version }}/lib'
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -36,8 +34,12 @@ jobs:
           args: --release --out dist
       - name: Build wheels - universal2
         uses: messense/maturin-action@v1
+        env:
+          # DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+          # MACOSX_DEPLOYMENT_TARGET: '10.9'
+          PYO3_CROSS_LIB_DIR: /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.8/lib
         with:
-          args: -i python --release --universal2 --out dist --no-sdist
+          args: -i python${{ matrix.python.version }}  --release --universal2 --out dist --no-sdist
       - name: Show wheels generated
         run: ls -lh dist/
       - name: Upload wheels

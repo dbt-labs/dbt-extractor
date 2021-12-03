@@ -1,6 +1,7 @@
 # rust
-/target
-/demo/target
+target/
+demo/target/
 
 # python
-/dist
+dist/
+env/
