@@ -20,11 +20,14 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      # This step runs on the GHA vm
+      # Exclude the `--no-sdist` arg for at least 1 python version, no need to build it for each python version
       - name: Build wheels - x86_64
         uses: messense/maturin-action@v1
         with:
           target: x86_64
           args: -i python${{ matrix.python-version }} --release --out dist ${{ matrix.python-version != '3.9' && '--no-sdist' || '' }}
+      # This step runs on the GHA vm
       - name: Build wheels - universal2
         uses: messense/maturin-action@v1
         env:
@@ -52,6 +55,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.target }}
+      # This step runs on the GHA vm
       - name: Build wheels
         uses: messense/maturin-action@v1
         with:
@@ -74,9 +78,10 @@ jobs:
         target: [x86_64, i686]
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
       # supported python versions
       # https://github.com/messense/maturin-action/blob/51478586be5dfb16a569cb6bbec182fba9f13f79/src/index.ts#L245
+      # this step runs in a docker container selected by the messense/maturin-action action
+      # there is no need to install python on the GHA vm
       - name: Build Wheels
         uses: messense/maturin-action@v1
         with:
@@ -108,7 +113,8 @@ jobs:
       PYO3_CROSS_LIB_DIR: /opt/python/${{ matrix.python.abi }}/lib
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      # this step runs in a docker container selected by the messense/maturin-action action
+      # there is no need to install python on the GHA vm
       - name: Build Wheels
         uses: messense/maturin-action@v1
         with:
