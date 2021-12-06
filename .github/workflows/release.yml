@@ -7,6 +7,7 @@ on:
         description: "Publish to PyPI (true/false)"
         required: true
         default: "false"
+  pull_request:
 
 jobs:
   python-macos:
@@ -14,23 +15,17 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          default: true
       - name: Build wheels - x86_64
         uses: messense/maturin-action@v1
         with:
           target: x86_64
-          args: -i python${{ matrix.python-version }} --release --out dist ${{ matrix.python-version != 3.9 && '--no-sdist' || '' }}
+          args: -i python${{ matrix.python-version }} --release --out dist ${{ matrix.python-version != '3.9' && '--no-sdist' || '' }}
       - name: Build wheels - universal2
         uses: messense/maturin-action@v1
         env:
@@ -46,44 +41,23 @@ jobs:
           path: dist
 
   python-windows:
-    name: Build windows ${{ matrix.target }}
+    name: Build windows ${{ matrix.target }} py${{ matrix.python-version }}
     runs-on: windows-latest
     strategy:
       matrix:
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
         target: [x64, x86]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.target }}
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-          architecture: ${{ matrix.target }}
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-          architecture: ${{ matrix.target }}
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.6
-          architecture: ${{ matrix.target }}
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          default: true
       - name: Build wheels
         uses: messense/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --no-sdist
-      - name: Install built wheel
-        run: |
-          pip install dbt_extractor --no-index --find-links dist --force-reinstall
-          python -c "import dbt_extractor"
+          args: -i python --release --out dist --no-sdist
       - name: Show wheels generated
         run: ls -lh dist
         shell: bash
@@ -101,10 +75,7 @@ jobs:
         target: [x86_64, i686]
     steps:
       - uses: actions/checkout@v2
-      # the native python is only used to test that the package can be installed
       - uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
       # supported python versions
       # https://github.com/messense/maturin-action/blob/51478586be5dfb16a569cb6bbec182fba9f13f79/src/index.ts#L245
       - name: Build Wheels
@@ -113,11 +84,6 @@ jobs:
           target: ${{ matrix.target }}
           manylinux: auto
           args: --release --out dist --no-sdist
-      - name: Install built wheel
-        if: matrix.target == 'x86_64'
-        run: |
-          pip install dbt_extractor --no-index --find-links dist --force-reinstall
-          python -c "import dbt_extractor"
       - name: Show wheels generated
         run: ls -lh dist/
       - name: Upload wheels
@@ -143,6 +109,7 @@ jobs:
       PYO3_CROSS_LIB_DIR: /opt/python/${{ matrix.python.abi }}/lib
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
       - name: Build Wheels
         uses: messense/maturin-action@v1
         with:
@@ -164,7 +131,7 @@ jobs:
             apt-get install -y --no-install-recommends python3 python3-pip software-properties-common
             add-apt-repository ppa:deadsnakes/ppa
             apt-get update
-            apt-get install -y python3.6 python3.7 python3.9
+            apt-get install -y python3.6 python3.7 python3.8 python3.9
           run: |
             ls -lrth /artifacts
             PYTHON=python${{ matrix.python.version }}
@@ -193,8 +160,6 @@ jobs:
       - name: Show wheels generated
         run: ls -lh ./
       - uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
       - name: Publish to PyPi
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
