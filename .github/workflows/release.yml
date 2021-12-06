@@ -1,0 +1,174 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish to PyPI (true/false)"
+        required: true
+        default: "false"
+
+jobs:
+  python-macos:
+    name: Build macos py${{ matrix.python-version }}
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      # This step runs on the GHA vm
+      # Exclude the `--no-sdist` arg for at least 1 python version, no need to build it for each python version
+      - name: Build wheels - x86_64
+        uses: messense/maturin-action@v1
+        with:
+          target: x86_64
+          args: -i python${{ matrix.python-version }} --release --out dist ${{ matrix.python-version != '3.9' && '--no-sdist' || '' }}
+      # This step runs on the GHA vm
+      - name: Build wheels - universal2
+        uses: messense/maturin-action@v1
+        env:
+          PYO3_CROSS_LIB_DIR: /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.8/lib
+        with:
+          args: -i python${{ matrix.python-version }} --release --universal2 --out dist --no-sdist
+      - name: Show wheels generated
+        run: ls -lh dist/
+      - name: Upload wheels
+        uses: actions/upload-artifact@v2
+        with:
+          name: wheels
+          path: dist
+
+  python-windows:
+    name: Build windows ${{ matrix.target }} py${{ matrix.python-version }}
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
+        target: [x64, x86]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.target }}
+      # This step runs on the GHA vm
+      - name: Build wheels
+        uses: messense/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: -i python --release --out dist --no-sdist
+      - name: Show wheels generated
+        run: ls -lh dist
+        shell: bash
+      - name: Upload wheels
+        uses: actions/upload-artifact@v2
+        with:
+          name: wheels
+          path: dist
+
+  python-linux:
+    name: Build linux ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64, i686]
+    steps:
+      - uses: actions/checkout@v2
+      # supported python versions
+      # https://github.com/messense/maturin-action/blob/51478586be5dfb16a569cb6bbec182fba9f13f79/src/index.ts#L245
+      # this step runs in a docker container selected by the messense/maturin-action action
+      # there is no need to install python on the GHA vm
+      - name: Build Wheels
+        uses: messense/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: auto
+          args: --release --out dist --no-sdist
+      - name: Show wheels generated
+        run: ls -lh dist/
+      - name: Upload wheels
+        uses: actions/upload-artifact@v2
+        with:
+          name: wheels
+          path: dist
+
+  python-linux-cross:
+    name: Build py${{ matrix.python.version }} linux-cross ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python:
+          [
+            { version: "3.6", abi: "cp36-cp36m" },
+            { version: "3.7", abi: "cp37-cp37m" },
+            { version: "3.8", abi: "cp38-cp38" },
+            { version: "3.9", abi: "cp39-cp39" },
+          ]
+        target: [aarch64, armv7, s390x, ppc64le, ppc64]
+    env:
+      PYO3_CROSS_LIB_DIR: /opt/python/${{ matrix.python.abi }}/lib
+    steps:
+      - uses: actions/checkout@v2
+      # this step runs in a docker container selected by the messense/maturin-action action
+      # there is no need to install python on the GHA vm
+      - name: Build Wheels
+        uses: messense/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: auto
+          args: -i python${{ matrix.python.version }} --release --out dist --no-sdist
+      - uses: uraimo/run-on-arch-action@v2.0.5
+        if: matrix.target != 'ppc64'
+        name: Install built wheel
+        with:
+          arch: ${{ matrix.target }}
+          distro: ubuntu20.04
+          githubToken: ${{ github.token }}
+          # Mount the dist directory as /artifacts in the container
+          dockerRunArgs: |
+            --volume "${PWD}/dist:/artifacts"
+          install: |
+            apt-get update
+            apt-get install -y --no-install-recommends python3 python3-pip software-properties-common
+            add-apt-repository ppa:deadsnakes/ppa
+            apt-get update
+            apt-get install -y python3.6 python3.7 python3.8 python3.9
+          run: |
+            ls -lrth /artifacts
+            PYTHON=python${{ matrix.python.version }}
+            $PYTHON -m pip install -U pip
+            $PYTHON -m pip install dbt_extractor --no-index --find-links /artifacts --force-reinstall
+            $PYTHON -c 'import dbt_extractor'
+      - name: Show wheels generated
+        run: ls -lh dist/
+      - name: Upload wheels
+        uses: actions/upload-artifact@v2
+        with:
+          name: wheels
+          path: dist
+
+  publish:
+    needs: [python-macos, python-windows, python-linux, python-linux-cross]
+    name: Publish to PyPI
+    environment:
+      name: pypi-prod
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: wheels
+      - name: Show wheels generated
+        run: ls -lh ./
+      - uses: actions/setup-python@v2
+      - name: Publish to PyPi
+        if: ${{ github.event.inputs.publish == 'true' }}
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          pip install --upgrade twine
+          twine upload --skip-existing *
