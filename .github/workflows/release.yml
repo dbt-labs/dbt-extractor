@@ -152,7 +152,6 @@ jobs:
     environment:
       name: pypi-prod
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.publish == 'true' }}
     steps:
       - uses: actions/download-artifact@v2
         with:
@@ -161,6 +160,7 @@ jobs:
         run: ls -lh ./
       - uses: actions/setup-python@v2
       - name: Publish to PyPi
+        if: ${{ github.event.inputs.publish == 'true' }}
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
