@@ -17,7 +17,7 @@ name = "dbt_extractor"
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-pyo3 = { version = "0.15.1", features = ["abi3-py36", "extension-module"] }
+pyo3 = { version = "0.15.1", features = ["abi3-py37", "extension-module"] }
 rayon = "1.5.1"
 tree-sitter = "0.19"
 tree-sitter-jinja2 = { git = "https://github.com/dbt-labs/tree-sitter-jinja2", tag = "v0.1.0" }
