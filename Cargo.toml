@@ -4,7 +4,7 @@ version = "0.4.0"
 description = "A tool to analyze and extract information from Jinja used in dbt projects."
 authors = [
   "Nathaniel May <nathaniel.may@dbtlabs.com>",
-  "dbt Labs <info@dbtlabs.com>"
+  "dbt Labs <info@dbtlabs.com>",
 ]
 edition = "2018"
 homepage = "https://github.com/dbt-labs/dbt-parser-generator/"
@@ -17,7 +17,7 @@ name = "dbt_extractor"
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
-pyo3 = { version = "0.15.1", features = ["extension-module"] }
+pyo3 = { version = "0.15.1", features = ["abi3-py37", "extension-module"] }
 rayon = "1.5.1"
 tree-sitter = "0.19"
 tree-sitter-jinja2 = { git = "https://github.com/dbt-labs/tree-sitter-jinja2", tag = "v0.1.0" }
