@@ -1,6 +1,6 @@
 [package]
 name = "dbt-extractor"
-version = "0.4.0"
+version = "0.4.1"
 description = "A tool to analyze and extract information from Jinja used in dbt projects."
 authors = [
   "Nathaniel May <nathaniel.may@dbtlabs.com>",
