@@ -1,27 +1,27 @@
 [build-system]
-requires = ["maturin>=0.12,<0.13"]
+requires = ["maturin>=0.11,<0.12"]
 build-backend = "maturin"
 
 [project]
 name = "dbt-extractor"
 authors = [
-  { email = "info@dbtlabs.com" },
-  { name = "dbt Labs" },
-  { email = "nathaniel.may@dbtlabs.com" },
-  { name = "Nathaniel May" },
+  {email = "info@dbtlabs.com"},
+  {name = "dbt Labs"},
+  {email = "nathaniel.may@dbtlabs.com"},
+  {name = "Nathaniel May"}
 ]
 long_description = { file = "README.md" }
 long_description_content_type = "text/markdown"
 readme = "README.md"
 requires-python = ">=3.6.1"
 classifiers = [
-  "Programming Language :: Rust",
+    "Programming Language :: Rust",
 
-  "Development Status :: 5 - Production/Stable",
+    "Development Status :: 5 - Production/Stable",
 
-  "License :: OSI Approved :: Apache Software License",
+    "License :: OSI Approved :: Apache Software License",
 
-  "Operating System :: Microsoft :: Windows",
-  "Operating System :: MacOS :: MacOS X",
-  "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
 ]
