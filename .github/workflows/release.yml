@@ -12,8 +12,8 @@ jobs:
   macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.9
           architecture: x64
@@ -41,7 +41,7 @@ jobs:
           pip install dbt-extractor --no-index --find-links dist --force-reinstall
           python -c "import dbt_extractor"
       - name: Upload wheels
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: wheels
           path: dist
@@ -52,8 +52,8 @@ jobs:
       matrix:
         target: [x64, x86]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.9
           architecture: ${{ matrix.target }}
@@ -73,7 +73,7 @@ jobs:
           pip install dbt-extractor --no-index --find-links dist --force-reinstall
           python -c "import dbt_extractor"
       - name: Upload wheels
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: wheels
           path: dist
@@ -84,8 +84,8 @@ jobs:
       matrix:
         target: [x86_64, i686]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.9
           architecture: x64
@@ -101,7 +101,7 @@ jobs:
           pip install dbt-extractor --no-index --find-links dist --force-reinstall
           python -c "import dbt_extractor"
       - name: Upload wheels
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: wheels
           path: dist
@@ -112,8 +112,8 @@ jobs:
       matrix:
         target: [aarch64, armv7, s390x, ppc64le, ppc64]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.9
       - name: Build wheels
@@ -122,7 +122,7 @@ jobs:
           target: ${{ matrix.target }}
           manylinux: auto
           args: --release --out dist --no-sdist
-      - uses: uraimo/run-on-arch-action@v2.1.1
+      - uses: uraimo/run-on-arch-action@v2.5.0
         if: matrix.target != 'ppc64'
         name: Install built wheel
         with:
@@ -137,7 +137,7 @@ jobs:
             pip3 install dbt-extractor --no-index --find-links dist/ --force-reinstall
             python3 -c "import dbt_extractor"
       - name: Upload wheels
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: wheels
           path: dist
@@ -150,8 +150,8 @@ jobs:
           - x86_64-unknown-linux-musl
           - i686-unknown-linux-musl
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.9
           architecture: x64
@@ -173,7 +173,7 @@ jobs:
             pip3 install dbt-extractor --no-index --find-links /io/dist/ --force-reinstall
             python3 -c "import dbt_extractor"
       - name: Upload wheels
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: wheels
           path: dist
@@ -188,8 +188,8 @@ jobs:
           - target: armv7-unknown-linux-musleabihf
             arch: armv7
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.9
       - name: Build wheels
@@ -198,7 +198,7 @@ jobs:
           target: ${{ matrix.platform.target }}
           manylinux: musllinux_1_2
           args: --release --out dist --no-sdist
-      - uses: uraimo/run-on-arch-action@v2.1.1
+      - uses: uraimo/run-on-arch-action@v2.5.0
         name: Install built wheel
         with:
           arch: ${{ matrix.platform.arch }}
@@ -211,7 +211,7 @@ jobs:
             pip3 install dbt-extractor --no-index --find-links dist/ --force-reinstall
             python3 -c "import dbt_extractor"
       - name: Upload wheels
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: wheels
           path: dist
@@ -223,12 +223,12 @@ jobs:
       name: pypi-prod
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: wheels
       - name: Show wheels generated
         run: ls -lh ./
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
       - name: Publish to PyPi
         if: ${{ github.event.inputs.publish == 'true' }}
         env:
