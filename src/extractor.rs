@@ -71,10 +71,6 @@ impl Extraction {
         }
     }
 
-    pub fn new() -> Extraction {
-        Extraction::populate(None, None, None)
-    }
-
     pub fn populate(
         refs: Option<Vec<(String, Option<String>)>>,
         sources: Option<Vec<(String, String)>>,
@@ -85,6 +81,12 @@ impl Extraction {
             sources: sources.unwrap_or(vec![]),
             configs: configs.unwrap_or(vec![]),
         }
+    }
+}
+
+impl Default for Extraction {
+    fn default() -> Self {
+        Self::populate(None, None, None)
     }
 }
 
@@ -147,18 +149,10 @@ impl Arbitrary for ConfigVal {
 
     fn shrink(&self) -> Box<dyn Iterator<Item = ConfigVal>> {
         match self {
-            ConfigVal::StringC(s) => {
-                Box::new(s.shrink().into_iter().map(ConfigVal::StringC).into_iter())
-            }
-            ConfigVal::BoolC(b) => {
-                Box::new(b.shrink().into_iter().map(ConfigVal::BoolC).into_iter())
-            }
-            ConfigVal::ListC(v) => {
-                Box::new(v.shrink().into_iter().map(ConfigVal::ListC).into_iter())
-            }
-            ConfigVal::DictC(m) => {
-                Box::new(m.shrink().into_iter().map(ConfigVal::DictC).into_iter())
-            }
+            ConfigVal::StringC(s) => Box::new(s.shrink().map(ConfigVal::StringC)),
+            ConfigVal::BoolC(b) => Box::new(b.shrink().map(ConfigVal::BoolC)),
+            ConfigVal::ListC(v) => Box::new(v.shrink().map(ConfigVal::ListC)),
+            ConfigVal::DictC(m) => Box::new(m.shrink().map(ConfigVal::DictC)),
         }
     }
 }
@@ -227,7 +221,7 @@ fn error_anywhere(node: &Node) -> bool {
 }
 
 // in the tree-sitter grammar some elements are named, those are the string values used to retrieve children.
-fn child_by_field_name<'a, 'b>(node: &'a Node, name: &'b str) -> Result<Node<'a>, SourceError> {
+fn child_by_field_name<'a>(node: &'a Node, name: &str) -> Result<Node<'a>, SourceError> {
     node.child_by_field_name(name)
         .ok_or(SourceError::MissingValue(
             node.kind().to_owned(),
@@ -274,12 +268,12 @@ fn to_ast(source: &[u8], node: Node) -> Result<ExprU, SourceError> {
             }
         }
 
-        "lit_string" => match text_from_node(&source, &node) {
+        "lit_string" => match text_from_node(source, &node) {
             Ok(s) => Ok(ExprU::StringU(strip_first_and_last(s))),
             Err(_) => Err(SourceError::TreeSitterError),
         },
 
-        "bool" => match text_from_node(&source, &node) {
+        "bool" => match text_from_node(source, &node) {
             Ok("True") => Ok(ExprU::BoolU(true)),
             Ok("False") => Ok(ExprU::BoolU(false)),
             Ok(s) => Err(SourceError::BadBoolean(s.to_owned())),
@@ -299,7 +293,7 @@ fn to_ast(source: &[u8], node: Node) -> Result<ExprU, SourceError> {
             let mut dict = HashMap::new();
             for pair in named_children(node) {
                 let key_node = child_by_field_name(&pair, "key")?;
-                let key = strip_first_and_last(text_from_node(&source, &key_node)?);
+                let key = strip_first_and_last(text_from_node(source, &key_node)?);
                 let value_node = child_by_field_name(&pair, "value")?;
                 let value = to_ast(source, value_node)?;
 
@@ -338,8 +332,6 @@ fn kwargs_last(args: &[ExprU]) -> bool {
             _ => {
                 if seen_kwarg {
                     return false;
-                } else {
-                    ()
                 }
             }
         }
@@ -357,15 +349,15 @@ fn type_check_configs(expr: ExprU) -> Result<ConfigVal, TypeError> {
 
         ExprU::ListU(elems) => elems
             .into_iter()
-            .map(|elem| type_check_configs(elem))
+            .map(type_check_configs)
             .collect::<Result<Vec<ConfigVal>, TypeError>>()
-            .map(|typed_elems| ConfigVal::ListC(typed_elems)),
+            .map(ConfigVal::ListC),
 
         ExprU::DictU(m) => m
             .into_iter()
             .map(|(key, elem)| type_check_configs(elem).map(|typed| (key, typed)))
             .collect::<Result<HashMap<String, ConfigVal>, TypeError>>()
-            .map(|typed_elems| ConfigVal::DictC(typed_elems)),
+            .map(ConfigVal::DictC),
 
         unsupported => Err(TypeError::UnsupportedConfigValue(ExprType::from(
             &unsupported,
@@ -409,14 +401,11 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
         ExprU::ListU(elems) => {
             let mut list = vec![];
             for elem in elems {
-                match elem {
-                    ExprU::FnCallU(name, _) => {
-                        return Err(TypeError::BadAssignment(
-                            "list element".to_owned(),
-                            ["fn_call", &name].join(" "),
-                        ))
-                    }
-                    _ => (),
+                if let ExprU::FnCallU(name, _) = elem {
+                    return Err(TypeError::BadAssignment(
+                        "list element".to_owned(),
+                        ["fn_call", &name].join(" "),
+                    ));
                 }
                 list.push(type_check(elem)?);
             }
@@ -470,7 +459,7 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                             // error on everything else
                             other_type => Err(TypeError::TypeMismatch {
                                 expected: ExprType::String,
-                                got: ExprType::from(other_type).to_owned(),
+                                got: ExprType::from(other_type),
                             }),
                         },
                         ExprU::KwargU(name, _) if name != "source_name" => {
@@ -491,7 +480,7 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                             // error on everything else
                             other_type => Err(TypeError::TypeMismatch {
                                 expected: ExprType::String,
-                                got: ExprType::from(other_type).to_owned(),
+                                got: ExprType::from(other_type),
                             }),
                         },
                         ExprU::KwargU(name, _) if name != "table_name" => {
@@ -512,7 +501,7 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                 }
 
                 "config" => {
-                    if args.len() < 1 {
+                    if args.is_empty() {
                         return Err(TypeError::ArgumentMismatch {
                             expected: vec![],
                             found: args.len(),
@@ -562,13 +551,13 @@ fn extract_from(ast: ExprT) -> Extraction {
             exprs
                 .into_par_iter()
                 .map(extract_from)
-                .reduce(|| Extraction::new(), |b, a| b.mappend(&a))
+                .reduce(Extraction::default, |b, a| b.mappend(&a))
         }
         ExprT::RefT(x, y) => Extraction::populate(Some(vec![(x, y)]), None, None),
         ExprT::SourceT(x, y) => Extraction::populate(None, Some(vec![(x, y)]), None),
         ExprT::ConfigT(configs) => Extraction::populate(None, None, Some(configs)),
         // otherwise, there's nothing to extract
-        _ => Extraction::new(),
+        _ => Extraction::default(),
     }
 }
 
@@ -616,7 +605,7 @@ mod monoid_laws {
 
     #[quickcheck]
     fn extractor_left_and_right_identity(x: Extraction) {
-        let mempty = Extraction::new();
+        let mempty = Extraction::default();
         assert_eq!(x, mempty.mappend(&x));
         assert_eq!(x, x.mappend(&mempty));
     }
@@ -648,27 +637,21 @@ mod type_check_tests {
 
     fn assert_all_type_check(sources: Vec<&str>) {
         for result in get_results(sources) {
-            match result {
-                (_, Ok(_)) => assert!(true),
-                (source, Err(e)) => {
-                    println!("source:         {}", source);
-                    println!("produced error: {}", e);
-                    assert!(false)
-                }
+            if let (source, Err(e)) = result {
+                println!("source:         {}", source);
+                println!("produced error: {}", e);
+                panic!("get_results did not error");
             }
         }
     }
 
     fn assert_none_type_check(sources: Vec<&str>) {
         for result in get_results(sources) {
-            match result {
-                (source, Ok(ast)) => {
-                    println!("expected error from source.");
-                    println!("source: {}", source);
-                    println!("produced ast: {:?}", ast);
-                    assert!(false)
-                }
-                (_, Err(_)) => assert!(true),
+            if let (source, Ok(ast)) = result {
+                println!("expected error from source.");
+                println!("source: {}", source);
+                println!("produced ast: {:?}", ast);
+                panic!("get_results did not error");
             }
         }
     }
@@ -679,7 +662,7 @@ mod type_check_tests {
             (source, Err(e)) => {
                 println!("source:         {}", source);
                 println!("produced error: {}", e);
-                assert!(false)
+                panic!("get_results did not error");
             }
         }
     }
@@ -690,7 +673,7 @@ mod type_check_tests {
                 println!("expected error from source.");
                 println!("source: {}", source);
                 println!("produced ast: {:?}", ast);
-                assert!(false)
+                panic!("get_results did not error");
             }
             (_, Err(e)) => assert_eq!(*e, expect),
         }

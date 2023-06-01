@@ -65,10 +65,7 @@ fn to_py_result<T, E: Display>(r: Result<T, E>) -> PyResult<T> {
 // `PyResult` raises Python exceptions. Calling code should catch and continue.
 #[pyfunction]
 pub fn py_extract_from_source(source: &str) -> PyResult<PyObject> {
-    let gil = Python::acquire_gil();
-    let py = gil.python();
-
-    to_py_result(extract_from_source(source)).and_then(|x| pythonize(py, x))
+    Python::with_gil(|py| to_py_result(extract_from_source(source)).and_then(|x| pythonize(py, x)))
 }
 
 #[pymodule]
