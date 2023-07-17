@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.0
+- Modified ref return type to include version.
+
 ## 0.4.0
 - Return type changed so that configs are a list of unmerged key-value pairs. Merging config values should now be done by the consumer.
 
