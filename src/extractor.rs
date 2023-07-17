@@ -4,13 +4,14 @@ use quickcheck::{Arbitrary, Gen};
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::str::from_utf8;
+use std::str::FromStr;
 use tree_sitter::{Node, Tree};
 
 // final result
 // this is snug fit for the shape of the data
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Extraction {
-    pub refs: Vec<(String, Option<String>)>,
+    pub refs: Vec<(String, Option<String>, Option<RefVersion>)>,
     pub sources: Vec<(String, String)>,
     pub configs: Vec<(String, ConfigVal)>,
 }
@@ -19,7 +20,7 @@ pub struct Extraction {
 impl Arbitrary for Extraction {
     fn arbitrary(g: &mut Gen) -> Extraction {
         Extraction {
-            refs: Vec::<(String, Option<String>)>::arbitrary(g),
+            refs: Vec::<(String, Option<String>, Option<RefVersion>)>::arbitrary(g),
             sources: Vec::<(String, String)>::arbitrary(g),
             configs: Vec::<(String, ConfigVal)>::arbitrary(g),
         }
@@ -72,7 +73,7 @@ impl Extraction {
     }
 
     pub fn populate(
-        refs: Option<Vec<(String, Option<String>)>>,
+        refs: Option<Vec<(String, Option<String>, Option<RefVersion>)>>,
         sources: Option<Vec<(String, String)>>,
         configs: Option<Vec<(String, ConfigVal)>>,
     ) -> Extraction {
@@ -91,7 +92,7 @@ impl Default for Extraction {
 }
 
 // untyped ast
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 enum ExprU {
     RootU(Vec<ExprU>),
     StringU(String),
@@ -100,10 +101,12 @@ enum ExprU {
     DictU(HashMap<String, ExprU>),
     KwargU(String, Box<ExprU>),
     FnCallU(String, Vec<ExprU>),
+    IntU(i32),
+    DoubleU(f64),
 }
 
 // typed ast
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 enum ExprT {
     RootT(Vec<ExprT>),
     StringT(String),
@@ -113,9 +116,11 @@ enum ExprT {
     DictT(HashMap<String, ExprT>),
     // built-in function types
     // args represented as positional regardless of kwargs in source
-    RefT(String, Option<String>),
+    RefT(String, Option<String>, Option<RefVersion>),
     SourceT(String, String),
     ConfigT(Vec<(String, ConfigVal)>),
+    IntT(i32),
+    DoubleT(f64),
 }
 
 // wrappers for config return types
@@ -157,6 +162,35 @@ impl Arbitrary for ConfigVal {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum RefVersion {
+    StringRV(String),
+    IntRV(i32),
+    DoubleRV(f64),
+}
+
+#[cfg(test)]
+impl Arbitrary for RefVersion {
+    fn arbitrary(g: &mut Gen) -> RefVersion {
+        let kind: usize = usize::arbitrary(g) % 4;
+
+        match kind {
+            0 => RefVersion::StringRV(String::arbitrary(g)),
+            1 => RefVersion::IntRV(i32::arbitrary(g)),
+            2 => RefVersion::DoubleRV(f64::arbitrary(g)),
+            _ => panic!(),
+        }
+    }
+
+    fn shrink(&self) -> Box<dyn Iterator<Item = RefVersion>> {
+        match self {
+            RefVersion::StringRV(s) => Box::new(s.shrink().map(RefVersion::StringRV)),
+            RefVersion::IntRV(i) => Box::new(i.shrink().map(RefVersion::IntRV)),
+            RefVersion::DoubleRV(d) => Box::new(d.shrink().map(RefVersion::DoubleRV)),
+        }
+    }
+}
+
 // values that represent types
 // generally used to pass type information to exceptions
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -168,6 +202,8 @@ pub enum ExprType {
     FnCall,
     Root,
     Kwarg,
+    Int,
+    Double,
 }
 
 impl ToString for ExprType {
@@ -180,6 +216,8 @@ impl ToString for ExprType {
             ExprType::FnCall => "fn_call".to_owned(),
             ExprType::Root => "root".to_owned(),
             ExprType::Kwarg => "kwarg".to_owned(),
+            ExprType::Int => "int".to_owned(),
+            ExprType::Double => "double".to_owned(),
         }
     }
 }
@@ -194,6 +232,8 @@ impl ExprType {
             ExprU::FnCallU(..) => ExprType::FnCall,
             ExprU::RootU(..) => ExprType::Root,
             ExprU::KwargU(..) => ExprType::Kwarg,
+            ExprU::IntU(..) => ExprType::Int,
+            ExprU::DoubleU(..) => ExprType::Double,
         }
     }
 }
@@ -320,6 +360,16 @@ fn to_ast(source: &[u8], node: Node) -> Result<ExprU, SourceError> {
             Ok(ExprU::FnCallU(name.to_owned(), args))
         }
 
+        "integer" => text_from_node(source, &node)
+            .map_or(None, |s| i32::from_str(s).ok())
+            .map(ExprU::IntU)
+            .ok_or(SourceError::TreeSitterError),
+
+        "float" => text_from_node(source, &node)
+            .map_or(None, |s| f64::from_str(s).ok())
+            .map(ExprU::DoubleU)
+            .ok_or(SourceError::TreeSitterError),
+
         s => Err(SourceError::UnknownNodeType(s.to_owned())),
     }
 }
@@ -418,30 +468,48 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
             };
             match &name[..] {
                 "ref" => {
-                    if args.len() != 1 && args.len() != 2 {
-                        return Err(TypeError::ArgumentMismatch {
-                            expected: vec![1, 2],
-                            found: args.len(),
-                        });
+                    let mut arg_stack = Vec::from(args);
+                    arg_stack.reverse();
+
+                    let a: String = match arg_stack.pop() {
+                        None => Err(TypeError::ArgumentMismatch {
+                            expected: vec![1, 2, 3],
+                            found: 0,
+                        }),
+                        Some(ExprU::StringU(s)) => Ok(s.clone()),
+                        Some(a) => Err(TypeError::TypeMismatch {
+                            expected: ExprType::String,
+                            got: ExprType::from(&a),
+                        }),
+                    }?;
+
+                    let b: Option<String> = match arg_stack.pop() {
+                        None => None,
+                        Some(ExprU::StringU(s)) => Some(s.clone()),
+                        Some(x) => {
+                            arg_stack.push(x);
+                            None
+                        }
+                    };
+
+                    let mut v: Option<RefVersion> = None;
+                    while !arg_stack.is_empty() {
+                        let arg = arg_stack.pop().unwrap();
+                        v = match arg {
+                            ExprU::KwargU(k, v) => match k.as_str() {
+                                "v" | "version" => match *v {
+                                    ExprU::StringU(s) => Some(RefVersion::StringRV(s.clone())),
+                                    ExprU::IntU(i) => Some(RefVersion::IntRV(i)),
+                                    ExprU::DoubleU(d) => Some(RefVersion::DoubleRV(d)),
+                                    _ => None,
+                                },
+                                _ => None,
+                            },
+                            _ => v,
+                        }
                     }
-                    let typed_args = args
-                        .into_iter()
-                        .map(|arg| {
-                            match arg {
-                                // refs can only take string literals
-                                ExprU::StringU(s) => Ok(s),
-                                // error on everything that isn't a string literal
-                                not_string => Err(TypeError::TypeMismatch {
-                                    expected: ExprType::String,
-                                    got: ExprType::from(&not_string),
-                                }),
-                            }
-                        })
-                        .collect::<Result<Vec<String>, TypeError>>()?;
-                    Ok(ExprT::RefT(
-                        typed_args[0].clone(),
-                        typed_args.get(1).map(|x| x.to_owned()),
-                    ))
+
+                    Ok(ExprT::RefT(a, b, v))
                 }
 
                 "source" => {
@@ -536,6 +604,10 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                 name => Err(TypeError::UnrecognizedFunction(name.to_owned())),
             }
         }
+
+        ExprU::IntU(i) => Ok(ExprT::IntT(i)),
+
+        ExprU::DoubleU(d) => Ok(ExprT::DoubleT(d)),
     }
 }
 
@@ -553,7 +625,7 @@ fn extract_from(ast: ExprT) -> Extraction {
                 .map(extract_from)
                 .reduce(Extraction::default, |b, a| b.mappend(&a))
         }
-        ExprT::RefT(x, y) => Extraction::populate(Some(vec![(x, y)]), None, None),
+        ExprT::RefT(x, y, z) => Extraction::populate(Some(vec![(x, y, z)]), None, None),
         ExprT::SourceT(x, y) => Extraction::populate(None, Some(vec![(x, y)]), None),
         ExprT::ConfigT(configs) => Extraction::populate(None, None, Some(configs)),
         // otherwise, there's nothing to extract
@@ -844,7 +916,7 @@ other as (
     fn ref_ast() {
         assert_produces_tree(
             "{{ ref('my_table') }}",
-            ExprT::RootT(vec![ExprT::RefT("my_table".to_string(), None)]),
+            ExprT::RootT(vec![ExprT::RefT("my_table".to_string(), None, None)]),
         )
     }
 
@@ -860,8 +932,8 @@ other as (
             join {{ ref('y') }}
             "#,
             ExprT::RootT(vec![
-                ExprT::RefT("x".to_string(), None),
-                ExprT::RefT("y".to_string(), None),
+                ExprT::RefT("x".to_string(), None, None),
+                ExprT::RefT("y".to_string(), None, None),
             ]),
         )
     }

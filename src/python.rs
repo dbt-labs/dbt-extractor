@@ -1,4 +1,4 @@
-use crate::extractor::{extract_from_source, ConfigVal, Extraction};
+use crate::extractor::{extract_from_source, ConfigVal, Extraction, RefVersion};
 use pyo3::create_exception;
 use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
@@ -29,14 +29,22 @@ fn convert_config(py: Python, v: ConfigVal) -> PyObject {
 
 // Transation between rust extraction type and Python dictionary
 fn pythonize(py: Python, extraction: Extraction) -> PyResult<PyObject> {
-    let refs: Vec<Vec<String>> = extraction
-        .refs
-        .into_iter()
-        .map(|x| match x {
-            (a, Some(b)) => vec![a, b],
-            (a, None) => vec![a],
-        })
-        .collect();
+    let refs = PyList::empty(py);
+
+    for r in extraction.refs.iter() {
+        let pyref = PyList::empty(py);
+        pyref.append(&r.0)?;
+        pyref.append(&r.1)?;
+        match &r.2 {
+            Some(RefVersion::StringRV(s)) => pyref.append(s),
+            Some(RefVersion::IntRV(s)) => pyref.append(s),
+            Some(RefVersion::DoubleRV(s)) => pyref.append(s),
+            _ => pyref.append(None::<u32>),
+        }?;
+
+        refs.append(pyref)?;
+    }
+
     let sources: &PySet = PySet::new(py, &extraction.sources[..])?;
     let py_configs: Vec<(String, PyObject)> = extraction
         .configs
