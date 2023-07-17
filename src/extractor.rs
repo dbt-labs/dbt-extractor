@@ -471,7 +471,8 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                     let mut arg_stack = Vec::from(args);
                     arg_stack.reverse();
 
-                    let a: String = match arg_stack.pop() {
+                    // The first param must be there, and must be a string.
+                    let p1: String = match arg_stack.pop() {
                         None => Err(TypeError::ArgumentMismatch {
                             expected: vec![1, 2, 3],
                             found: 0,
@@ -483,7 +484,8 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                         }),
                     }?;
 
-                    let b: Option<String> = match arg_stack.pop() {
+                    // The second param is optional and might be a string.
+                    let p2: Option<String> = match arg_stack.pop() {
                         None => None,
                         Some(ExprU::StringU(s)) => Some(s.clone()),
                         Some(x) => {
@@ -492,24 +494,31 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                         }
                     };
 
-                    let mut v: Option<RefVersion> = None;
-                    while !arg_stack.is_empty() {
-                        let arg = arg_stack.pop().unwrap();
-                        v = match arg {
-                            ExprU::KwargU(k, v) => match k.as_str() {
-                                "v" | "version" => match *v {
-                                    ExprU::StringU(s) => Some(RefVersion::StringRV(s.clone())),
-                                    ExprU::IntU(i) => Some(RefVersion::IntRV(i)),
-                                    ExprU::DoubleU(d) => Some(RefVersion::DoubleRV(d)),
-                                    _ => None,
-                                },
-                                _ => None,
-                            },
-                            _ => v,
-                        }
-                    }
+                    // If there are two string params, the first is the package
+                    // and the second is the name. If there is one, it's just the
+                    // name. This little match sorts that out.
+                    let (name, package) = match (p1, p2) {
+                        (a, Some(b)) => (b, Some(a)),
+                        (a, None) => (a, None)
+                    };
 
-                    Ok(ExprT::RefT(a, b, v))
+                    // Now deal with additional params. There should be at most
+                    // one, and it must be a kwarg with key 'v' or 'version'.
+                    let version = match arg_stack.pop() {
+                            Some(ExprU::KwargU(k, v)) => match k.as_str() {
+                                "v" | "version" => match *v {
+                                    ExprU::StringU(s) => Ok(Some(RefVersion::StringRV(s.clone()))),
+                                    ExprU::IntU(i) => Ok(Some(RefVersion::IntRV(i))),
+                                    ExprU::DoubleU(d) => Ok(Some(RefVersion::DoubleRV(d))),
+                                    x => Err(TypeError::TypeMismatch { expected: ExprType::Kwarg, got: ExprType::from(&x) }),
+                                },
+                                _ => Err(TypeError::UnexpectedKwarg(k)),
+                            },
+                            Some(x) => Err(TypeError::TypeMismatch { expected: ExprType::Kwarg, got: ExprType::from(&x) } ),
+                            None => Ok(None)
+                    }?;
+
+                    Ok(ExprT::RefT(name, package, version))
                 }
 
                 "source" => {
