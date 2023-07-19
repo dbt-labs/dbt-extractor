@@ -731,15 +731,14 @@ mod monoid_laws {
     use quickcheck_macros::quickcheck;
 
     #[quickcheck]
-    fn extractor_left_and_right_identity(x: Extraction) {
+    fn extractor_left_and_right_identity(x: Extraction) -> bool {
         let mempty = Extraction::default();
-        assert_eq!(x, mempty.mappend(&x));
-        assert_eq!(x, x.mappend(&mempty));
+        x == mempty.mappend(&x) && x == x.mappend(&mempty)
     }
 
     #[quickcheck]
-    fn extractor_associativity(x: Extraction, y: Extraction, z: Extraction) {
-        assert_eq!(x.mappend(&y).mappend(&z), x.mappend(&y.mappend(&z)));
+    fn extractor_associativity(x: Extraction, y: Extraction, z: Extraction) -> bool {
+        x.mappend(&y).mappend(&z) == x.mappend(&y.mappend(&z))
     }
 }
 
