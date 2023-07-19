@@ -34,7 +34,9 @@ fn pythonize(py: Python, extraction: Extraction) -> PyResult<PyObject> {
     for r in extraction.refs.iter() {
         let pyref = PyDict::new(py);
         pyref.set_item("name", &r.name)?;
-        pyref.set_item("package", &r.package)?;
+        if r.package.is_some() {
+            pyref.set_item("package", &r.package)?;
+        }
         match &r.version {
             Some(RefVersion::StringRV(s)) => pyref.set_item("version", s),
             Some(RefVersion::IntRV(i)) => pyref.set_item("version", i),
