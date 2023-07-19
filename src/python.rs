@@ -6,6 +6,7 @@ use pyo3::types::{PyDict, PyList, PySet};
 use pyo3::wrap_pyfunction;
 use std::collections::HashMap;
 use std::fmt::Display;
+use RefVersion::*;
 
 create_exception!(dbt_extractor, ExtractionError, PyException);
 
@@ -38,9 +39,9 @@ fn pythonize(py: Python, extraction: Extraction) -> PyResult<PyObject> {
             pyref.set_item("package", &r.package)?;
         }
         match &r.version {
-            Some(RefVersion::StringRV(s)) => pyref.set_item("version", s),
-            Some(RefVersion::IntRV(i)) => pyref.set_item("version", i),
-            Some(RefVersion::DoubleRV(d)) => pyref.set_item("version", d),
+            Some(StringRV(s)) => pyref.set_item("version", s),
+            Some(IntRV(i)) => pyref.set_item("version", i),
+            Some(DoubleRV(d)) => pyref.set_item("version", d),
             _ => PyResult::Ok(()),
         }?;
 

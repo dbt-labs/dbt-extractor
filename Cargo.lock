@@ -456,8 +456,8 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter-jinja2"
-version = "0.1.0"
-source = "git+https://github.com/dbt-labs/tree-sitter-jinja2?tag=v0.2.0#95247a1e5c1fe47171749c71555eecc3e0749577"
+version = "0.2.0"
+source = "git+https://github.com/dbt-labs/tree-sitter-jinja2?tag=v0.2.0#c9b092eff38bd6943254ad0373006d83c100a8c0"
 dependencies = [
  "cc",
  "tree-sitter",

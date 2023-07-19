@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::str::from_utf8;
 use std::str::FromStr;
 use tree_sitter::{Node, Tree};
+use RefVersion::*;
 
 // final result
 // this is snug fit for the shape of the data
@@ -167,8 +168,8 @@ impl Arbitrary for RefVersion {
         let kind: usize = usize::arbitrary(g) % 2;
 
         match kind {
-            0 => RefVersion::StringRV(String::arbitrary(g)),
-            1 => RefVersion::IntRV(i64::arbitrary(g)),
+            0 => StringRV(String::arbitrary(g)),
+            1 => IntRV(i64::arbitrary(g)),
             // DoubleRV intentionally excluded because NaN isn't even partially equal to itself
             _ => panic!(),
         }
@@ -532,9 +533,9 @@ fn type_check(ast: ExprU) -> Result<ExprT, TypeError> {
                     let version = match arg_stack.pop() {
                         Some(ExprU::KwargU(k, v)) => match k.as_str() {
                             "v" | "version" => match *v {
-                                ExprU::StringU(s) => Ok(Some(RefVersion::StringRV(s.clone()))),
-                                ExprU::IntU(i) => Ok(Some(RefVersion::IntRV(i))),
-                                ExprU::DoubleU(d) => Ok(Some(RefVersion::DoubleRV(d))),
+                                ExprU::StringU(s) => Ok(Some(StringRV(s.clone()))),
+                                ExprU::IntU(i) => Ok(Some(IntRV(i))),
+                                ExprU::DoubleU(d) => Ok(Some(DoubleRV(d))),
                                 e => Err(TypeError::TypeMismatch {
                                     expected: ExprType::Kwarg,
                                     got: ExprType::from(&e),
@@ -808,6 +809,7 @@ mod type_check_tests {
     #[test]
     fn recognizes_ref_source_config() {
         assert_all_type_check(vec![
+            "select * from {{ ref('my_table') }}",
             "select * from {{ ref('my_table', v=2) }}",
             "{{ config(key='value') }}",
             "{{ source('a', 'b') }}",
@@ -1000,7 +1002,7 @@ other as (
                 ExprT::RefT(DbtRef {
                     name: "b".to_string(),
                     package: Some("a".to_string()),
-                    version: Some(RefVersion::StringRV("c".to_string())),
+                    version: Some(StringRV("c".to_string())),
                 }),
             ]),
         )
