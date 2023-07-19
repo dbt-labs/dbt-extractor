@@ -1,7 +1,7 @@
 // in Rust "integration test" just means using the
 // library from the outside like our users would
 
-use dbt_extractor::{extract_from_source, ConfigVal, Extraction};
+use dbt_extractor::{extract_from_source, ConfigVal, DbtRef, Extraction, RefVersion};
 use std::collections::HashMap;
 
 fn assert_extraction(source: &str, expected: Extraction) {
@@ -17,8 +17,16 @@ fn extracts_refs() {
         "{{ ref('my_table') }} {{ ref('other_table')}}",
         Extraction::populate(
             Some(vec![
-                ("my_table".to_string(), None),
-                ("other_table".to_string(), None),
+                DbtRef {
+                    name: "my_table".to_string(),
+                    package: None,
+                    version: None,
+                },
+                DbtRef {
+                    name: "other_table".to_string(),
+                    package: None,
+                    version: None,
+                },
             ]),
             None,
             None,
@@ -59,9 +67,13 @@ fn extracts_all() {
     ];
 
     assert_extraction(
-        "{{ source('package', 'table') }} {{ ref('x') }} {{ config(k='v', x=True) }}",
+        "{{ source('package', 'table') }} {{ ref('p','n',v=2.0) }} {{ config(k='v', x=True) }}",
         Extraction::populate(
-            Some(vec![("x".to_string(), None)]),
+            Some(vec![DbtRef {
+                name: "n".to_string(),
+                package: Some("p".to_string()),
+                version: Some(RefVersion::DoubleRV(2.0)),
+            }]),
             Some(vec![("package".to_string(), "table".to_string())]),
             Some(configs),
         ),

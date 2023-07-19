@@ -32,14 +32,14 @@ fn pythonize(py: Python, extraction: Extraction) -> PyResult<PyObject> {
     let refs = PyList::empty(py);
 
     for r in extraction.refs.iter() {
-        let pyref = PyList::empty(py);
-        pyref.append(&r.0)?;
-        pyref.append(&r.1)?;
-        match &r.2 {
-            Some(RefVersion::StringRV(s)) => pyref.append(s),
-            Some(RefVersion::IntRV(s)) => pyref.append(s),
-            Some(RefVersion::DoubleRV(s)) => pyref.append(s),
-            _ => pyref.append(None::<u32>),
+        let pyref = PyDict::new(py);
+        pyref.set_item("name", &r.name)?;
+        pyref.set_item("package", &r.package)?;
+        match &r.version {
+            Some(RefVersion::StringRV(s)) => pyref.set_item("version", s),
+            Some(RefVersion::IntRV(i)) => pyref.set_item("version", i),
+            Some(RefVersion::DoubleRV(d)) => pyref.set_item("version", d),
+            _ => PyResult::Ok(()),
         }?;
 
         refs.append(pyref)?;
