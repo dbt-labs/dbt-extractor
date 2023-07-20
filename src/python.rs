@@ -1,4 +1,4 @@
-use crate::extractor::{extract_from_source, ConfigVal, Extraction};
+use crate::extractor::{extract_from_source, ConfigVal, Extraction, RefVersion};
 use pyo3::create_exception;
 use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
@@ -6,6 +6,7 @@ use pyo3::types::{PyDict, PyList, PySet};
 use pyo3::wrap_pyfunction;
 use std::collections::HashMap;
 use std::fmt::Display;
+use RefVersion::*;
 
 create_exception!(dbt_extractor, ExtractionError, PyException);
 
@@ -29,14 +30,24 @@ fn convert_config(py: Python, v: ConfigVal) -> PyObject {
 
 // Transation between rust extraction type and Python dictionary
 fn pythonize(py: Python, extraction: Extraction) -> PyResult<PyObject> {
-    let refs: Vec<Vec<String>> = extraction
-        .refs
-        .into_iter()
-        .map(|x| match x {
-            (a, Some(b)) => vec![a, b],
-            (a, None) => vec![a],
-        })
-        .collect();
+    let refs = PyList::empty(py);
+
+    for r in extraction.refs.iter() {
+        let pyref = PyDict::new(py);
+        pyref.set_item("name", &r.name)?;
+        if r.package.is_some() {
+            pyref.set_item("package", &r.package)?;
+        }
+        match &r.version {
+            Some(StringRV(s)) => pyref.set_item("version", s),
+            Some(IntRV(i)) => pyref.set_item("version", i),
+            Some(DoubleRV(d)) => pyref.set_item("version", d),
+            _ => PyResult::Ok(()),
+        }?;
+
+        refs.append(pyref)?;
+    }
+
     let sources: &PySet = PySet::new(py, &extraction.sources[..])?;
     let py_configs: Vec<(String, PyObject)> = extraction
         .configs
