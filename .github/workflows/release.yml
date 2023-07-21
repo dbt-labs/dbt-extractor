@@ -35,7 +35,7 @@ jobs:
       - name: Build wheels - universal2
         uses: messense/maturin-action@v1
         with:
-          args: --release --universal2 --out dist --no-sdist
+          args: --release --target universal2-apple-darwin --out dist
       - name: Install built wheel - universal2
         run: |
           pip install dbt-extractor --no-index --find-links dist --force-reinstall
@@ -67,7 +67,7 @@ jobs:
         uses: messense/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --no-sdist
+          args: --release --out dist
       - name: Install built wheel
         run: |
           pip install dbt-extractor --no-index --find-links dist --force-reinstall
@@ -94,7 +94,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           manylinux: auto
-          args: --release --out dist --no-sdist
+          args: --release --out dist
       - name: Install built wheel
         if: matrix.target == 'x86_64'
         run: |
@@ -121,13 +121,13 @@ jobs:
         with:
           target: ${{ matrix.target }}
           manylinux: auto
-          args: --release --out dist --no-sdist
+          args: --release --out dist
       - uses: uraimo/run-on-arch-action@v2.5.0
         if: matrix.target != 'ppc64'
         name: Install built wheel
         with:
           arch: ${{ matrix.target }}
-          distro: ubuntu18.04
+          distro: ubuntu20.04
           githubToken: ${{ github.token }}
           install: |
             apt-get update
@@ -160,7 +160,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist --no-sdist
+          args: --release --out dist
       - name: Install built wheel
         if: matrix.target == 'x86_64-unknown-linux-musl'
         uses: addnab/docker-run-action@v3
@@ -197,7 +197,7 @@ jobs:
         with:
           target: ${{ matrix.platform.target }}
           manylinux: musllinux_1_2
-          args: --release --out dist --no-sdist
+          args: --release --out dist
       - uses: uraimo/run-on-arch-action@v2.5.0
         name: Install built wheel
         with:
