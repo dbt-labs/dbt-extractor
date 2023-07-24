@@ -229,6 +229,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: wheels
+          path: dist
       - name: Show wheels generated
         run: ls -lh ./
       - uses: actions/setup-python@v4
