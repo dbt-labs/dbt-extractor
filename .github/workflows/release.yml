@@ -229,11 +229,7 @@ jobs:
       - name: Show wheels generated
         run: ls -lh ./
       - uses: actions/setup-python@v4
-      - name: Publish to PyPi
-        if: ${{ github.event.inputs.publish == 'true' }}
-        env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          pip install --upgrade twine
-          twine upload --skip-existing *
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: artifact/
