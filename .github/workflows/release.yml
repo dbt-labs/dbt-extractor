@@ -220,8 +220,11 @@ jobs:
     needs: [macos, windows, linux, linux-cross, musllinux, musllinux-cross]
     name: Publish to PyPI
     environment:
-      name: pypi-prod
+      name: pypiprod
     runs-on: ubuntu-latest
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
     steps:
       - uses: actions/download-artifact@v3
         with:
@@ -229,11 +232,6 @@ jobs:
       - name: Show wheels generated
         run: ls -lh ./
       - uses: actions/setup-python@v4
-      - name: Publish to PyPi
+      - name: Publish package distributions to PyPI
         if: ${{ github.event.inputs.publish == 'true' }}
-        env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          pip install --upgrade twine
-          twine upload --skip-existing *
+        uses: pypa/gh-action-pypi-publish@release/v1
