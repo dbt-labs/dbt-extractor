@@ -230,6 +230,7 @@ jobs:
         run: ls -lh ./
       - uses: actions/setup-python@v4
       - name: Publish package distributions to PyPI
+        if: ${{ github.event.inputs.publish == 'true' }}
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: artifact/
