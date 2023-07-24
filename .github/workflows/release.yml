@@ -229,8 +229,9 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: wheels
+          path: dist
       - name: Show wheels generated
-        run: ls -lh ./
+        run: ls -lh dist
       - uses: actions/setup-python@v4
       - name: Publish package distributions to PyPI
         if: ${{ github.event.inputs.publish == 'true' }}
