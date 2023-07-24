@@ -231,7 +231,7 @@ jobs:
           name: wheels
           path: dist
       - name: Show wheels generated
-        run: ls -lh ./
+        run: ls -lh dict
       - uses: actions/setup-python@v4
       - name: Publish package distributions to PyPI
         if: ${{ github.event.inputs.publish == 'true' }}
