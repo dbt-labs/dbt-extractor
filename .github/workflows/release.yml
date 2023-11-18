@@ -34,7 +34,7 @@ jobs:
       - name: Upload sdist
         uses: actions/upload-artifact@v3
         with:
-          name: wheels
+          name: for-pypi
           path: dist
   macos:
     runs-on: macos-latest
@@ -70,7 +70,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
-          name: wheels
+          name: for-pypi
           path: dist
 
   windows:
@@ -102,7 +102,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
-          name: wheels
+          name: for-pypi
           path: dist
 
   linux:
@@ -130,7 +130,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
-          name: wheels
+          name: for-pypi
           path: dist
 
   linux-cross:
@@ -166,7 +166,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
-          name: wheels
+          name: for-pypi
           path: dist
 
   musllinux:
@@ -202,7 +202,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
-          name: wheels
+          name: for-pypi
           path: dist
 
   musllinux-cross:
@@ -240,7 +240,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
-          name: wheels
+          name: for-pypi
           path: dist
 
   publish:
@@ -255,9 +255,9 @@ jobs:
     steps:
       - uses: actions/download-artifact@v3
         with:
-          name: wheels
+          name: for-pypi
           path: dist
-      - name: Show wheels generated
+      - name: Show distributions generated
         run: ls -lh dist
       - uses: actions/setup-python@v4
       - name: Publish package distributions to PyPI
