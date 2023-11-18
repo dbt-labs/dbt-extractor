@@ -9,6 +9,33 @@ on:
         default: "false"
 
 jobs:
+  sdist:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+          architecture: x64
+      - name: Build sdist
+        uses: messense/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: auto
+          args: --release --sdist --out dist
+      - name: Install built sdist
+        if: matrix.target == 'x86_64'
+        run: |
+          pip install dist/*.tar.gz --force-reinstall
+          python -c "import dbt_extractor"
+      - name: Upload sdist
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: dist
   macos:
     runs-on: macos-latest
     steps:
@@ -217,7 +244,7 @@ jobs:
           path: dist
 
   publish:
-    needs: [macos, windows, linux, linux-cross, musllinux, musllinux-cross]
+    needs: [sdist, macos, windows, linux, linux-cross, musllinux, musllinux-cross]
     name: Publish to PyPI
     environment:
       name: pypiprod
