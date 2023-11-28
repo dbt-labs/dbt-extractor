@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.1
+- Restored source distribution
+
 ## 0.5.0
 - Modified ref return type to include version.
 

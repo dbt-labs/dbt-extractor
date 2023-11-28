@@ -25,9 +25,12 @@ jobs:
           default: true
       - name: Build wheels - x86_64
         uses: messense/maturin-action@v1
+        # NOTE: This build step also generates the source distribution (sdist),
+        # so if it is removed we will need to generate that on another of the
+        # build steps.
         with:
           target: x86_64
-          args: --release --out dist
+          args: --release --out dist --sdist
       - name: Install built wheel - x86_64
         run: |
           pip install dbt-extractor --no-index --find-links dist --force-reinstall
