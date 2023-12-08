@@ -1,11 +1,16 @@
 
 # dbt extractor
-
-![demo app](demo/demo.gif)
+## Understanding dbt-extractor
 
 This repository contains a tool that processes the most common jinja value templates in dbt model files. The tool depends on tree-sitter and the tree-sitter-jinja2 library.
 
-# Strategy
+![demo app](demo/demo.gif)
+
+## Getting started
+
+- Read the [introduction](https://docs.getdbt.com/docs/introduction/) and [viewpoint](https://docs.getdbt.com/docs/about/viewpoint/) of dbt
+
+## Strategy
 
 The current strategy is for this processor to be 100% certain when it can accurately extract values from a given model file. Anything less than 100% certainty returns an exception so that the model can be rendered with python Jinja instead. 
 
@@ -17,7 +22,7 @@ If we instead error when we could have confidently extracted values, there is no
 
 Even though jinja in dbt is not a typed language, the type checker statically determines whether or not the current implementation can confidently extract values without relying on python jinja rendering, which is when these errors would otherwise surface. This type checker will become more permissive over time as this tool expands to include more dbt and jinja features.
 
-# Architecture
+## Architecture
 
 This architecture is optimized for value extraction and for future flexibility. This architecture is expected to change, and is coded in fp-style stages to make those changes easier for the future.
 
@@ -35,21 +40,16 @@ The parser is solely responsible for turning text into recognized values, while 
 
 The extractor uses the typed abstract syntax tree to easily identify all the refs, sources, and configs present and extract them.
 
-## Running The Demo App
-To see the full implementation extract dbt values live as you type in a browser, run:
-```
-make demo
-```
-It may take a moment for the demo to compile an optimized version of itself.
+## Join the dbt Community
 
-Kill the server with ctrl+c to end the demo.
+- Be part of the conversation in the [dbt Community Slack](http://community.getdbt.com/)
+- Read more on the [dbt Community Discourse](https://discourse.getdbt.com)
 
-## Testing The Project
-```
-make test
-```
+## Reporting bugs and contributing code
 
-## Future Work
-- Refactor the tree-sitter jinja parser into its own repository to potentially open source and engage with the community on implementing improvements.
-- Remove ref, source, and config type checking as hard coded rules and instead read these function types from external function definition statements.
-- Create input path for a manifest file so it can be run on any project without additional pre-processing
+- Want to report a bug or request a feature? Let us know on [Slack](http://community.getdbt.com/), or open [an issue](https://github.com/dbt-labs/dbt-extractor/issues/new)
+- Want to help us build `dbt-extractor`? Check out the [Contributing Guide](https://github.com/dbt-labs/dbt-extractor/blob/HEAD/CONTRIBUTING.md)
+
+## Code of Conduct
+
+Everyone interacting in the dbt project's codebases, issue trackers, chat rooms, and mailing lists is expected to follow the [dbt Code of Conduct](https://community.getdbt.com/code-of-conduct).
