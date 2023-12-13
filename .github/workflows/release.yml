@@ -13,7 +13,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.9
           architecture: x64
@@ -56,7 +56,7 @@ jobs:
         target: [x64, x86]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.9
           architecture: ${{ matrix.target }}
@@ -88,7 +88,7 @@ jobs:
         target: [x86_64, i686]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.9
           architecture: x64
@@ -116,7 +116,7 @@ jobs:
         target: [aarch64, armv7, s390x, ppc64le, ppc64]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.9
       - name: Build wheels
@@ -154,7 +154,7 @@ jobs:
           - i686-unknown-linux-musl
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.9
           architecture: x64
@@ -192,7 +192,7 @@ jobs:
             arch: armv7
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.9
       - name: Build wheels
@@ -235,7 +235,7 @@ jobs:
           path: dist
       - name: Show wheels generated
         run: ls -lh dist
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
       - name: Publish package distributions to PyPI
         if: ${{ github.event.inputs.publish == 'true' }}
         uses: pypa/gh-action-pypi-publish@release/v1
