@@ -47,13 +47,13 @@ If you are a member of the `dbt-labs` GitHub organization, you will have push ac
 
 ## Setting up an environment
 
-TBD
+After ensuring you have Python and Rust installed.
 
 ## Running `dbt-extractor` in development
 
 ### Installation
 
-TBD
+If you do not want to install dbt-extractor in your global enviornment, create and enter a Python virtual environment. Next, in the repo root directory, run the command `pip install -e.`. This will compile the Rust source code, and use maturin to create and install a Python wrapper package for the compiled machine code.
 
 ### Running `dbt-extractor`
 
@@ -82,11 +82,8 @@ make test
 
 ## Debugging
 
-TBD
+The Python portions of dbt-extractor can be debugged just like any other Python program. In order to debug portions of the library written in Rust, you will need to attach a Rust-compatible debugger at run time. Consult the documentation for Rust and your IDE for details.
 
-### Assorted development tips
-
-TBD
 
 ## Submitting a Pull Request
 
