@@ -1,5 +1,4 @@
-#[allow(deprecated)]
-use crate::extractor::{extract_from_source, ConfigVal, Extraction, RefVersion};
+use crate::extractor::{extract_from_source as rust_extract_from_source, ConfigVal, Extraction, RefVersion};
 use pyo3::create_exception;
 use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
@@ -85,12 +84,12 @@ fn to_py_result<T, E: Display>(r: Result<T, E>) -> PyResult<T> {
 // `PyResult` raises Python exceptions. Calling code should catch and continue.
 #[pyfunction]
 pub fn py_extract_from_source(source: &str) -> PyResult<PyObject> {
-    Python::with_gil(|py| to_py_result(extract_from_source(source)).and_then(|x| pythonize(py, x)))
+    Python::with_gil(|py| to_py_result(rust_extract_from_source(source)).and_then(|x| pythonize(py, x)))
 }
 
 #[pymodule]
 fn dbt_extractor(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.setattr("ExtractionError", py.get_type::<ExtractionError>())?;
-    m.setattr("extract_from_source", wrap_pyfunction!(py_extract_from_source, m)?)?;
+    m.add_function(wrap_pyfunction!(py_extract_from_source, m)?)?;
     Ok(())
 }
