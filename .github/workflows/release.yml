@@ -242,7 +242,6 @@ jobs:
           python-version: ${{ env.python-version }}
 
       - name: Publish package distributions to PyPI
-        if: ${{ github.event.inputs.publish == 'true' }}
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
