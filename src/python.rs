@@ -90,6 +90,8 @@ pub fn py_extract_from_source(source: &str) -> PyResult<PyObject> {
 #[pymodule]
 fn dbt_extractor(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.setattr("ExtractionError", py.get_type::<ExtractionError>())?;
-    m.setattr("extract_from_source", wrap_pyfunction!(py_extract_from_source, m)?)?;
+    let extract_fn = wrap_pyfunction!(py_extract_from_source, m)?;
+    m.setattr("py_extract_from_source", extract_fn.clone())?;
+    m.setattr("extract_from_source", extract_fn)?;
     Ok(())
 }
