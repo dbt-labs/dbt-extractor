@@ -1,3 +1,4 @@
+#[allow(deprecated)]
 use crate::extractor::{extract_from_source, ConfigVal, Extraction, RefVersion};
 use pyo3::create_exception;
 use pyo3::exceptions::PyException;
@@ -11,25 +12,33 @@ use RefVersion::*;
 create_exception!(dbt_extractor, ExtractionError, PyException);
 
 // Can't export ConfigVal directly: https://github.com/PyO3/pyo3/issues/417
-fn convert_config(py: Python, v: ConfigVal) -> PyObject {
+fn convert_config(py: Python, v: ConfigVal) -> Py<PyAny> {
     match v {
-        ConfigVal::StringC(s) => s.to_object(py),
-        ConfigVal::BoolC(b) => b.to_object(py),
+        ConfigVal::StringC(s) => s.into_pyobject(py).unwrap().into(),
+        #[allow(deprecated)]
+        ConfigVal::BoolC(b) => {
+            let py_obj = b.into_py(py);
+            Py::from(py_obj)
+        },
         ConfigVal::ListC(v) => v
             .into_iter()
             .map(|x| convert_config(py, x))
-            .collect::<Vec<PyObject>>()
-            .to_object(py),
+            .collect::<Vec<Py<PyAny>>>()
+            .into_pyobject(py)
+            .unwrap()
+            .into(),
         ConfigVal::DictC(d) => d
             .into_iter()
             .map(|(k, v)| (k, convert_config(py, v)))
-            .collect::<HashMap<String, PyObject>>()
-            .to_object(py),
+            .collect::<HashMap<String, Py<PyAny>>>()
+            .into_pyobject(py)
+            .unwrap()
+            .into(),
     }
 }
 
 // Transation between rust extraction type and Python dictionary
-fn pythonize(py: Python, extraction: Extraction) -> PyResult<PyObject> {
+fn pythonize(py: Python, extraction: Extraction) -> PyResult<Py<PyAny>> {
     let refs = PyList::empty(py);
 
     for r in extraction.refs.iter() {
@@ -48,19 +57,19 @@ fn pythonize(py: Python, extraction: Extraction) -> PyResult<PyObject> {
         refs.append(pyref)?;
     }
 
-    let sources: &PySet = PySet::new(py, &extraction.sources[..])?;
-    let py_configs: Vec<(String, PyObject)> = extraction
+    let sources = PySet::new(py, &extraction.sources[..])?;
+    let py_configs: Vec<(String, Py<PyAny>)> = extraction
         .configs
         .into_iter()
         .map(|(k, v)| (k, convert_config(py, v)))
         .collect();
-    let configs: &PyList = PyList::new(py, &py_configs[..]);
+    let configs = PyList::new(py, &py_configs[..])?;
 
     let dict = PyDict::new(py);
     dict.set_item("refs", refs)?;
     dict.set_item("sources", sources)?;
     dict.set_item("configs", configs)?;
-    Ok(dict.to_object(py))
+    Ok(dict.into_pyobject(py).unwrap().into())
 }
 
 // Naively converts a Result to a PyResult by using the string
@@ -80,12 +89,8 @@ pub fn py_extract_from_source(source: &str) -> PyResult<PyObject> {
 }
 
 #[pymodule]
-fn dbt_extractor(py: Python, m: &PyModule) -> PyResult<()> {
-    m.add("ExtractionError", py.get_type::<ExtractionError>())
-        .unwrap();
-
-    m.add_wrapped(wrap_pyfunction!(py_extract_from_source))
-        .unwrap();
-
+fn dbt_extractor(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.setattr("ExtractionError", py.get_type::<ExtractionError>())?;
+    m.setattr("extract_from_source", wrap_pyfunction!(py_extract_from_source, m)?)?;
     Ok(())
 }
