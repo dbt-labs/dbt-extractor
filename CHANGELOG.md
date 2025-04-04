@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.2
+- Bump pyo3 to 0.24.1
+
 ## 0.5.1
 - Restored source distribution
 
