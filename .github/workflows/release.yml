@@ -16,7 +16,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -63,7 +63,7 @@ jobs:
         target: [x64, x86]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -102,7 +102,7 @@ jobs:
         target: [x86_64, i686]
     steps:
       - name: "Chekout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -136,7 +136,7 @@ jobs:
         target: [aarch64, armv7, s390x, ppc64le, ppc64]
     steps:
       - name: "Chekout repo"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -165,7 +165,7 @@ jobs:
           - i686-unknown-linux-musl
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -197,7 +197,7 @@ jobs:
             arch: armv7
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
         uses: actions/setup-python@v5
