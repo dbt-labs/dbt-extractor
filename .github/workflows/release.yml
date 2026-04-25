@@ -51,7 +51,7 @@ jobs:
           python -c "import dbt_extractor"
 
       - name: Upload wheels
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # actions/upload-artifact@v5
         with:
           name: macos-wheels
           path: dist
@@ -90,7 +90,7 @@ jobs:
           python -c "import dbt_extractor"
 
       - name: Upload wheels
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # actions/upload-artifact@v5
         with:
           name: windows-${{ matrix.target }}-wheels
           path: dist
@@ -124,7 +124,7 @@ jobs:
           python -c "import dbt_extractor"
 
       - name: Upload wheels
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # actions/upload-artifact@v5
         with:
           name: linux-${{ matrix.target }}-wheels
           path: dist
@@ -151,7 +151,7 @@ jobs:
           args: --release --out dist
 
       - name: Upload wheels
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # actions/upload-artifact@v5
         with:
           name: linux-cross-${{ matrix.target }}-wheels
           path: dist
@@ -181,7 +181,7 @@ jobs:
           args: --release --out dist
 
       - name: Upload wheels
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # actions/upload-artifact@v5
         with:
           name: musllinux-${{ matrix.target }}-wheels
           path: dist
@@ -212,7 +212,7 @@ jobs:
           args: --release --out dist
 
       - name: Upload wheels
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # actions/upload-artifact@v5
         with:
           name: musllinux-${{ matrix.platform.arch }}-wheels
           path: dist
