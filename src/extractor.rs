@@ -295,7 +295,7 @@ fn child_by_field_name<'a>(node: &'a Node, name: &str) -> Result<Node<'a>, Sourc
 
 // tree-sitter returns a concrete syntax tree. only named elements form the abstract syntax tree.
 fn named_children(node: Node) -> Vec<Node> {
-    // calling allocating a new cursor every time is less effecient, but juggling lifetimes also sucks.
+    // calling allocating a new cursor every time is less efficient, but juggling lifetimes also sucks.
     node.named_children(&mut node.walk()).collect()
 }
 

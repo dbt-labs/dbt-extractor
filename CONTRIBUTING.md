@@ -53,7 +53,7 @@ After ensuring you have Python and Rust installed.
 
 ### Installation
 
-If you do not want to install dbt-extractor in your global enviornment, create and enter a Python virtual environment. Next, in the repo root directory, run the command `pip install -e.`. This will compile the Rust source code, and use maturin to create and install a Python wrapper package for the compiled machine code.
+If you do not want to install dbt-extractor in your global environment, create and enter a Python virtual environment. Next, in the repo root directory, run the command `pip install -e.`. This will compile the Rust source code, and use maturin to create and install a Python wrapper package for the compiled machine code.
 
 ### Running `dbt-extractor`
 

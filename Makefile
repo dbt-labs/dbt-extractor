@@ -14,7 +14,7 @@ test: install
 run:
 	cargo build && cargo run
 
-# builds optimized binary since the demo displays rumtimes
+# builds optimized binary since the demo displays runtimes
 demo:
 	cd demo \
 	&& open demo.html \

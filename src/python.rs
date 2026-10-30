@@ -36,7 +36,7 @@ fn convert_config(py: Python, v: ConfigVal) -> Py<PyAny> {
     }
 }
 
-// Transation between rust extraction type and Python dictionary
+// Translation between rust extraction type and Python dictionary
 fn pythonize(py: Python, extraction: Extraction) -> PyResult<Py<PyAny>> {
     let refs = PyList::empty(py);
 
